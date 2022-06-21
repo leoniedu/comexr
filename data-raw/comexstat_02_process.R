@@ -7,8 +7,6 @@ tic()
 
 con_comex <- comexstat_duck_1(overwrite = TRUE)
 
-
-
 comexstat_board <- board_local(versioned = FALSE)
 
 
