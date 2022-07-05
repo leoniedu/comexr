@@ -23,7 +23,6 @@ ymin <- 2017
 ## minimum year for the rolling sum by country (pais), year (ano), month (mes), and product (ncm),
 yminp <- 2019
 
-ddir <- path.expand(rappdirs::user_data_dir("comexstatr"))
 cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
 
 

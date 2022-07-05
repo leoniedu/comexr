@@ -61,7 +61,7 @@ df <- open_dataset(list(df_i, df_e)) %>%
   mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
 
 ## write partitioned data
-ddir_partition <- file.path(ddir, "comexstat_partition")
+ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
 unlink(ddir_partition, recursive = TRUE)
 dir.create(ddir_partition, showWarnings = FALSE)
 df %>%
@@ -71,7 +71,7 @@ toc()
 
 tic()
 ## partition by pais
-ddir_partition <- file.path(ddir, "comexstat_pais")
+ddir_partition <- file.path(comexstat_path(), "comexstat_pais")
 unlink(ddir_partition, recursive = TRUE)
 dir.create(ddir_partition, showWarnings = FALSE)
 df %>%

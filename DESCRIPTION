@@ -1,19 +1,38 @@
 Package: comexstatr
-Title: Brazilian Foreign Trade Statistics
-Version: 0.0.0.9000
-Authors@R: 
-    person("Eduardo", "Leoni", , "e.leoni@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0003-0955-5232"))
-Description: Downloads and makes available data on Brazilian foreign trade, including 12 month rolling sums.
-License: MIT + file LICENSE
-Suggests: 
-    testthat (>= 3.0.0)
-Config/testthat/edition: 3
+Title: Access to brazilian foreign trade data- Comexstat.
+Version: 0.0.1
+Authors@R: c(
+        person(given = "Eduardo",
+               family = "Leoni",
+               role = c("aut", "cre"),
+               email = "e.leoni@gmail.com",
+               comment = c(ORCID = "0000-0003-0955-5232"))
+        )
+Description: Easy acess to Brazilian foreign trade statustics.
+URL: https://gitlab.com/lacreta/comexstatr/
+BugReports: https://gitlab.com/lacreta/comexstatr/-/issues
+License: CC0
 Encoding: UTF-8
+LazyData: false
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
-Depends: 
-    R (>= 2.10)
-LazyData: true
-URL: https://github.com/leoniedu/comexstatr
-BugReports: https://github.com/leoniedu/comexstatr/issues
+Imports:
+    DBI,
+    duckdb,
+    httr,
+    tibble,
+    purrr,
+    cli,
+    crayon,
+    rstudioapi,
+    tools
+Suggests:
+    testthat,
+    covr,
+    knitr,
+    dplyr,
+    dbplyr,
+    ggplot2,
+    chilemapas
+Depends:
+    R (>= 4.0)
