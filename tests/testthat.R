@@ -1,4 +1,3 @@
 library(testthat)
-library(comexstatr)
-
-test_check("comexstatr")
+library(comexstat2017)
+test_check("comexstat2017")
