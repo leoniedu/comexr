@@ -58,6 +58,7 @@ comexstat_connect <- function(dir = comexstat_path(), overwrite = FALSE) {
   },
   finally = NULL
   )
+  comexstat_arrow(con)
   assign("comexstat_connect", con, envir = comexstat_cache)
   con
 }

@@ -1,5 +1,204 @@
 #' @export
-comexstat_process <- function(year_min_ncm=2019, year_min_ncm_country=2019, mem_limit_gb=4, threads=4) {
+comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
+  ymin <- year_min_ncm
+  yminp <- year_min_ncm_country
+  require(arrow)
+  require(dplyr)
+  require(rappdirs)
+  require(tictoc)
+  require(pins)
+  cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
+  comexstat_board <- board_local(versioned = FALSE)
+  tic()
+  ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
+  comexstat_schema_e <- schema(
+    field("CO_ANO", int16()),
+    field("CO_MES", int8()),
+    field("CO_NCM", arrow::string()),
+    field("CO_UNID", arrow::string()),
+    field("CO_PAIS", arrow::string()),
+    field("SG_UF_NCM", arrow::string()),
+    field("CO_VIA", arrow::string()),
+    field("CO_URF", arrow::string()),
+    field("QT_ESTAT", double()),
+    field("KG_LIQUIDO", double()),
+    field("VL_FOB", double())
+  )
+  comexstat_schema_i <- comexstat_schema_e
+  comexstat_schema_i <- comexstat_schema_i$AddField(11, field = field("VL_FRETE", double()))
+  comexstat_schema_i <- comexstat_schema_i$AddField(12, field = field("VL_SEGURO", double()))
+  ## export
+  fname <- file.path(cdir, "EXP_COMPLETA.csv")
+  cnames <- read.csv2(fname, nrows = 3) %>%
+    janitor::clean_names() %>%
+    names()
+  df_e <- open_dataset(
+    fname,
+    delim = ";",
+    format = "text",
+    schema = comexstat_schema_e,
+    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+  )
+  fname <- file.path(cdir, "IMP_COMPLETA.csv")
+  cnames <- read.csv2(fname, nrows = 3) %>%
+    janitor::clean_names() %>%
+    names()
+  df_i <- open_dataset(
+    fname,
+    delim = ";",
+    format = "text",
+    schema = comexstat_schema_i,
+    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+  )
+  ## bind together imports and exports
+  df <- open_dataset(list(df_i, df_e)) %>%
+    rename_with(tolower) %>%
+    mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
+  ## write partitioned data
+  ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
+  unlink(ddir_partition, recursive = TRUE)
+  dir.create(ddir_partition, showWarnings = FALSE)
+  df %>%
+    filter(co_ano>=ymin)%>%
+    group_by(co_ano, fluxo) %>%
+    write_dataset(ddir_partition, format = "parquet")
+  toc()
+  tic()
+  ## partition by pais
+  ddir_partition <- file.path(comexstat_path(), "comexstat_pais")
+  unlink(ddir_partition, recursive = TRUE)
+  dir.create(ddir_partition, showWarnings = FALSE)
+  df %>%
+    filter(co_ano >= yminp) %>%
+    mutate(co_ano_mes=as.Date(paste(co_ano,co_mes,"01", sep="-")))%>%
+    group_by(co_pais, fluxo, co_ano_mes, co_ncm)%>%
+    summarise(qt_estat=sum(qt_estat),
+              kg_liquido=sum(kg_liquido),
+              vl_fob=sum(vl_fob),
+              vl_frete=sum(vl_frete),
+              vl_seguro=sum(vl_seguro)
+    )%>%
+    group_by(co_pais, fluxo) %>%
+    arrange(co_ncm, co_ano_mes)%>%
+    write_dataset(ddir_partition, format = "parquet", partitioning = c("fluxo","co_pais"))
+  toc()
+}
+
+
+
+
+#' @export
+comexstat_arrow <- function(con_comex) {
+  require(arrow)
+  require(duckdb)
+  ## Load full arrow dataset created by "stage"
+  ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
+  df_f <- open_dataset(
+    ddir_partition,
+    format = "parquet"
+  )
+  duckdb_register_arrow(con_comex, "comexstat_arrow", df_f)
+  ## Load  arrow dataset created by "stage" partition by pais
+  ddir_partition <- file.path(comexstat_path(), "comexstat_pais")
+  comexstat_schema <- schema(
+    field("co_ano_mes", date32()),
+    field("co_ncm", arrow::string()),
+    field("fluxo", arrow::string()),
+    field("co_pais", arrow::string()),
+    field("qt_estat", double()),
+    field("kg_liquido", double()),
+    field("vl_fob", double()),
+    field("vl_frete", double()),
+    field("vl_seguro", double()))
+  df_f <- open_dataset(
+    ddir_partition,
+    format = "parquet", schema = comexstat_schema
+  )
+  duckdb_register_arrow(con_comex, "comexstat_pais_arrow", df_f)
+}
+
+
+
+#' @export
+comexstat_create_db <- function(overwrite=FALSE) {
+  require(pins)
+  require(DBI)
+  require(arrow)
+  require(duckdb)
+  require(dplyr)
+  comexstat_board <- board_local(versioned = FALSE)
+  con_comex <- comexstat_connect(overwrite = overwrite)
+  comexstat_arrow(con_comex)
+  ##
+  msg("Checking calculated totals with the supplied totals dataset  ... ")
+  bind_rows(
+    comexstat_board %>%
+      pin_download("exp_totais_conferencia") %>%
+      read.csv2() %>%
+      mutate(fluxo = "exp"),
+    comexstat_board %>%
+      pin_download("imp_totais_conferencia") %>%
+      read.csv2() %>%
+      mutate(fluxo = "imp")
+  ) %>%
+    rename_with(tolower) -> totais
+
+  totais_tocheck <- suppressWarnings(tbl(con_comex, "comexstat_arrow") %>%
+                                       group_by(co_ano, fluxo) %>%
+                                       mutate(numero_linhas = 1) %>%
+                                       summarise(across(c(numero_linhas, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro), sum)) %>%
+                                       collect())
+
+  check <- left_join(totais_tocheck, totais %>% select(-arquivo), by = c("co_ano", "fluxo")) %>%
+    transmute(check = qt_estat.y
+              - qt_estat.x + vl_fob.y - vl_fob.x +
+                numero_linhas.y - numero_linhas.x, check2 = if_else(fluxo == "imp", vl_frete.y - vl_frete.x + vl_seguro.y - vl_seguro.x, 0)) %>%
+    filter((check > 0) | (check2 > 0))
+
+  ## runs out of memory fast!
+  # totais_tocheck_pais <- tbl(con_comex, "comexstat_pais_arrow") %>%
+  #   group_by(co_ano, fluxo) %>%
+  #   mutate(numero_linhas = 1) %>%
+  #   summarise(across(c(numero_linhas, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro), sum)) %>%
+  #   collect()
+  #
+  # check_pais <- left_join(totais_tocheck_pais, totais %>% select(-arquivo), by = c("co_ano", "fluxo")) %>%
+  #   transmute(check = qt_estat.y
+  #             - qt_estat.x + vl_fob.y - vl_fob.x +
+  #               numero_linhas.y - numero_linhas.x, check2 = if_else(fluxo == "imp", vl_frete.y - vl_frete.x + vl_seguro.y - vl_seguro.x, 0)) %>%
+  #   filter((check > 0) | (check2 > 0))
+  #
+  #
+  # stopifnot(nrow(check_pais) == 0)
+
+  ## load auxiliary tables
+  purrr::walk(c(
+    "ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade", "pais",
+    "pais_bloco"
+  ), ~ {
+    pin_download(comexstat_board, name = .x) %>%
+      data.table::fread(encoding = "Latin-1", colClasses = "character") %>%
+      janitor::clean_names() %>%
+      dbWriteTable(con_comex, name = .x, ., overwrite = TRUE)
+  })
+
+  ## check that co_unid is unique by co_ncm
+  check_unid <- tbl(con_comex, "comexstat_arrow") %>%
+    distinct(co_ncm, co_unid) %>%
+    count(co_ncm) %>%
+    filter(n > 1) %>%
+    collect()
+  stopifnot(nrow(check_unid) == 0)
+
+  ## ncms
+  dbSendQuery(comexstat_connect(), "create or replace table ncms as select * from ncm left join ncm_cgce using (co_cgce_n3) left join ncm_cuci using (co_cuci_item) left join ncm_isic using (co_isic_classe) left join ncm_unidade using (co_unid)")
+  purrr::walk(c("ncm_cgce", 'ncm', "ncm_cuci", "ncm_isic", "ncm_unidade"), ~ dbRemoveTable(comexstat_connect(), name=.x))
+  msg("Local database created and/or checked!")
+}
+
+
+#' @export
+comexstat_process <- function(year_min_ncm=2019, year_min_ncm_country=2019, mem_limit_gb=4, threads=2) {
   require(feather)
   require(arrow)
   require(duckdb)
@@ -21,10 +220,9 @@ comexstat_process <- function(year_min_ncm=2019, year_min_ncm_country=2019, mem_
   comexstat_arrow(con_comex)
   msg("Creating ncm/country/month level dataset  ... ")
   ## rolling sum by month, direction (imports/exports) and country
-  dbSendQuery(con_comex, paste("create or replace table comexstat_selp as select make_date(co_ano, co_mes, 1) as co_ano_mes, co_pais, co_ncm, fluxo,
-sum(vl_fob) as vl_fob, sum(qt_estat) as qt_estat, sum(kg_liquido) as kg_liquido, sum(vl_frete) as vl_frete, sum(vl_seguro) as vl_seguro from comexstat_pais_arrow  where co_ano>=", yminp, "  group by co_ncm, co_ano_mes, co_pais, fluxo"))
-
-
+  ## comexstat_pais_arrow  already summarised (sum) by co_ano_mes, co_pais, co_ncm, fluxo
+  #dbSendQuery(con_comex, paste("create or replace table comexstat_pais_arrow as select make_date(co_ano, co_mes, 1) as co_ano_mes, co_pais, co_ncm, fluxo,
+#sum(vl_fob) as vl_fob, sum(qt_estat) as qt_estat, sum(kg_liquido) as kg_liquido, sum(vl_frete) as vl_frete, sum(vl_seguro) as vl_seguro from comexstat_pais_arrow  where co_ano>=", yminp, "  group by co_ncm, co_ano_mes, co_pais, fluxo"))
   ## combination all co_ncm, co_pais, co_ano_mes, fluxo
   sqlcomb <- paste0("
 create or replace table co_ano_mes_pais_ncm as select
@@ -33,8 +231,8 @@ co_ncm,
 co_pais,
 fluxo
 from
-(select distinct co_ano_mes  from comexstat_selp),
-(select min(co_ano_mes) co_ano_mes_min, co_ncm, co_pais, fluxo from comexstat_selp group by co_pais, co_ncm, fluxo)
+(select distinct co_ano_mes  from comexstat_pais_arrow),
+(select min(co_ano_mes) co_ano_mes_min, co_ncm, co_pais, fluxo from comexstat_pais_arrow group by co_pais, co_ncm, fluxo)
 WHERE co_ano_mes>=co_ano_mes_min
 ")
   tmp <- dbSendQuery(con_comex, sqlcomb)
@@ -47,7 +245,7 @@ WHERE co_ano_mes>=co_ano_mes_min
   sum("kg_liquido") OVER one as kg_liquido_12_sum,
   sum("vl_frete") OVER one as vl_frete_12_sum,
   sum("vl_seguro") OVER one as vl_seguro_12_sum
-   from co_ano_mes_pais_ncm left join comexstat_selp
+   from co_ano_mes_pais_ncm left join comexstat_pais_arrow
    using (co_ano_mes, co_ncm, co_pais, fluxo)
   WINDOW one as (
   PARTITION BY "co_ncm", "co_pais", "fluxo"
@@ -62,11 +260,11 @@ WHERE co_ano_mes>=co_ano_mes_min
     "create or replace table comexstatp as
 select comexstat_12_sum_p.*,
 vl_fob, vl_frete, vl_seguro,
-vl_fob+vl_frete+vl_seguro as vl_cif_imp,
-vl_fob_12_sum+vl_frete_12_sum+vl_seguro_12_sum as vl_cif_12_sum_imp
+vl_fob+vl_frete+vl_seguro as vl_cif,
+vl_fob_12_sum+vl_frete_12_sum+vl_seguro_12_sum as vl_cif_12_sum
                              from
                              comexstat_12_sum_p
-                             left join comexstat_selp using (co_ncm, co_ano_mes, co_pais, fluxo)
+                             left join comexstat_pais_arrow using (co_ncm, co_ano_mes, co_pais, fluxo)
                              where vl_fob_12_sum is not null
                              and vl_fob_12_sum>0"
   )
@@ -74,22 +272,17 @@ vl_fob_12_sum+vl_frete_12_sum+vl_seguro_12_sum as vl_cif_12_sum_imp
 
 
   sql <- glue(
-    "create or replace view comexstatpv as
-select comexstatp.*, ncms.no_ncm_por as no_ncm, pais.no_pais as pais, ncms.co_unid, ncms.sg_unid as unidade
+    "create or replace view comexstat_pais_arrowv as
+select comexstat_pais_arrow.*, ncms.no_ncm_por as no_ncm, pais.no_pais as pais, ncms.co_unid, ncms.sg_unid as unidade
                              from
-                             comexstatp
+                             comexstat_pais_arrow
                              left join pais using(co_pais)
                              left join ncms using(co_ncm)"
   )
   dbSendQuery(con_comex, sql)
-  tbl(con_comex, "comexstatp") %>% count(co_ano_mes)
+  tbl(con_comex, "comexstat_pais_arrow") %>% count(co_ano_mes)
 
   toc()
-
-
-
-
-
 
   # ano, mes, fluxo ---------------------------------------------------------
   tic()
@@ -137,8 +330,8 @@ WHERE co_ano_mes>=co_ano_mes_min
     "create or replace table comexstat as
 select comexstat_12_sum.*,
 vl_fob, vl_frete, vl_seguro,
-vl_fob+vl_frete+vl_seguro as vl_cif_imp,
-vl_fob_12_sum+vl_frete_12_sum+vl_seguro_12_sum as vl_cif_12_sum_imp
+vl_fob+vl_frete+vl_seguro as vl_cif,
+vl_fob_12_sum+vl_frete_12_sum+vl_seguro_12_sum as vl_cif_12_sum
                              from
                              comexstat_12_sum
                              left join comexstat_sel using (co_ncm, co_ano_mes, fluxo)
@@ -156,6 +349,41 @@ select comexstat.*, ncms.no_ncm_por as no_ncm, ncms.co_unid, ncms.sg_unid as uni
                              left join ncms using(co_ncm)"
   )
   dbSendQuery(con_comex, sql)
+
+  sql <- "create or replace view comexstat12_raw as
+  (select co_ano, make_date(co_ano, 12, 1) as co_ano_mes, co_ncm, co_pais, fluxo,
+    sum(qt_estat) qt_estat_12_sum,
+    sum(kg_liquido) kg_liquido_12_sum,
+    sum(vl_fob) vl_fob_12_sum,
+    sum(vl_frete) vl_frete_12_sum,
+    sum(vl_seguro) vl_seguro_12_sum,
+    sum(vl_fob + vl_frete +vl_seguro) vl_cif_12_sum
+  from  comexstat_arrow
+    where co_ano< (select max(co_ano) from comexstat_arrow)
+    group by co_ano, co_ncm, co_pais, fluxo)
+union all
+  (select date_part('year', co_ano_mes) as co_ano, co_ano_mes, co_ncm, co_pais, fluxo,
+    qt_estat_12_sum,
+    kg_liquido_12_sum,
+    vl_fob_12_sum,
+    vl_frete_12_sum,
+    vl_seguro_12_sum,
+    vl_cif_12_sum
+  from  comexstatp
+    where co_ano>= (select max(co_ano) from comexstat_arrow));
+
+
+create or replace view comexstat12 as
+  select comexstat12_raw.*, pais.no_pais as pais,
+  ncms.no_ncm_por as no_ncm,
+  ncms.sg_unid, ncms.no_unid
+  from
+    comexstat12_raw
+    left join pais using(co_pais)
+    left join ncms using(co_ncm);
+  "
+  dbSendQuery(con_comex, sql)
+
 
   dbRemoveTable(con_comex, "co_ano_mes_ncm")
   dbRemoveTable(con_comex, "co_ano_mes_pais_ncm")
