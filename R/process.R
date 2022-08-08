@@ -373,7 +373,7 @@ union all
     where co_ano>= (select max(co_ano) from comexstat_arrow));
 
 
-create or replace view comexstat12 as
+create or replace view comexstatvp as
   select comexstat12_raw.*, pais.no_pais as pais,
   ncms.no_ncm_por as no_ncm,
   ncms.sg_unid, ncms.no_unid
