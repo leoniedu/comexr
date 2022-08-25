@@ -19,35 +19,30 @@ app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 ## Installation
 
 You can install the development version of comexstatr cloning the repo
-from github (with git lfs installed) and installing locally.
+from github and installing locally.
 
-``` r
-```
 
 ## Example
 
-``` r
+``` {r}
 library(comexstatr)
 library(dplyr)
-#> 
-#> Attaching package: 'dplyr'
-#> The following objects are masked from 'package:stats':
-#> 
-#>     filter, lag
-#> The following objects are masked from 'package:base':
-#> 
-#>     intersect, setdiff, setequal, union
-library(ggplot2)
-## imports and exports from china and usa after 2019, 12 month rolling sum
-qplot(co_ano_mes, vl_fob_12_sum_bi, data=comex_roll12p%>%
-  filter(co_ano_mes>="2020-01-01", pais%in%c("China", "Estados Unidos"))%>%
-  group_by(co_ano_mes, fluxo, pais)%>%
-  summarise(vl_fob_12_sum_bi=sum(vl_fob_12_sum)/1e9), color=pais, geom="line", linetype=fluxo) +
-  scale_y_continuous(limits=c(0,NA), expand=c(0,0))+
-  theme_linedraw() + labs(x="", y="12 month rolling sum USD Bi", linetype="", color="") +
-  scale_color_brewer(palette = "Set1")
-#> `summarise()` has grouped output by 'co_ano_mes', 'fluxo'. You can override
-#> using the `.groups` argument.
-```
+library(tictoc)
 
-<img src="man/figures/README-example-1.png" width="100%" />
+##downloading
+tic()
+comexstat_download_raw()
+toc()
+
+
+## summarise by ncm and year
+tic()
+cstat <- comexstat_raw()
+cstat_ncm_year <- cstat%>%
+  filter(co_ano>=2021)%>%
+  group_by(co_ano, co_ncm, fluxo)%>%
+  summarise(vl_fob=sum(vl_fob))%>%collect%>%
+  arrange(co_ano, co_ncm, fluxo)
+head(cstat_ncm_year)
+
+```

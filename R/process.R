@@ -390,3 +390,64 @@ create or replace view comexstatvp as
   toc()
   dbDisconnect(con_comex)
 }
+
+
+
+
+#' @export
+comexstat_raw <- function() {
+  require(arrow)
+  require(dplyr)
+  require(rappdirs)
+  require(tictoc)
+  require(pins)
+  cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
+  comexstat_board <- board_local(versioned = FALSE)
+  tic()
+  ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
+  comexstat_schema_e <- schema(
+    field("CO_ANO", int16()),
+    field("CO_MES", int8()),
+    field("CO_NCM", arrow::string()),
+    field("CO_UNID", arrow::string()),
+    field("CO_PAIS", arrow::string()),
+    field("SG_UF_NCM", arrow::string()),
+    field("CO_VIA", arrow::string()),
+    field("CO_URF", arrow::string()),
+    field("QT_ESTAT", double()),
+    field("KG_LIQUIDO", double()),
+    field("VL_FOB", double())
+  )
+  comexstat_schema_i <- comexstat_schema_e
+  comexstat_schema_i <- comexstat_schema_i$AddField(11, field = field("VL_FRETE", double()))
+  comexstat_schema_i <- comexstat_schema_i$AddField(12, field = field("VL_SEGURO", double()))
+  ## export
+  fname <- file.path(cdir, "EXP_COMPLETA.csv")
+  cnames <- read.csv2(fname, nrows = 3) %>%
+    janitor::clean_names() %>%
+    names()
+  df_e <- open_dataset(
+    fname,
+    delim = ";",
+    format = "text",
+    schema = comexstat_schema_e,
+    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+  )
+  fname <- file.path(cdir, "IMP_COMPLETA.csv")
+  cnames <- read.csv2(fname, nrows = 3) %>%
+    janitor::clean_names() %>%
+    names()
+  df_i <- open_dataset(
+    fname,
+    delim = ";",
+    format = "text",
+    schema = comexstat_schema_i,
+    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+  )
+  ## bind together imports and exports
+  df <- open_dataset(list(df_i, df_e)) %>%
+    rename_with(tolower) %>%
+    mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
+  toc()
+  df
+}
