@@ -37,7 +37,7 @@ library(comexstatr)
 ##downloading
 tictoc::tic()
 comexstat_download_raw(
-  #force_download = TRUE
+  ##force_download = TRUE
   )
 tictoc::toc()
 
@@ -46,11 +46,21 @@ tictoc::toc()
 tictoc::tic()
 cstat <- comexstat_raw()
 cstat_ncm_year <- cstat|>
-  dplyr::filter(co_ano==2021)|>
+  dplyr::filter(co_ano>=2017)|>
   dplyr::group_by(co_ano, co_ncm, fluxo)|>
   dplyr::summarise(vl_fob=sum(vl_fob))|>
   dplyr::collect()|>
   dplyr::arrange(co_ano, co_ncm, fluxo)
 head(cstat_ncm_year)
 tictoc::toc()
+
+tictoc::tic()
+cstat_year <- cstat|>
+  dplyr::group_by(co_ano, fluxo)|>
+  dplyr::summarise(vl_fob_bi=sum(vl_fob)/1e9)|>
+  dplyr::collect()|>
+  dplyr::arrange(co_ano, fluxo)
+head(cstat_year)
+tictoc::toc()
+
 ```

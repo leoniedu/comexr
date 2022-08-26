@@ -31,7 +31,7 @@ library(comexstatr)
 ##downloading
 tictoc::tic()
 comexstat_download_raw(
-  #force_download = TRUE
+  ##force_download = TRUE
   )
 ```
 
@@ -41,19 +41,14 @@ comexstat_download_raw(
 tictoc::toc()
 ```
 
-    ## 0.285 sec elapsed
+    ## 0.292 sec elapsed
 
 ``` r
 ## summarise by ncm and year
 tictoc::tic()
 cstat <- comexstat_raw()
-```
-
-    ## 0.327 sec elapsed
-
-``` r
 cstat_ncm_year <- cstat|>
-  dplyr::filter(co_ano==2021)|>
+  dplyr::filter(co_ano>=2017)|>
   dplyr::group_by(co_ano, co_ncm, fluxo)|>
   dplyr::summarise(vl_fob=sum(vl_fob))|>
   dplyr::collect()|>
@@ -62,18 +57,45 @@ head(cstat_ncm_year)
 ```
 
     ## # A tibble: 6 × 4
-    ## # Groups:   co_ano, co_ncm [4]
+    ## # Groups:   co_ano, co_ncm [3]
     ##   co_ano co_ncm   fluxo  vl_fob
     ##    <int> <chr>    <chr>   <dbl>
-    ## 1   2021 01012100 exp   1894729
-    ## 2   2021 01012100 imp   2290284
-    ## 3   2021 01012900 exp   5230872
-    ## 4   2021 01012900 imp   1960884
-    ## 5   2021 01019000 exp       566
-    ## 6   2021 01022110 exp     25606
+    ## 1   2017 01012100 exp   4546869
+    ## 2   2017 01012100 imp   3028068
+    ## 3   2017 01012900 exp   2657375
+    ## 4   2017 01012900 imp   2753243
+    ## 5   2017 01022110 exp    809930
+    ## 6   2017 01022110 imp     39575
 
 ``` r
 tictoc::toc()
 ```
 
-    ## 6.993 sec elapsed
+    ## 7.719 sec elapsed
+
+``` r
+tictoc::tic()
+cstat_year <- cstat|>
+  dplyr::group_by(co_ano, fluxo)|>
+  dplyr::summarise(vl_fob_bi=sum(vl_fob)/1e9)|>
+  dplyr::collect()|>
+  dplyr::arrange(co_ano, fluxo)
+head(cstat_year)
+```
+
+    ## # A tibble: 6 × 3
+    ## # Groups:   co_ano [3]
+    ##   co_ano fluxo vl_fob_bi
+    ##    <int> <chr>     <dbl>
+    ## 1   1997 exp        52.9
+    ## 2   1997 imp        60.5
+    ## 3   1998 exp        51.1
+    ## 4   1998 imp        58.7
+    ## 5   1999 exp        47.9
+    ## 6   1999 imp        50.3
+
+``` r
+tictoc::toc()
+```
+
+    ## 6.474 sec elapsed

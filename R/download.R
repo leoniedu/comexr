@@ -43,7 +43,7 @@ comexstat_download_raw <- function(force_download=FALSE) {
     msg("downloading files ... can take a while ...")
     ds <- purrr::map(comexstat_board_url$urls |> names(), ~ pins::pin_download(board = comexstat_board_url, name = .x))
     names(ds) <- names(comexstat_board_url$urls)
-    purrr::walk(names(ds), ~ pin_upload(comexstat_board, name = .x, paths = ds[[.x]]))
+    purrr::walk(names(ds), ~ pins::pin_upload(comexstat_board, name = .x, paths = ds[[.x]]))
     msg("Unzipping files...")
     zip::unzip(comexstat_board |> pins::pin_download("exp_completa"), exdir = cdir)
     zip::unzip(comexstat_board |> pins::pin_download("imp_completa"), exdir = cdir)

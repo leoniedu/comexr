@@ -403,7 +403,6 @@ comexstat_raw <- function() {
   # require(pins)
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
   comexstat_board <- pins::board_local(versioned = FALSE)
-  tictoc::tic()
   ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
   comexstat_schema_e <- arrow::schema(
     arrow::field("CO_ANO", arrow::int16()),
@@ -448,6 +447,5 @@ comexstat_raw <- function() {
   df <- arrow::open_dataset(list(df_i, df_e)) |>
     dplyr::rename_with(tolower) |>
     dplyr::mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
-  tictoc::toc()
   df
 }
