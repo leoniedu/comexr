@@ -2,11 +2,11 @@
 comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
   ymin <- year_min_ncm
   yminp <- year_min_ncm_country
-  require(arrow)
-  require(dplyr)
-  require(rappdirs)
-  require(tictoc)
-  require(pins)
+  #require(arrow)
+  #require(dplyr)
+  #require(rappdirs)
+  #require(tictoc)
+  #require(pins)
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
   comexstat_board <- board_local(versioned = FALSE)
   tic()
@@ -37,7 +37,7 @@ comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
     delim = ";",
     format = "text",
     schema = comexstat_schema_e,
-    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+    read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
   )
   fname <- file.path(cdir, "IMP_COMPLETA.csv")
   cnames <- read.csv2(fname, nrows = 3) %>%
@@ -48,20 +48,20 @@ comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
     delim = ";",
     format = "text",
     schema = comexstat_schema_i,
-    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+    read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
   )
   ## bind together imports and exports
   df <- open_dataset(list(df_i, df_e)) %>%
     rename_with(tolower) %>%
-    mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
+    dplyr::mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
   ## write partitioned data
   ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
   unlink(ddir_partition, recursive = TRUE)
   dir.create(ddir_partition, showWarnings = FALSE)
   df %>%
-    filter(co_ano>=ymin)%>%
-    group_by(co_ano, fluxo) %>%
-    write_dataset(ddir_partition, format = "parquet")
+    dplyr::filter(co_ano>=ymin)%>%
+    dplyr::group_by(co_ano, fluxo) %>%
+    arrow::write_dataset(ddir_partition, format = "parquet")
   toc()
   tic()
   ## partition by pais
@@ -396,58 +396,58 @@ create or replace view comexstatvp as
 
 #' @export
 comexstat_raw <- function() {
-  require(arrow)
-  require(dplyr)
-  require(rappdirs)
-  require(tictoc)
-  require(pins)
+  # require(arrow)
+  # require(dplyr)
+  # require(rappdirs)
+  # require(tictoc)
+  # require(pins)
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
-  comexstat_board <- board_local(versioned = FALSE)
-  tic()
+  comexstat_board <- pins::board_local(versioned = FALSE)
+  tictoc::tic()
   ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
-  comexstat_schema_e <- schema(
-    field("CO_ANO", int16()),
-    field("CO_MES", int8()),
-    field("CO_NCM", arrow::string()),
-    field("CO_UNID", arrow::string()),
-    field("CO_PAIS", arrow::string()),
-    field("SG_UF_NCM", arrow::string()),
-    field("CO_VIA", arrow::string()),
-    field("CO_URF", arrow::string()),
-    field("QT_ESTAT", double()),
-    field("KG_LIQUIDO", double()),
-    field("VL_FOB", double())
+  comexstat_schema_e <- arrow::schema(
+    arrow::field("CO_ANO", arrow::int16()),
+    arrow::field("CO_MES", arrow::int8()),
+    arrow::field("CO_NCM", arrow::string()),
+    arrow::field("CO_UNID", arrow::string()),
+    arrow::field("CO_PAIS", arrow::string()),
+    arrow::field("SG_UF_NCM", arrow::string()),
+    arrow::field("CO_VIA", arrow::string()),
+    arrow::field("CO_URF", arrow::string()),
+    arrow::field("QT_ESTAT", double()),
+    arrow::field("KG_LIQUIDO", double()),
+    arrow::field("VL_FOB", double())
   )
   comexstat_schema_i <- comexstat_schema_e
-  comexstat_schema_i <- comexstat_schema_i$AddField(11, field = field("VL_FRETE", double()))
-  comexstat_schema_i <- comexstat_schema_i$AddField(12, field = field("VL_SEGURO", double()))
+  comexstat_schema_i <- comexstat_schema_i$AddField(11, field = arrow::field("VL_FRETE", double()))
+  comexstat_schema_i <- comexstat_schema_i$AddField(12, field = arrow::field("VL_SEGURO", double()))
   ## export
   fname <- file.path(cdir, "EXP_COMPLETA.csv")
-  cnames <- read.csv2(fname, nrows = 3) %>%
-    janitor::clean_names() %>%
+  cnames <- read.csv2(fname, nrows = 3) |>
+    janitor::clean_names() |>
     names()
-  df_e <- open_dataset(
+  df_e <- arrow::open_dataset(
     fname,
     delim = ";",
     format = "text",
     schema = comexstat_schema_e,
-    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+    read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
   )
   fname <- file.path(cdir, "IMP_COMPLETA.csv")
-  cnames <- read.csv2(fname, nrows = 3) %>%
-    janitor::clean_names() %>%
+  cnames <- read.csv2(fname, nrows = 3) |>
+    janitor::clean_names() |>
     names()
-  df_i <- open_dataset(
+  df_i <- arrow::open_dataset(
     fname,
     delim = ";",
     format = "text",
     schema = comexstat_schema_i,
-    read_options = CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+    read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
   )
   ## bind together imports and exports
-  df <- open_dataset(list(df_i, df_e)) %>%
-    rename_with(tolower) %>%
-    mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
-  toc()
+  df <- arrow::open_dataset(list(df_i, df_e)) |>
+    dplyr::rename_with(tolower) |>
+    dplyr::mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
+  tictoc::toc()
   df
 }

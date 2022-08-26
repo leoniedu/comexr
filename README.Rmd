@@ -31,23 +31,26 @@ from github and installing locally.
 
 ``` {r}
 library(comexstatr)
-library(dplyr)
-library(tictoc)
+#library(dplyr)
+#library(tictoc)
 
 ##downloading
-tic()
-comexstat_download_raw()
-toc()
+tictoc::tic()
+comexstat_download_raw(
+  #force_download = TRUE
+  )
+tictoc::toc()
 
 
 ## summarise by ncm and year
-tic()
+tictoc::tic()
 cstat <- comexstat_raw()
-cstat_ncm_year <- cstat%>%
-  filter(co_ano>=2021)%>%
-  group_by(co_ano, co_ncm, fluxo)%>%
-  summarise(vl_fob=sum(vl_fob))%>%collect%>%
-  arrange(co_ano, co_ncm, fluxo)
+cstat_ncm_year <- cstat|>
+  dplyr::filter(co_ano==2021)|>
+  dplyr::group_by(co_ano, co_ncm, fluxo)|>
+  dplyr::summarise(vl_fob=sum(vl_fob))|>
+  dplyr::collect()|>
+  dplyr::arrange(co_ano, co_ncm, fluxo)
 head(cstat_ncm_year)
-
+tictoc::toc()
 ```

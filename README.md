@@ -25,63 +25,39 @@ from github and installing locally.
 
 ``` r
 library(comexstatr)
-library(dplyr)
-```
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
-library(tictoc)
+#library(dplyr)
+#library(tictoc)
 
 ##downloading
-tic()
-comexstat_download_raw()
+tictoc::tic()
+comexstat_download_raw(
+  #force_download = TRUE
+  )
 ```
 
     ## Downloading data from Comexstat...
 
-    ## Loading required package: pins
-
 ``` r
-toc()
+tictoc::toc()
 ```
 
-    ## 0.146 sec elapsed
+    ## 0.285 sec elapsed
 
 ``` r
 ## summarise by ncm and year
-tic()
+tictoc::tic()
 cstat <- comexstat_raw()
 ```
 
-    ## Loading required package: arrow
-
-    ## 
-    ## Attaching package: 'arrow'
-
-    ## The following object is masked from 'package:utils':
-    ## 
-    ##     timestamp
-
-    ## Loading required package: rappdirs
-
-    ## 0.148 sec elapsed
+    ## 0.327 sec elapsed
 
 ``` r
-cstat_ncm_year <- cstat%>%
-  filter(co_ano>=2021)%>%
-  group_by(co_ano, co_ncm, fluxo)%>%
-  summarise(vl_fob=sum(vl_fob))%>%collect%>%
-  arrange(co_ano, co_ncm, fluxo)
+cstat_ncm_year <- cstat|>
+  dplyr::filter(co_ano==2021)|>
+  dplyr::group_by(co_ano, co_ncm, fluxo)|>
+  dplyr::summarise(vl_fob=sum(vl_fob))|>
+  dplyr::collect()|>
+  dplyr::arrange(co_ano, co_ncm, fluxo)
 head(cstat_ncm_year)
 ```
 
@@ -95,3 +71,9 @@ head(cstat_ncm_year)
     ## 4   2021 01012900 imp   1960884
     ## 5   2021 01019000 exp       566
     ## 6   2021 01022110 exp     25606
+
+``` r
+tictoc::toc()
+```
+
+    ## 6.993 sec elapsed
