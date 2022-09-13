@@ -8,31 +8,31 @@ comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
   #require(tictoc)
   #require(pins)
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
-  comexstat_board <- board_local(versioned = FALSE)
+  comexstat_board <- pins::board_local(versioned = FALSE)
   tic()
   ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
-  comexstat_schema_e <- schema(
-    field("CO_ANO", int16()),
-    field("CO_MES", int8()),
-    field("CO_NCM", arrow::string()),
-    field("CO_UNID", arrow::string()),
-    field("CO_PAIS", arrow::string()),
-    field("SG_UF_NCM", arrow::string()),
-    field("CO_VIA", arrow::string()),
-    field("CO_URF", arrow::string()),
-    field("QT_ESTAT", double()),
-    field("KG_LIQUIDO", double()),
-    field("VL_FOB", double())
+  comexstat_schema_e <- arrow::schema(
+    arrow::field("CO_ANO", arrow::int16()),
+    arrow::field("CO_MES", arrow::int8()),
+    arrow::field("CO_NCM", arrow::string()),
+    arrow::field("CO_UNID", arrow::string()),
+    arrow::field("CO_PAIS", arrow::string()),
+    arrow::field("SG_UF_NCM", arrow::string()),
+    arrow::field("CO_VIA", arrow::string()),
+    arrow::field("CO_URF", arrow::string()),
+    arrow::field("QT_ESTAT", double()),
+    arrow::field("KG_LIQUIDO", double()),
+    arrow::field("VL_FOB", double())
   )
   comexstat_schema_i <- comexstat_schema_e
-  comexstat_schema_i <- comexstat_schema_i$AddField(11, field = field("VL_FRETE", double()))
-  comexstat_schema_i <- comexstat_schema_i$AddField(12, field = field("VL_SEGURO", double()))
+  comexstat_schema_i <- comexstat_schema_i$AddField(11, field = arrow::field("VL_FRETE", double()))
+  comexstat_schema_i <- comexstat_schema_i$AddField(12, field = arrow::field("VL_SEGURO", double()))
   ## export
   fname <- file.path(cdir, "EXP_COMPLETA.csv")
-  cnames <- read.csv2(fname, nrows = 3) %>%
-    janitor::clean_names() %>%
+  cnames <- read.csv2(fname, nrows = 3) |>
+    janitor::clean_names() |>
     names()
-  df_e <- open_dataset(
+  df_e <- arrow::open_dataset(
     fname,
     delim = ";",
     format = "text",
@@ -40,10 +40,10 @@ comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
     read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
   )
   fname <- file.path(cdir, "IMP_COMPLETA.csv")
-  cnames <- read.csv2(fname, nrows = 3) %>%
-    janitor::clean_names() %>%
+  cnames <- read.csv2(fname, nrows = 3) |>
+    janitor::clean_names() |>
     names()
-  df_i <- open_dataset(
+  df_i <- arrow::open_dataset(
     fname,
     delim = ";",
     format = "text",
@@ -51,16 +51,16 @@ comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
     read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
   )
   ## bind together imports and exports
-  df <- open_dataset(list(df_i, df_e)) %>%
-    rename_with(tolower) %>%
+  df <- arrow::open_dataset(list(df_i, df_e))  |>
+    dplyr::rename_with(tolower) |>
     dplyr::mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
   ## write partitioned data
   ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
   unlink(ddir_partition, recursive = TRUE)
   dir.create(ddir_partition, showWarnings = FALSE)
-  df %>%
-    dplyr::filter(co_ano>=ymin)%>%
-    dplyr::group_by(co_ano, fluxo) %>%
+  df |>
+    dplyr::filter(co_ano>=ymin)|>
+    dplyr::group_by(co_ano, fluxo) |>
     arrow::write_dataset(ddir_partition, format = "parquet")
   toc()
   tic()
@@ -68,19 +68,19 @@ comexstat_stage <- function(year_min_ncm=2019, year_min_ncm_country=2019) {
   ddir_partition <- file.path(comexstat_path(), "comexstat_pais")
   unlink(ddir_partition, recursive = TRUE)
   dir.create(ddir_partition, showWarnings = FALSE)
-  df %>%
-    filter(co_ano >= yminp) %>%
-    mutate(co_ano_mes=as.Date(paste(co_ano,co_mes,"01", sep="-")))%>%
-    group_by(co_pais, fluxo, co_ano_mes, co_ncm)%>%
-    summarise(qt_estat=sum(qt_estat),
+  df |>
+    dplyr::filter(co_ano >= yminp) |>
+    dplyr::mutate(co_ano_mes=as.Date(paste(co_ano,co_mes,"01", sep="-")))|>
+    dplyr::group_by(co_pais, fluxo, co_ano_mes, co_ncm)|>
+    dplyr::summarise(qt_estat=sum(qt_estat),
               kg_liquido=sum(kg_liquido),
               vl_fob=sum(vl_fob),
               vl_frete=sum(vl_frete),
               vl_seguro=sum(vl_seguro)
-    )%>%
-    group_by(co_pais, fluxo) %>%
-    arrange(co_ncm, co_ano_mes)%>%
-    write_dataset(ddir_partition, format = "parquet", partitioning = c("fluxo","co_pais"))
+    )|>
+    dplyr::group_by(co_pais, fluxo) |>
+    dplyr::arrange(co_ncm, co_ano_mes)|>
+    arrow::write_dataset(ddir_partition, format = "parquet", partitioning = c("fluxo","co_pais"))
   toc()
 }
 
@@ -100,16 +100,16 @@ comexstat_arrow <- function(con_comex) {
   duckdb_register_arrow(con_comex, "comexstat_arrow", df_f)
   ## Load  arrow dataset created by "stage" partition by pais
   ddir_partition <- file.path(comexstat_path(), "comexstat_pais")
-  comexstat_schema <- schema(
-    field("co_ano_mes", date32()),
-    field("co_ncm", arrow::string()),
-    field("fluxo", arrow::string()),
-    field("co_pais", arrow::string()),
-    field("qt_estat", double()),
-    field("kg_liquido", double()),
-    field("vl_fob", double()),
-    field("vl_frete", double()),
-    field("vl_seguro", double()))
+  comexstat_schema <- arrow::schema(
+    arrow::field("co_ano_mes", date32()),
+    arrow::field("co_ncm", arrow::string()),
+    arrow::field("fluxo", arrow::string()),
+    arrow::field("co_pais", arrow::string()),
+    arrow::field("qt_estat", double()),
+    arrow::field("kg_liquido", double()),
+    arrow::field("vl_fob", double()),
+    arrow::field("vl_frete", double()),
+    arrow::field("vl_seguro", double()))
   df_f <- open_dataset(
     ddir_partition,
     format = "parquet", schema = comexstat_schema
@@ -132,40 +132,40 @@ comexstat_create_db <- function(overwrite=FALSE) {
   ##
   msg("Checking calculated totals with the supplied totals dataset  ... ")
   bind_rows(
-    comexstat_board %>%
-      pin_download("exp_totais_conferencia") %>%
-      read.csv2() %>%
+    comexstat_board |>
+      pin_download("exp_totais_conferencia") |>
+      read.csv2() |>
       mutate(fluxo = "exp"),
-    comexstat_board %>%
-      pin_download("imp_totais_conferencia") %>%
-      read.csv2() %>%
+    comexstat_board |>
+      pin_download("imp_totais_conferencia") |>
+      read.csv2() |>
       mutate(fluxo = "imp")
-  ) %>%
-    rename_with(tolower) -> totais
+  ) |>
+    dplyr::rename_with(tolower) -> totais
 
-  totais_tocheck <- suppressWarnings(tbl(con_comex, "comexstat_arrow") %>%
-                                       group_by(co_ano, fluxo) %>%
-                                       mutate(numero_linhas = 1) %>%
-                                       summarise(across(c(numero_linhas, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro), sum)) %>%
+  totais_tocheck <- suppressWarnings(tbl(con_comex, "comexstat_arrow") |>
+                                       group_by(co_ano, fluxo) |>
+                                       mutate(numero_linhas = 1) |>
+                                       summarise(across(c(numero_linhas, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro), sum)) |>
                                        collect())
 
-  check <- left_join(totais_tocheck, totais %>% select(-arquivo), by = c("co_ano", "fluxo")) %>%
+  check <- left_join(totais_tocheck, totais |> select(-arquivo), by = c("co_ano", "fluxo")) |>
     transmute(check = qt_estat.y
               - qt_estat.x + vl_fob.y - vl_fob.x +
-                numero_linhas.y - numero_linhas.x, check2 = if_else(fluxo == "imp", vl_frete.y - vl_frete.x + vl_seguro.y - vl_seguro.x, 0)) %>%
+                numero_linhas.y - numero_linhas.x, check2 = if_else(fluxo == "imp", vl_frete.y - vl_frete.x + vl_seguro.y - vl_seguro.x, 0)) |>
     filter((check > 0) | (check2 > 0))
 
   ## runs out of memory fast!
-  # totais_tocheck_pais <- tbl(con_comex, "comexstat_pais_arrow") %>%
-  #   group_by(co_ano, fluxo) %>%
-  #   mutate(numero_linhas = 1) %>%
-  #   summarise(across(c(numero_linhas, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro), sum)) %>%
+  # totais_tocheck_pais <- tbl(con_comex, "comexstat_pais_arrow") |>
+  #   group_by(co_ano, fluxo) |>
+  #   mutate(numero_linhas = 1) |>
+  #   summarise(across(c(numero_linhas, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro), sum)) |>
   #   collect()
   #
-  # check_pais <- left_join(totais_tocheck_pais, totais %>% select(-arquivo), by = c("co_ano", "fluxo")) %>%
+  # check_pais <- left_join(totais_tocheck_pais, totais |> select(-arquivo), by = c("co_ano", "fluxo")) |>
   #   transmute(check = qt_estat.y
   #             - qt_estat.x + vl_fob.y - vl_fob.x +
-  #               numero_linhas.y - numero_linhas.x, check2 = if_else(fluxo == "imp", vl_frete.y - vl_frete.x + vl_seguro.y - vl_seguro.x, 0)) %>%
+  #               numero_linhas.y - numero_linhas.x, check2 = if_else(fluxo == "imp", vl_frete.y - vl_frete.x + vl_seguro.y - vl_seguro.x, 0)) |>
   #   filter((check > 0) | (check2 > 0))
   #
   #
@@ -176,23 +176,23 @@ comexstat_create_db <- function(overwrite=FALSE) {
     "ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade", "pais",
     "pais_bloco"
   ), ~ {
-    pin_download(comexstat_board, name = .x) %>%
-      data.table::fread(encoding = "Latin-1", colClasses = "character") %>%
-      janitor::clean_names() %>%
-      dbWriteTable(con_comex, name = .x, ., overwrite = TRUE)
+    pin_download(comexstat_board, name = .x) |>
+      data.table::fread(encoding = "Latin-1", colClasses = "character") |>
+      janitor::clean_names() |>
+      DBI::dbWriteTable(con_comex, name = .x, ., overwrite = TRUE)
   })
 
   ## check that co_unid is unique by co_ncm
-  check_unid <- tbl(con_comex, "comexstat_arrow") %>%
-    distinct(co_ncm, co_unid) %>%
-    count(co_ncm) %>%
-    filter(n > 1) %>%
+  check_unid <- tbl(con_comex, "comexstat_arrow") |>
+    distinct(co_ncm, co_unid) |>
+    count(co_ncm) |>
+    filter(n > 1) |>
     collect()
   stopifnot(nrow(check_unid) == 0)
 
   ## ncms
   dbSendQuery(comexstat_connect(), "create or replace table ncms as select * from ncm left join ncm_cgce using (co_cgce_n3) left join ncm_cuci using (co_cuci_item) left join ncm_isic using (co_isic_classe) left join ncm_unidade using (co_unid)")
-  purrr::walk(c("ncm_cgce", 'ncm', "ncm_cuci", "ncm_isic", "ncm_unidade"), ~ dbRemoveTable(comexstat_connect(), name=.x))
+  purrr::walk(c("ncm_cgce", 'ncm', "ncm_cuci", "ncm_isic", "ncm_unidade"), ~ DBI::dbRemoveTable(comexstat_connect(), name=.x))
   msg("Local database created and/or checked!")
 }
 
@@ -280,7 +280,7 @@ select comexstat_pais_arrow.*, ncms.no_ncm_por as no_ncm, pais.no_pais as pais, 
                              left join ncms using(co_ncm)"
   )
   dbSendQuery(con_comex, sql)
-  tbl(con_comex, "comexstat_pais_arrow") %>% count(co_ano_mes)
+  tbl(con_comex, "comexstat_pais_arrow") |> count(co_ano_mes)
 
   toc()
 
@@ -393,54 +393,74 @@ create or replace view comexstatvp as
 
 
 #' @export
-comexstat_raw <- function(rewrite=FALSE) {
+comexstat_raw <- function(rewrite=TRUE) {
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
+  ddir <- file.path(comexstat_path(), "comexstat_partition")
   comexstat_board <- pins::board_local(versioned = FALSE)
   ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
-  comexstat_schema_e <- arrow::schema(
-    arrow::field("CO_ANO", arrow::int16()),
-    arrow::field("CO_MES", arrow::int8()),
-    arrow::field("CO_NCM", arrow::string()),
-    arrow::field("CO_UNID", arrow::string()),
-    arrow::field("CO_PAIS", arrow::string()),
-    arrow::field("SG_UF_NCM", arrow::string()),
-    arrow::field("CO_VIA", arrow::string()),
-    arrow::field("CO_URF", arrow::string()),
-    arrow::field("QT_ESTAT", double()),
-    arrow::field("KG_LIQUIDO", double()),
-    arrow::field("VL_FOB", double())
-  )
-  comexstat_schema_i <- comexstat_schema_e
-  comexstat_schema_i <- comexstat_schema_i$AddField(11, field = arrow::field("VL_FRETE", double()))
-  comexstat_schema_i <- comexstat_schema_i$AddField(12, field = arrow::field("VL_SEGURO", double()))
-  ## export
-  fname <- file.path(cdir, "EXP_COMPLETA.csv")
-  cnames <- read.csv2(fname, nrows = 3) |>
-    janitor::clean_names() |>
-    names()
-  df_e <- arrow::open_dataset(
-    fname,
-    delim = ";",
-    format = "text",
-    schema = comexstat_schema_e,
-    read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
-  )
-  fname <- file.path(cdir, "IMP_COMPLETA.csv")
-  cnames <- read.csv2(fname, nrows = 3) |>
-    janitor::clean_names() |>
-    names()
-  df_i <- arrow::open_dataset(
-    fname,
-    delim = ";",
-    format = "text",
-    schema = comexstat_schema_i,
-    read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
-  )
-  ## bind together imports and exports
-  df <- arrow::open_dataset(list(df_i, df_e)) |>
-    dplyr::rename_with(tolower) |>
-    dplyr::mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
-  df
+  if (rewrite) {
+    comexstat_schema <- arrow::schema(
+      arrow::field("co_ano", arrow::int16()),
+      arrow::field("co_mes", arrow::int8()),
+      arrow::field("co_ncm", arrow::string()),
+      arrow::field("fluxo", arrow::string()),
+      arrow::field("co_pais", arrow::string()),
+      arrow::field("qt_estat", double()),
+      arrow::field("kg_liquido", double()),
+      arrow::field("vl_fob", double()),
+      arrow::field("vl_frete", double()),
+      arrow::field("vl_seguro", double()))
+    res <- open_dataset(
+      ddir,
+      format = "parquet",schema = comexstat_schema
+    )%>%dplyr::rename_with(tolower)
+    res
+  } else {
+    comexstat_schema_e <- arrow::schema(
+      arrow::field("CO_ANO", arrow::int16()),
+      arrow::field("CO_MES", arrow::int8()),
+      arrow::field("CO_NCM", arrow::string()),
+      arrow::field("CO_UNID", arrow::string()),
+      arrow::field("CO_PAIS", arrow::string()),
+      arrow::field("SG_UF_NCM", arrow::string()),
+      arrow::field("CO_VIA", arrow::string()),
+      arrow::field("CO_URF", arrow::string()),
+      arrow::field("QT_ESTAT", double()),
+      arrow::field("KG_LIQUIDO", double()),
+      arrow::field("VL_FOB", double())
+    )
+    comexstat_schema_i <- comexstat_schema_e
+    comexstat_schema_i <- comexstat_schema_i$AddField(11, field = arrow::field("VL_FRETE", double()))
+    comexstat_schema_i <- comexstat_schema_i$AddField(12, field = arrow::field("VL_SEGURO", double()))
+    ## export
+    fname <- file.path(cdir, "EXP_COMPLETA.csv")
+    cnames <- read.csv2(fname, nrows = 3) |>
+      janitor::clean_names() |>
+      names()
+    df_e <- arrow::open_dataset(
+      fname,
+      delim = ";",
+      format = "text",
+      schema = comexstat_schema_e,
+      read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+    )
+    fname <- file.path(cdir, "IMP_COMPLETA.csv")
+    cnames <- read.csv2(fname, nrows = 3) |>
+      janitor::clean_names() |>
+      names()
+    df_i <- arrow::open_dataset(
+      fname,
+      delim = ";",
+      format = "text",
+      schema = comexstat_schema_i,
+      read_options = arrow::CsvReadOptions$create(skip_rows = 1, column_names = toupper(cnames))
+    )
+    ## bind together imports and exports
+    df <- arrow::open_dataset(list(df_i, df_e)) |>
+      dplyr::rename_with(tolower) |>
+      dplyr::mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
+    df
+  }
 }
 
 #' @export
