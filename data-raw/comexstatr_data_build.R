@@ -10,11 +10,25 @@ comexstat_stage(year_min_ncm=ymin, year_min_ncm_country=yminc)
 
 comexstat_create_db(overwrite=TRUE)
 tic()
-comexstat_process(year_min_ncm=ymin, year_min_ncm_country=yminc, threads = 8, mem_limit_gb = 8)
+comexstat_process(year_min_ncm=ymin, year_min_ncm_country=yminc, threads = 2, mem_limit_gb = 8)
 toc()
 
+stop()
 
+
+tmp <- map(dbListTables(con), ~ try(tbl(con, .x)%>%head%>%collect))
+names(tmp) <- dbListTables(con)
+
+## export comexstatv
+
+
+library(comexstatr)
+library(tictoc)
+library(dplyr)
+library(arrow)
+tic()
 con <- comexstat_connect()
+
 
 ## blocos
 blocos_sel <- c("22","111","1","3","9", "5", "51", "105", "41")
@@ -75,3 +89,13 @@ qplot(co_ano_mes, vl_fob_12_sum/1e6, data=
 
 
 
+ddir_partition <- file.path(comexstatr:::comexstat_path(), "comexstat12")
+unlink(ddir_partition, recursive = TRUE)
+dir.create(ddir_partition, showWarnings = FALSE)
+df <- tbl(con, "comexstat12")%>%collect
+toc()
+tic()
+df %>%
+  group_by(co_ano, fluxo) %>%
+  write_dataset(ddir_partition, format = "parquet")
+toc()

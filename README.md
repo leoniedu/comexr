@@ -1,155 +1,101 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# comexstat 2017 (Paquete R)
+# comexstatr
 
 <!-- badges: start -->
 
-[![Project Status: Active – The project has reached a stable, usable
-state and is being actively
-developed.](https://lifecycle.r-lib.org/articles/figures/lifecycle-stable.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable-1)
 [![Lifecycle:
-stable](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#stable)
-[![GH-actions](https://github.com/ropensci/comexstat2017/workflows/R-CMD-check/badge.svg)](https://github.com/ropensci/comexstat2017/actions)
-[![codecov](https://codecov.io/gh/ropensci/comexstat2017/branch/main/graph/badge.svg?token=XI59cmGd15)](https://codecov.io/gh/ropensci/comexstat2017)
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![CRAN
-status](https://www.r-pkg.org/badges/version/comexstat2017)](https://CRAN.R-project.org/package=comexstat2017)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4277761.svg)](https://doi.org/10.5281/zenodo.4277761)
-[![Buy Me a
-Coffee](https://img.shields.io/badge/buymeacoffee-pacha-yellow)](https://www.buymeacoffee.com/pacha?via=github)
-[![Status at rOpenSci Software Peer
-Review](https://badges.ropensci.org/414_status.svg)](https://github.com/ropensci/software-review/issues/414)
+status](https://www.r-pkg.org/badges/version/comexstatr)](https://CRAN.R-project.org/package=comexstatr)
 <!-- badges: end -->
 
-# Acerca de
+The goal of comexstatr is to make it easy to download, process, and
+analyze Brazilian foreign trade statistics, available through the web
+app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
+<https://www.gov.br/produtividade-e-comercio-exterior/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta>.
 
-Provee un acceso conveniente a mas de 17 millones de registros de la
-base de datos del comexstat 2017. Los datos fueron importados desde el DVD
-oficial del INE usando el [Convertidor
-REDATAM](https://github.com/discontinuos/redatam-converter/) creado por
-Pablo De Grande y ademas se proporcionan los mapas que acompanian a
-estos datos. Estos mismos datos en DVD posteriormente quedaron
-disponibles en las [Bases de Datos del
-INE](https://www.ine.cl/estadisticas/sociales/comexstats-de-poblacion-y-vivienda/poblacion-y-vivienda).
+## Installation
 
-Despues de la primera llamada a `library(comexstat2017)` se le pedira al
-usuario que descargue la base usando `comexstat_descargar_base()` y se puede
-modificar la ruta de descarga con la variable de entorno
-`comexstat_BBDD_DIR`. La variable de entorno se puede crear con
-`usethis::edit_r_environ()`.
+You can install the development version of comexstatr cloning the repo
+from github and installing locally.
 
-La documentacion esta disponible en
-<https://docs.ropensci.org/comexstat2017/>.
+## Example
 
-# Publico objetivo
+``` r
+library(comexstatr)
+#library(dplyr)
+#library(tictoc)
 
-Estudiantes, academicos e investigadores que necesiten un acceso
-conveniente a datos censales directamente en R o RStudio.
+##downloading
+tictoc::tic()
+comexstat_download_raw(
+  ##force_download = TRUE
+  )
+```
 
-# Requerimientos de instalacion
+    ## Downloading data from Comexstat...
 
-Esta libreria necesita 3.5 GB libres para la crear la base de datos
-localmente. Una vez creada la base, esta ocupa 1.0 GB en disco.
+``` r
+tictoc::toc()
+```
 
-# Instalacion
+    ## 0.292 sec elapsed
 
-Version estable
+``` r
+## summarise by ncm and year
+tictoc::tic()
+cstat <- comexstat_raw()
+cstat_ncm_year <- cstat|>
+  dplyr::filter(co_ano>=2017)|>
+  dplyr::group_by(co_ano, co_ncm, fluxo)|>
+  dplyr::summarise(vl_fob=sum(vl_fob))|>
+  dplyr::collect()|>
+  dplyr::arrange(co_ano, co_ncm, fluxo)
+head(cstat_ncm_year)
+```
 
-    install.packages("comexstat2017")
+    ## # A tibble: 6 × 4
+    ## # Groups:   co_ano, co_ncm [3]
+    ##   co_ano co_ncm   fluxo  vl_fob
+    ##    <int> <chr>    <chr>   <dbl>
+    ## 1   2017 01012100 exp   4546869
+    ## 2   2017 01012100 imp   3028068
+    ## 3   2017 01012900 exp   2657375
+    ## 4   2017 01012900 imp   2753243
+    ## 5   2017 01022110 exp    809930
+    ## 6   2017 01022110 imp     39575
 
-Version de desarrollo
+``` r
+tictoc::toc()
+```
 
-    # install.packages("remotes")
-    remotes::install_github("ropensci/comexstat2017")
+    ## 7.719 sec elapsed
 
-# Valor agregado sobre los archivos SHP y REDATAM del INE
+``` r
+tictoc::tic()
+cstat_year <- cstat|>
+  dplyr::group_by(co_ano, fluxo)|>
+  dplyr::summarise(vl_fob_bi=sum(vl_fob)/1e9)|>
+  dplyr::collect()|>
+  dplyr::arrange(co_ano, fluxo)
+head(cstat_year)
+```
 
-Esta version de la base de datos del comexstat 2017 presenta algunas
-diferencias respecto de la original que se obtiene en DVD y corresponde
-a una version DuckDB derivada a partir de los Microdatos del comexstat 2017
-en formato DVD.
+    ## # A tibble: 6 × 3
+    ## # Groups:   co_ano [3]
+    ##   co_ano fluxo vl_fob_bi
+    ##    <int> <chr>     <dbl>
+    ## 1   1997 exp        52.9
+    ## 2   1997 imp        60.5
+    ## 3   1998 exp        51.1
+    ## 4   1998 imp        58.7
+    ## 5   1999 exp        47.9
+    ## 6   1999 imp        50.3
 
-La modificacion sobre los archivos originales, que incluyen geometrias
-detalladas disponibles en [Cartografias
-comexstat2017](https://github.com/ropensci/comexstat2017-cartografias),
-consistio en unir todos los archivos SHP regionales en una unica tabla
-por nivel (e.g en lugar de proveer `R01_mapa_comunas`, …,
-`R15_mapa_comunas` combine las 15 regiones en una unica tabla
-`mapa_comunas`).
+``` r
+tictoc::toc()
+```
 
-Los cambios concretos respecto de la base original son los siguientes:
-
--   Nombres de columna en formato “tidy” (e.g. `comuna_ref_id` en lugar
-    de `COMUNA_REF_ID`).
--   Agregue los nombres de las unidades geograficas (e.g. se incluye
-    `nom_comuna` en la tabla `comunas` para facilitar los filtros).
--   Aniadi la variable `geocodigo` a la tabla de `zonas`. Esto facilita
-    mucho las uniones con las tablas de mapas en SQL.
--   Tambien inclui las observaciones 16054 to 16060 en la variable
-    `zonaloc_ref_id`. Esto se debio a que era necesario para crear una
-    llave foranea desde la tabla `mapa_zonas` (ver repositorio
-    [Cartografias
-    comexstat2017](https://github.com/ropensci/comexstat2017-cartografias)) y
-    vincular el `geocodigo` (no todas las zonas del mapa estan presentes
-    en los datos del comexstat).
-
-Ademas de los datos del comexstat, inclui la descripcion de las variables en
-formato tabla (y no en XML como se obtiene del DVD). La ventaja de esto
-es poder consultar rapidamente lo que significan los codigos de
-variables y su etiquetado, por ejemplo como explico en la 
-[historia del proyecto]([https://github.com/pachadotdev/comexstat2017/blob/main/vignettes/comexstat2017.Rmd](https://ropensci.org/blog/2021/07/27/comexstat2017-es/)).
-
-# Relacion de comexstat 2017 con Chilemapas
-
-Todos los datos de estos repositorios contemplan 15 regiones pues los
-archivos del comexstat se entregan de esta forma y este paquete esta 100%
-orientado a facilitar el acceso a datos.
-
-Por su parte, [chilemapas](https://docs.ropensci.org/comexstat2017) se
-centra unicamente en los mapas y tambien usa las cartografias del DVD
-del comexstat para entregar mapas simplificados (de menor detalle y mas
-livianos). Chilemapas cuenta con una transformacion de codigos para dar
-cuenta de la creacion de la Region de Niuble.
-
-En resumen, comexstat2017 permite construir estadisticas demograficas y
-chilemapas ayuda a mostrarlas en un mapa usando ggplot2 (u otro paquete
-como tmap).
-
-# Cita este trabajo
-
-Si usas `comexstat2017` en trabajos academicos u otro tipo de publicacion
-por favor usa la siguiente cita:
-
-    Mauricio Vargas (2020). comexstat2017: Base de Datos de Facil Acceso del comexstat
-      2017 de Chile (2017 Chilean Census Easy Access Database). R package version
-      0.1. https://docs.ropensci.org/comexstat2017/
-
-Entrada para BibTeX:
-
-    @Manual{,
-      title = {comexstat2017: Base de Datos de F\'acil Acceso del comexstat 2017 de Chile
-    (2017 Chilean Census Easy Access Database)},
-      author = {Mauricio Vargas},
-      year = {2020},
-      note = {R package version 0.1},
-      url = {https://docs.ropensci.org/comexstat2017/},
-      doi = {10.5281/zenodo.4277761}
-    }
-
-# Contribuciones
-
-Para contribuir a este proyecto debes estar de acuerdo con el [Codigo de
-Conducta de rOpenSci](https://ropensci.org/code-of-conduct/). Me es util
-contar con mas ejemplos, mejoras a las funciones y todo lo que ayude a
-la comunidad. Si tienes algo que aportar me puedes dejar un issue o pull
-request.
-
-# Agradecimientos
-
-Muchas gracias a Juan Correa por su asesoria como geografo experto.
-
-# Aportes
-
-Si quieres donar para aportar al desarrollo de este y mas paquetes Open
-Source, puedes hacerlo en [Buy Me a
-Coffee](https://www.buymeacoffee.com/pacha/).
+    ## 6.474 sec elapsed
