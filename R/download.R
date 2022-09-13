@@ -7,8 +7,9 @@
 #'
 #' @examples
 #' \dontrun{ comexstat_download_raw() }
-comexstat_download_raw <- function(force_download=FALSE) {
+comexstat_download_raw <- function(force_download=FALSE, rewrite=TRUE) {
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
+  ddir <- file.path(comexstat_path(), "comexstat_partition")
   msg("Downloading data from Comexstat...")
   #require(pins)
   #require(dplyr)
@@ -47,5 +48,7 @@ comexstat_download_raw <- function(force_download=FALSE) {
     msg("Unzipping files...")
     zip::unzip(comexstat_board |> pins::pin_download("exp_completa"), exdir = cdir)
     zip::unzip(comexstat_board |> pins::pin_download("imp_completa"), exdir = cdir)
+    if (rewrite) comexstat_rewrite()
   }
+  if (rewrite) ddir else (cdir)
 }

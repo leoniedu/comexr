@@ -3,7 +3,7 @@ library(tictoc)
 
 ##downloading
 tic()
-comexstat_download_raw()
+p <- comexstat_download_raw(rewrite = TRUE)
 toc()
 
 
@@ -11,8 +11,35 @@ toc()
 tic()
 cstat <- comexstat_raw()
 cstat_ncm_year <- cstat%>%
-  filter(co_ano>=2021)%>%
-  group_by(co_ano, co_ncm, fluxo)%>%
-  summarise(vl_fob=sum(vl_fob))%>%collect%>%
-  arrange(co_ano, co_ncm, fluxo)
+  dplyr::filter(co_ano>2017)%>%
+  dplyr::group_by(co_ano, co_ncm, fluxo)%>%
+  dplyr::summarise(vl_fob=sum(vl_fob))%>%dplyr::collect()%>%
+  dplyr::arrange(co_ano, co_ncm, fluxo)
 head(cstat_ncm_year)
+toc()
+
+
+## summarise by ncm and year
+## with rewrite
+tic()
+cstat <- arrow::open_dataset(p)
+cstat_ncm_year <- cstat%>%
+  dplyr::filter(co_ano>2017)%>%
+  dplyr::group_by(co_ano, co_ncm, fluxo)%>%
+  dplyr::summarise(vl_fob=sum(vl_fob))%>%dplyr::collect()%>%
+  dplyr::arrange(co_ano, co_ncm, fluxo)
+head(cstat_ncm_year)
+toc()
+
+
+## summarise by pais
+## with rewrite
+tic()
+cstat <- arrow::open_dataset(p)
+cstat_pais_year <- cstat%>%
+  #dplyr::filter(co_ano>2017)%>%
+  dplyr::group_by(co_pais, fluxo)%>%
+  dplyr::summarise(vl_fob=sum(vl_fob))%>%dplyr::collect()%>%
+  dplyr::arrange(desc(vl_fob))
+head(cstat_pais_year)
+toc()

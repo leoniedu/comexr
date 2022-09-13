@@ -392,15 +392,8 @@ create or replace view comexstatvp as
 }
 
 
-
-
 #' @export
-comexstat_raw <- function() {
-  # require(arrow)
-  # require(dplyr)
-  # require(rappdirs)
-  # require(tictoc)
-  # require(pins)
+comexstat_raw <- function(rewrite=FALSE) {
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
   comexstat_board <- pins::board_local(versioned = FALSE)
   ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
@@ -448,4 +441,17 @@ comexstat_raw <- function() {
     dplyr::rename_with(tolower) |>
     dplyr::mutate(fluxo = if_else(is.na(vl_frete), "exp", "imp"))
   df
+}
+
+#' @export
+comexstat_rewrite <- function() {
+  df <- comexstat_raw()
+  ## write partitioned data
+  ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
+  unlink(ddir_partition, recursive = TRUE)
+  dir.create(ddir_partition, showWarnings = FALSE)
+  df |>
+    dplyr::group_by(co_ano, fluxo) |>
+    arrow::write_dataset(ddir_partition, format = "parquet")
+  ddir_partition
 }
