@@ -410,10 +410,10 @@ comexstat_raw <- function(rewrite=TRUE) {
       arrow::field("vl_fob", double()),
       arrow::field("vl_frete", double()),
       arrow::field("vl_seguro", double()))
-    res <- open_dataset(
+    res <- arrow::open_dataset(
       ddir,
       format = "parquet",schema = comexstat_schema
-    )%>%dplyr::rename_with(tolower)
+    )|>dplyr::rename_with(tolower)
     res
   } else {
     comexstat_schema_e <- arrow::schema(
