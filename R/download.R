@@ -50,5 +50,6 @@ comexstat_download_raw <- function(force_download=FALSE, rewrite=TRUE) {
     zip::unzip(comexstat_board |> pins::pin_download("imp_completa"), exdir = cdir)
     if (rewrite) comexstat_rewrite()
   }
+  msg("Downloading done!")
   if (rewrite) ddir else (cdir)
 }
