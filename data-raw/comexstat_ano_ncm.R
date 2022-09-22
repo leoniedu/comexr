@@ -1,5 +1,6 @@
 library(comexstatr)
 library(tictoc)
+library(dplyr)
 
 ##downloading
 tic()
