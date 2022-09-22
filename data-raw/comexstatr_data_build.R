@@ -3,7 +3,7 @@ library(tictoc)
 comexstat_download_raw()
 
 ymin <- 0
-yminc <- lubridate::year(Sys.Date())-2
+yminc <- lubridate::year(Sys.Date())-1
 comexstat_stage(year_min_ncm=ymin, year_min_ncm_country=yminc)
 
 
