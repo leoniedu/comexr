@@ -4,13 +4,13 @@ library(dplyr)
 
 ##downloading
 tic()
-p <- comexstat_download_raw(rewrite = TRUE)
+p <- comexstat_download_raw(rewrite = TRUE, force_download = FALSE)
 toc()
 
 
 ## summarise by ncm and year
 tic()
-cstat <- comexstat_raw(TRUE)
+cstat <- comexstat_raw(rewrite = TRUE)
 cstat_ncm_year <- cstat%>%
   dplyr::filter(co_ano>2017)%>%
   dplyr::group_by(co_ano, co_ncm, fluxo)%>%

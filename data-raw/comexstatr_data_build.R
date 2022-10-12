@@ -1,6 +1,6 @@
 library(comexstatr)
 library(tictoc)
-comexstat_download_raw()
+comexstat_download_raw(rewrite = TRUE)
 
 ymin <- 0
 yminc <- lubridate::year(Sys.Date())-1
