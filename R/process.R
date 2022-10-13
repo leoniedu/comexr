@@ -176,10 +176,10 @@ comexstat_create_db <- function(overwrite=FALSE) {
     "ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade", "pais",
     "pais_bloco"
   ), ~ {
-    pin_download(comexstat_board, name = .x) |>
-      data.table::fread(encoding = "Latin-1", colClasses = "character") |>
-      janitor::clean_names() |>
-      DBI::dbWriteTable(con_comex, name = .x, ., overwrite = TRUE)
+    r <- pin_download(comexstat_board, name = .x) |>
+      read.csv2(fileEncoding = "latin1", colClasses = "character") |>
+      janitor::clean_names()
+    DBI::dbWriteTable(con_comex, name = .x, value = r, overwrite = TRUE)
   })
 
   ## check that co_unid is unique by co_ncm
@@ -256,7 +256,7 @@ WHERE co_ano_mes>=co_ano_mes_min
   dbSendQuery(con_comex, sql)
 
   #  create (persist) table by ano, mes, pais
-  sql <- glue(
+  sql <- glue::glue(
     "create or replace table comexstatp as
 select comexstat_12_sum_p.*,
 vl_fob, vl_frete, vl_seguro,
@@ -271,7 +271,7 @@ vl_fob_12_sum+vl_frete_12_sum+vl_seguro_12_sum as vl_cif_12_sum
   dbSendQuery(con_comex, sql)
 
 
-  sql <- glue(
+  sql <- glue::glue(
     "create or replace view comexstat_pais_arrowv as
 select comexstat_pais_arrow.*, ncms.no_ncm_por as no_ncm, pais.no_pais as pais, ncms.co_unid, ncms.sg_unid as unidade
                              from
