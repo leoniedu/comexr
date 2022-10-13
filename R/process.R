@@ -405,6 +405,7 @@ comexstat_raw <- function(rewrite=TRUE) {
       arrow::field("co_ncm", arrow::string()),
       arrow::field("fluxo", arrow::string()),
       arrow::field("co_pais", arrow::string()),
+      arrow::field("co_unid", arrow::string()),
       arrow::field("qt_estat", double()),
       arrow::field("kg_liquido", double()),
       arrow::field("vl_fob", double()),
@@ -465,7 +466,7 @@ comexstat_raw <- function(rewrite=TRUE) {
 
 #' @export
 comexstat_rewrite <- function() {
-  df <- comexstat_raw()
+  df <- comexstat_raw(FALSE)
   ## write partitioned data
   ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
   unlink(ddir_partition, recursive = TRUE)
