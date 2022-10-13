@@ -466,7 +466,7 @@ comexstat_raw <- function(rewrite=TRUE) {
 
 #' @export
 comexstat_rewrite <- function() {
-  df <- comexstat_raw(FALSE)
+  df <- comexstat_raw(rewrite = FALSE)
   ## write partitioned data
   ddir_partition <- file.path(comexstat_path(), "comexstat_partition")
   unlink(ddir_partition, recursive = TRUE)
