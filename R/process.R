@@ -70,7 +70,7 @@ comexstat_raw <- function(rewrite=TRUE) {
   }
 }
 
-
+#' @export
 ncms <- function() {
   suppressWarnings({
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
