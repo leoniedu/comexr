@@ -20,6 +20,16 @@ head(cstat_ncm_year)
 toc()
 
 
+tic()
+cstat <- comexstat_raw(rewrite = TRUE)
+cstat_year <- cstat%>%
+  dplyr::group_by(co_ano, fluxo)%>%
+  dplyr::summarise(vl_fob_bi=sum(vl_fob)/1e9)%>%dplyr::collect()%>%
+  dplyr::arrange(fluxo, co_ano)
+tail(cstat_year)
+toc()
+
+
 ## summarise by ncm and year
 ## with rewrite
 tic()
