@@ -76,9 +76,9 @@ ncms <- function() {
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
   comexstat_board <- pins::board_local()
   ## write auxiliary data
-  ncms_list <- purrr::map(c("ncm", "ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),~
+  ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),~
                pins::pin_download(.x, board=comexstat_board) |> readr::read_csv2(locale = readr::locale(encoding="latin1")) |> janitor::clean_names())
-  ncms_merged <- Reduce(full_join, ncms_list)
+  ncms_merged <- Reduce(dplyr::left_join, ncms_list)
   ncms_merged
   }) |> suppressMessages()
 }
