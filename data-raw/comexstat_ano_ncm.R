@@ -51,6 +51,7 @@ cstat_pais_year <- cstat%>%
   #dplyr::filter(co_ano>2017)%>%
   dplyr::group_by(co_pais, fluxo)%>%
   dplyr::summarise(vl_fob=sum(vl_fob))%>%dplyr::collect()%>%
-  dplyr::arrange(desc(vl_fob))
+  dplyr::arrange(desc(vl_fob))%>%
+  left_join(pais())
 head(cstat_pais_year)
 toc()
