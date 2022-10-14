@@ -77,7 +77,7 @@ ncms <- function() {
   comexstat_board <- pins::board_local()
   ## write auxiliary data
   ncms_list <- purrr::map(c("ncm", "ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),~
-               pins::pin_download(.x, board=comexstat_board)%>%readr::read_csv2() |> janitor::clean_names())
+               pins::pin_download(.x, board=comexstat_board) |> readr::read_csv2() |> janitor::clean_names())
   ncms_merged <- Reduce(full_join, ncms_list)
   ncms_merged
   }) |> suppressMessages()
