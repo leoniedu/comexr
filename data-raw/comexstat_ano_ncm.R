@@ -14,7 +14,8 @@ cstat <- comexstat_raw(TRUE)
 cstat_ncm_year <- cstat%>%
   dplyr::filter(co_ano>2017)%>%
   dplyr::group_by(co_ano, co_ncm, fluxo)%>%
-  dplyr::summarise(vl_fob=sum(vl_fob))%>%dplyr::collect()%>%
+  dplyr::summarise(vl_fob=sum(vl_fob))%>%
+  dplyr::collect()%>%
   dplyr::arrange(co_ano, co_ncm, fluxo)
 head(cstat_ncm_year)
 toc()
@@ -38,7 +39,7 @@ toc()
 tic()
 cstat <- arrow::open_dataset(p)
 cstat_pais_year <- cstat%>%
-  #dplyr::filter(co_ano>2017)%>%
+  dplyr::filter(co_ano>2017)%>%
   dplyr::group_by(co_pais, fluxo)%>%
   dplyr::summarise(vl_fob=sum(vl_fob))%>%dplyr::collect()%>%
   dplyr::arrange(desc(vl_fob))
