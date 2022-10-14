@@ -13,6 +13,7 @@ tic()
 comexstat_process(year_min_ncm=ymin, year_min_ncm_country=yminc, threads = 2, mem_limit_gb = 8)
 toc()
 
+source("data-raw/comexstatr_data_write.R", echo=TRUE)
 stop()
 
 
