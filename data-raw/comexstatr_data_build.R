@@ -10,7 +10,8 @@ comexstat_stage(year_min_ncm=ymin, year_min_ncm_country=yminc)
 
 comexstat_create_db(overwrite=TRUE)
 tic()
-comexstat_process(year_min_ncm=ymin, year_min_ncm_country=yminc, threads = 2, mem_limit_gb = 8)
+comexstat_process(year_min_ncm=ymin, year_min_ncm_country=yminc, threads = 2,
+                  mem_limit_gb = 8)
 toc()
 
 source("data-raw/comexstatr_data_write.R", echo=TRUE)
@@ -75,9 +76,14 @@ pb <- tbl(con, "comexstat12")%>%
 pb <- pb%>%collect
 
 library(ggplot2)
-qplot(co_ano_mes, p, geom='line', data=pb%>%group_by(bloco)%>%filter(any(p>.25)), color=bloco) + facet_wrap(~fluxo)
+qplot(co_ano_mes, p, geom='line',
+      data=pb%>%group_by(bloco)%>%filter(any(p>.25)),
+      color=bloco) +
+  facet_wrap(~fluxo)
 
-qplot(co_ano_mes, vl_fob_12_sum_bi, geom='line', data=pb%>%group_by(bloco)%>%filter(any(p>.1)), color=bloco) + facet_wrap(~fluxo)
+qplot(co_ano_mes, vl_fob_12_sum_bi, geom='line', data=pb%>%
+        group_by(bloco)%>%
+        filter(any(p>.1)), color=bloco) + facet_wrap(~fluxo)
 
 dnow <- tbl(con, "comexstat12")%>%
   filter(co_ncm=="07032090", co_ano_mes>=as.Date("2017-01-01"))%>%

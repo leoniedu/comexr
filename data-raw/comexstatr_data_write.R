@@ -39,7 +39,9 @@ comexstatp %>%
   write_dataset(dout, format = "parquet")
 
 
-lanomes <- tbl(con, "comexstatvp")%>%summarise(co_ano_mes=max(co_ano_mes))%>%pull(co_ano_mes)
+lanomes <- tbl(con, "comexstatvp")%>%
+  summarise(co_ano_mes=max(co_ano_mes))%>%
+  pull(co_ano_mes)
 
 comexstat_last <-
   open_dataset(

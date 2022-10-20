@@ -32,7 +32,10 @@ comexstat_check_status <- function() {
 #' }
 comexstat_connect <- function(dir = comexstat_path(), overwrite = FALSE) {
   duckdb_version <- utils::packageVersion("duckdb")
-  db_file <- paste0(dir, "/comexstat_duckdb_v", gsub("\\.", "", duckdb_version), ".sql")
+  db_file <- paste0(dir,
+                    "/comexstat_duckdb_v",
+                    gsub("\\.", "", duckdb_version),
+                    ".sql")
   db <- mget("comexstat_connect", envir = comexstat_cache, ifnotfound = NA)[[1]]
   if (inherits(db, "DBIConnection")) {
     if (overwrite) {

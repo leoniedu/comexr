@@ -255,7 +255,7 @@ comexstat_create_db <- function(overwrite=FALSE) {
   comexstat_arrow(con_comex)
   ##
   msg("Checking calculated totals with the supplied totals dataset  ... ")
-  bind_rows(
+  totais <- bind_rows(
     comexstat_board |>
       pin_download("exp_totais_conferencia") |>
       read.csv2() |>
@@ -265,7 +265,7 @@ comexstat_create_db <- function(overwrite=FALSE) {
       read.csv2() |>
       mutate(fluxo = "imp")
   ) |>
-    dplyr::rename_with(tolower) -> totais
+    dplyr::rename_with(tolower)
 
   totais_tocheck <- suppressWarnings(tbl(con_comex, "comexstat_arrow") |>
                                        group_by(co_ano, fluxo) |>
