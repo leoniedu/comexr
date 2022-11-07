@@ -46,7 +46,7 @@ tictoc::toc()
 ``` r
 ## summarise by ncm and year
 tictoc::tic()
-cstat <- comexstat_raw()
+cstat <- comexstat()
 cstat_ncm_year <- cstat|>
   dplyr::filter(co_ano>=2017)|>
   dplyr::group_by(co_ano, co_ncm, fluxo)|>
