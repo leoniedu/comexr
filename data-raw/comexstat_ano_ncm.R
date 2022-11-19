@@ -4,7 +4,7 @@ library(dplyr)
 
 ##downloading
 tic()
-p <- comexstat_download_raw(rewrite = TRUE, force_download = FALSE)
+p <- comexstat_download(rewrite = TRUE, force_download = FALSE)
 toc()
 
 
@@ -25,12 +25,13 @@ ym <- comexstat()%>%
   distinct(co_ano, co_mes)%>%
   arrange(-co_ano, -co_mes)%>%
   collect%>%
-  mutate(id=rep(1:(n()/12), each=12)[1:n()])%>%
-  group_by(id)%>%
-  mutate(co_ano_mes_12=lubridate::make_date(co_ano[1], co_mes[1]))%>%
-  ungroup%>%
-  select(-id)
+  head(12)
 
+  # mutate(id=rep(1:(n()/12), each=12)[1:n()])%>%
+  # group_by(id)%>%
+  # mutate(co_ano_mes_12=if_else(is.na(id), as.Date(NA), lubridate::make_date(co_ano[1], co_mes[1])))%>%
+  # ungroup%>%
+  # select(-id)
 
 msul <- pais_bloco()%>%
   filter(co_bloco==111)%>%
@@ -66,7 +67,7 @@ tmp <- cstat%>%
          kg_liquido_rel=kg_liquido/kg_liquido[1]
          )
 
-
+library(ggplot2)
 qplot(co_ano_mes_12, vl_fob_rel/kg_liquido_rel, data=tmp, color=parceiro, geom="line") + facet_wrap(~fluxo)
 
 

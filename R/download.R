@@ -6,8 +6,8 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{ comexstat_download_raw() }
-comexstat_download_raw <- function(force_download=FALSE, rewrite=TRUE) {
+#' \dontrun{ comexstat_download() }
+comexstat_download <- function(force_download=FALSE, rewrite=TRUE) {
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
   ddir <- file.path(comexstat_path(), "comexstat_partition")
   msg("Downloading data from Comexstat...")
