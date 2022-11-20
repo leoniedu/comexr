@@ -1,4 +1,4 @@
-download_comex <- function(filenames, outdir=ddircomex, download_method="curl") {
+download_comex <- function(filenames, outdir=ddircomex, download_method="libcurl") {
   urls <- c(
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
