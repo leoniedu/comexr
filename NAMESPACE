@@ -2,8 +2,8 @@
 
 export(comexstat)
 export(comexstat_download)
-export(comexstat_path)
 export(comexstat_rewrite)
 export(ncms)
 export(pais)
 export(pais_bloco)
+export(read_comex)
