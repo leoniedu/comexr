@@ -32,8 +32,8 @@ download_comex <- function(filenames, outdir=ddircomex, method="auto", extra=NUL
 #' \dontrun{ comexstat_download() }
 comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
   msg("Downloading data from Comexstat...")
-  dir.create(cdircomex, showWarnings = FALSE)
-  dir.create(ddircomex, showWarnings = FALSE)
+  dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
+  dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
   check_imp_down <- download_comex("imp_totais_conferencia.csv", outdir = cdircomex, method=method, extra=extra)
   check_imp <- check_imp_down |>
     read1_comex()

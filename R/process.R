@@ -93,10 +93,10 @@ read_comex <- function(name, dir=ddircomex) {
 
 
 #' @export
-pais <- function() read1comex("pais")
+pais <- function() read_comex("pais")
 
 #' @export
-pais_bloco <- function() read1comex("pais_bloco")
+pais_bloco <- function() read_comex("pais_bloco")
 
 
 #' @export
