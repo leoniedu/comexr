@@ -35,7 +35,7 @@ comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
   check_imp_down <- download_comex("imp_totais_conferencia.csv", outdir = cdircomex, method=method, extra=extra)
   check_imp <- check_imp_down |>
     read1_comex()
-  local_imp <- tryCatch(read_comex("imp_totais_conferencia"), error = function(e) tibble())
+  local_imp <- tryCatch(read_comex("imp_totais_conferencia"), error = function(e) dplyr::tibble())
   if (force_download | (!setequal(local_imp, check_imp))) {
     msg("downloading files ... can take a while ...")
     ds <- download_comex("all", method=method, extra=extra)

@@ -51,7 +51,9 @@ library(comexstatr)
 tictoc::tic()
 comexstat_download(
   ##force_download = TRUE
+  ##method="wget", 
   )
+##comexstat_download(method="wget", extra="--no-check-certificate")
 tictoc::toc()
 
 
