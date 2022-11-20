@@ -50,7 +50,6 @@ comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
     comexstat_check()
   }
   msg("Downloading done!")
-  ddir
 }
 
 
