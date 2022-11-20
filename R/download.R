@@ -1,4 +1,4 @@
-download_comex <- function(filenames, outdir=ddircomex, download_method="libcurl") {
+download_comex <- function(filenames, outdir=ddircomex, method="auto", extra=NULL) {
   urls <- c(
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
@@ -17,7 +17,7 @@ download_comex <- function(filenames, outdir=ddircomex, download_method="libcurl
   if (filenames=="all") {
     filenames <- names(urls)
   }
-  res <- purrr::map(filenames, ~download.file(url=urls[.x], file.path(outdir, .x), method=download_method))
+  res <- purrr::map(filenames, ~download.file(url=urls[.x], destfile = file.path(outdir, .x), method=method, extra=extra))
   file.path(outdir, filenames)
 }
 
@@ -30,15 +30,15 @@ download_comex <- function(filenames, outdir=ddircomex, download_method="libcurl
 #'
 #' @examples
 #' \dontrun{ comexstat_download() }
-comexstat_download <- function(force_download=FALSE) {
+comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
   msg("Downloading data from Comexstat...")
-  check_imp_down <- download_comex("imp_totais_conferencia.csv", outdir = cdircomex)
+  check_imp_down <- download_comex("imp_totais_conferencia.csv", outdir = cdircomex, method=method, extra=extra)
   check_imp <- check_imp_down |>
     read1_comex()
   local_imp <- tryCatch(read_comex("imp_totais_conferencia"), error = function(e) tibble())
   if (force_download | (!setequal(local_imp, check_imp))) {
     msg("downloading files ... can take a while ...")
-    ds <- download_comex("all")
+    ds <- download_comex("all", method=method, extra=extra)
     msg("Unzipping files...")
     zip::unzip(
       grep("exp_completa", ds, value = TRUE)

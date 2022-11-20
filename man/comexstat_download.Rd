@@ -4,7 +4,7 @@
 \alias{comexstat_download}
 \title{Download raw data from Comexstat}
 \usage{
-comexstat_download(force_download = FALSE)
+comexstat_download(force_download = FALSE, method = "auto", extra = NULL)
 }
 \arguments{
 \item{force_download}{Force downloading data, even if it is (apparently) current.}
