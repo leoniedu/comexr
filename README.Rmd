@@ -30,13 +30,13 @@ from github and installing locally.
 ## Example
 
 ``` {r}
+##devtools::install_github("leoniedu/comexstatr")
+##install.packages("tictoc")
 library(comexstatr)
-#library(dplyr)
-#library(tictoc)
 
 ##downloading
 tictoc::tic()
-comexstat_download_raw(
+comexstat_download(
   ##force_download = TRUE
   )
 tictoc::toc()

@@ -1,4 +1,4 @@
-download_comex <- function(filenames, outdir=ddircomex) {
+download_comex <- function(filenames, outdir=ddircomex, download_method="curl") {
   urls <- c(
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
@@ -17,7 +17,7 @@ download_comex <- function(filenames, outdir=ddircomex) {
   if (filenames=="all") {
     filenames <- names(urls)
   }
-  res <- purrr::map(filenames, ~download.file(url=urls[.x], file.path(outdir, .x), method="curl"))
+  res <- purrr::map(filenames, ~download.file(url=urls[.x], file.path(outdir, .x), method=download_method))
   file.path(outdir, filenames)
 }
 
