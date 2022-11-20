@@ -70,7 +70,7 @@ comexstat <- function() {
     file.path(ddircomex, "comexstat_partition"),
     format = "parquet",schema = comexstat_schema
   )|>dplyr::rename_with(tolower)
-  res%>%dplyr::mutate(vl_cif=vl_fob+vl_frete+vl_seguro)
+  res |> dplyr::mutate(vl_cif=vl_fob+vl_frete+vl_seguro)
 }
 
 #' @export
