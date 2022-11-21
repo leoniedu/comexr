@@ -24,35 +24,68 @@ from github and installing locally.
 ## Example
 
 ``` r
-library(comexstatr)
-#library(dplyr)
-#library(tictoc)
+##installing arrow tips 
+## https://arrow.apache.org/docs/r/articles/install.html#:~:text=Step%201%20-%20Using%20a%20computer%20with%20internet,created%20my_arrow_pkg.tar.gz%20to%20the%20computer%20without%20internet%20access
 
+
+
+##devtools::install_github("leoniedu/comexstatr")
+##install.packages("tictoc")
+library(comexstatr)
+library(dplyr)
+```
+
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
+
+``` r
 ##downloading
 tictoc::tic()
-comexstat_download_raw(
+comexstat_download(
   ##force_download = TRUE
   )
 ```
 
     ## Downloading data from Comexstat...
 
+    ## ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.
+
+    ## Rows: 26 Columns: 8
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ";"
+    ## chr (1): ARQUIVO
+    ## dbl (7): CO_ANO, QT_ESTAT, KG_LIQUIDO, VL_FOB, VL_FRETE, VL_SEGURO, NUMERO_L...
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+    ## Downloading done!
+
 ``` r
+## might need something like this if you get ssl errors. 
+##comexstat_download(method="wget", extra="--no-check-certificate")
 tictoc::toc()
 ```
 
-    ## 0.292 sec elapsed
+    ## 0.63 sec elapsed
 
 ``` r
-## summarise by ncm and year
+## summarise by product code (NCM) and year
 tictoc::tic()
 cstat <- comexstat()
 cstat_ncm_year <- cstat|>
-  dplyr::filter(co_ano>=2017)|>
-  dplyr::group_by(co_ano, co_ncm, fluxo)|>
-  dplyr::summarise(vl_fob=sum(vl_fob))|>
-  dplyr::collect()|>
-  dplyr::arrange(co_ano, co_ncm, fluxo)
+  filter(co_ano>=2017)|>
+  group_by(co_ano, co_ncm, fluxo)|>
+  summarise(vl_fob=sum(vl_fob))|>
+  collect()|>
+  arrange(co_ano, co_ncm, fluxo)
 head(cstat_ncm_year)
 ```
 
@@ -71,31 +104,62 @@ head(cstat_ncm_year)
 tictoc::toc()
 ```
 
-    ## 7.719 sec elapsed
+    ## 1.122 sec elapsed
+
+Main trade partners.
 
 ``` r
-tictoc::tic()
-cstat_year <- cstat|>
-  dplyr::group_by(co_ano, fluxo)|>
-  dplyr::summarise(vl_fob_bi=sum(vl_fob)/1e9)|>
-  dplyr::collect()|>
-  dplyr::arrange(co_ano, fluxo)
-head(cstat_year)
+cstat_top_0 <- cstat|>
+  #filter(co_ano>=2017)|>
+  group_by(co_pais)|>
+  summarise(vl_fob=sum(vl_fob))|>
+  ungroup() |> 
+  arrange(desc(vl_fob))|>
+  collect()|>
+  slice(1:3)
+
+cstat_top <- cstat |> 
+  #filter(co_ano>=2017)%>%
+  semi_join(cstat_top_0, by=c("co_pais"))%>%
+  group_by(co_ano, co_pais, fluxo)|>
+  summarise(vl_fob=sum(vl_fob))%>%
+  collect%>%
+  left_join(pais())
 ```
 
-    ## # A tibble: 6 × 3
-    ## # Groups:   co_ano [3]
-    ##   co_ano fluxo vl_fob_bi
-    ##    <int> <chr>     <dbl>
-    ## 1   1997 exp        52.9
-    ## 2   1997 imp        60.5
-    ## 3   1998 exp        51.1
-    ## 4   1998 imp        58.7
-    ## 5   1999 exp        47.9
-    ## 6   1999 imp        50.3
+    ## Joining, by = "co_pais"
 
 ``` r
-tictoc::toc()
+library(ggplot2)
+qplot(co_ano, vl_fob_bi, data=cstat_top%>%filter(co_ano<2022)%>%mutate(vl_fob_bi=vl_fob/1e9), color=no_pais_ing, geom="line") +
+  facet_wrap(~fluxo) +
+  labs(color="", x="", y="US$ Bi (FOB)") +
+  theme_linedraw() + theme(legend.position="bottom")
 ```
 
-    ## 6.474 sec elapsed
+![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+## By ISIC - International Standard Industrial Classification of All Economic Activities
+
+``` r
+isic <- cstat |> 
+  left_join(ncms()%>%select(co_ncm, isic=no_isic_secao_ing))%>%
+  group_by(isic, co_ano, fluxo)%>%
+  summarise(vl_fob=sum(vl_fob))%>%
+  collect
+```
+
+    ## Joining, by = "co_cgce_n3"
+    ## Joining, by = "co_cuci_item"
+    ## Joining, by = "co_isic_classe"
+    ## Joining, by = "co_unid"
+
+``` r
+qplot(co_ano, vl_fob_bi, 
+      data=isic%>%mutate(vl_fob_bi=vl_fob/1e9), color=isic, geom="line") +
+  facet_wrap(~fluxo) +
+  labs(color="", x="", y="US$ Bi (FOB)") +
+  theme_linedraw() + theme(legend.position="bottom")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->

@@ -27,7 +27,10 @@ You can install the development version of comexstatr cloning the repo
 from github and installing locally.
 
 
-## Example
+## Examples
+
+
+### Download / install required packages
 
 ``` {r}
 ##installing arrow tips 
@@ -38,35 +41,114 @@ from github and installing locally.
 ##devtools::install_github("leoniedu/comexstatr")
 ##install.packages("tictoc")
 library(comexstatr)
+library(dplyr)
+library(tictoc)
 
 ##downloading
-tictoc::tic()
+tic()
 comexstat_download(
   ##force_download = TRUE
   )
+## might need something like this if you get ssl errors. 
 ##comexstat_download(method="wget", extra="--no-check-certificate")
-tictoc::toc()
+toc()
 
-
-## summarise by ncm and year
-tictoc::tic()
-cstat <- comexstat()
-cstat_ncm_year <- cstat|>
-  dplyr::filter(co_ano>=2017)|>
-  dplyr::group_by(co_ano, co_ncm, fluxo)|>
-  dplyr::summarise(vl_fob=sum(vl_fob))|>
-  dplyr::collect()|>
-  dplyr::arrange(co_ano, co_ncm, fluxo)
-head(cstat_ncm_year)
-tictoc::toc()
-
-tictoc::tic()
-cstat_year <- cstat|>
-  dplyr::group_by(co_ano, fluxo)|>
-  dplyr::summarise(vl_fob_bi=sum(vl_fob)/1e9)|>
-  dplyr::collect()|>
-  dplyr::arrange(co_ano, fluxo)
-head(cstat_year)
-tictoc::toc()
 
 ```
+
+### Main trade partners, treating countries in Mercosul and European Union as blocks.
+
+```{r}
+
+msul <- pais_bloco()%>%
+  filter(co_bloco==111)%>%
+  pull(co_pais)
+eu <- pais_bloco()%>%
+  filter(co_bloco==22)%>%
+  pull(co_pais)
+
+pb <- pais()%>%
+  transmute(co_pais, 
+            partner=
+              case_when(co_pais%in%msul ~ "Mercosul",
+                        co_pais%in%eu ~ "European Union",
+                        TRUE ~ no_pais_ing)
+              )
+
+cstat_top_0 <- comexstat()|>
+  left_join(pb) |> 
+  #filter(co_ano>=2017)|>
+  group_by(partner)|>
+  summarise(vl_fob=sum(vl_fob))|>
+  ungroup() |> 
+  arrange(desc(vl_fob))|>
+  collect()|>
+  slice(1:5)
+
+cstat_top <- comexstat() |>
+  left_join(pb) |> 
+  #filter(co_ano>=2017)%>%
+  semi_join(cstat_top_0, by=c("partner"))%>%
+  group_by(co_ano, partner, fluxo)|>
+  summarise(vl_fob=sum(vl_fob))%>%
+  collect
+
+library(ggplot2)
+qplot(co_ano, vl_fob_bi, data=cstat_top%>%filter(co_ano<2022)%>%mutate(vl_fob_bi=vl_fob/1e9), color=partner, geom="line") +
+  facet_wrap(~fluxo) +
+  labs(color="", x="", y="US$ Bi (FOB)") +
+  theme_linedraw() + theme(legend.position="bottom")
+
+```
+
+
+
+## By ISIC - International Standard Industrial Classification of All Economic Activities
+
+
+```{r}
+
+isic <- cstat |> 
+  left_join(ncms()%>%select(co_ncm, isic=no_isic_secao_ing))%>%
+  group_by(isic, co_ano, fluxo)%>%
+  summarise(vl_fob=sum(vl_fob))%>%
+  collect
+
+
+
+qplot(co_ano, vl_fob_bi, 
+      data=isic%>%mutate(vl_fob_bi=vl_fob/1e9), color=isic, geom="line") +
+  facet_wrap(~fluxo) +
+  labs(color="", x="", y="US$ Bi (FOB)") +
+  theme_linedraw() + theme(legend.position="bottom")
+
+```
+
+
+
+
+### By state
+
+```{r}
+
+bystate <- cstat |> 
+  group_by(state=sg_uf_ncm, co_ano, fluxo)%>%
+  summarise(vl_fob=sum(vl_fob))%>%
+  collect
+
+topstate <- bystate%>%group_by(state)%>%summarise(vl_fob=sum(vl_fob))%>%arrange(-vl_fob)%>%head(3)
+
+
+
+qplot(co_ano, vl_fob_bi, 
+      data=bystate%>%
+        semi_join(topstate, by="state")%>%
+        mutate(vl_fob_bi=vl_fob/1e9), color=state, geom="line") +
+  facet_wrap(~fluxo) +
+  labs(color="", x="", y="US$ Bi (FOB)") +
+  theme_linedraw() + theme(legend.position="bottom")
+```
+
+
+
+

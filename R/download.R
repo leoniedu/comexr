@@ -1,5 +1,7 @@
 download_comex <- function(filenames, outdir=ddircomex, method="auto", extra=NULL) {
   urls <- c(
+    "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
+    "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_COMPLETA.zip",
