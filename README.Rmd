@@ -23,23 +23,19 @@ app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 
 ## Installation
 
-You can install the development version of comexstatr cloning the repo
-from github and installing locally.
+```{r}
+##devtools::install_github("leoniedu/comexstatr")
+##install.packages("tictoc")
+```
+
+###If you have problems installing arrow, see:
+
+https://arrow.apache.org/docs/r/articles/install.html#:~:text=Step%201%20-%20Using%20a%20computer%20with%20internet,created%20my_arrow_pkg.tar.gz%20to%20the%20computer%20without%20internet%20access
 
 
 ## Examples
 
-
-### Download / install required packages
-
 ``` {r}
-##installing arrow tips 
-## https://arrow.apache.org/docs/r/articles/install.html#:~:text=Step%201%20-%20Using%20a%20computer%20with%20internet,created%20my_arrow_pkg.tar.gz%20to%20the%20computer%20without%20internet%20access
-
-
-
-##devtools::install_github("leoniedu/comexstatr")
-##install.packages("tictoc")
 library(comexstatr)
 library(dplyr)
 library(tictoc)
