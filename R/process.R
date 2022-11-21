@@ -74,16 +74,14 @@ comexstat <- function() {
 }
 
 
-ncms_0 <- function() {
-  suppressWarnings({
-  cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
-  comexstat_board <- pins::board_local()
-  ## write auxiliary data
-  ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),~
-               pins::pin_download(.x, board=comexstat_board) |> readr::read_csv2(locale = readr::locale(encoding="latin1")) |> janitor::clean_names())
-  ncms_merged <- Reduce(dplyr::left_join, ncms_list)%>%suppressMessages()
-  ncms_merged
-})
+#' @export
+ncms <- function() {
+  suppressMessages(suppressWarnings({
+    ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),read_comex)
+    ncms_merged <- Reduce(dplyr::left_join, ncms_list)
+    ncms_merged <- Reduce(dplyr::left_join, ncms_list)%>%suppressMessages()
+    ncms_merged
+}))
 }
 
 read1_comex <- function(fname) {
@@ -92,10 +90,10 @@ read1_comex <- function(fname) {
     janitor::clean_names()
 }
 
-ncms <- memoise::memoise(ncms_0)
 
-read_comex <- function(name, dir=ddircomex) {
-  file.path(dir, paste0(name, ".csv")) |> read1_comex() |> suppressMessages()
+#' @export
+read_comex <- function(name, dir=ddircomex, extension=".csv") {
+  file.path(dir, paste0(name, extension)) |> read1_comex() |> suppressMessages()
 }
 
 
@@ -118,3 +116,6 @@ comexstat_rewrite <- function() {
     arrow::write_dataset(ddir_partition, format = "parquet")
   ddir_partition
 }
+
+
+
