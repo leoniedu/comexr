@@ -79,7 +79,6 @@ ncms <- function() {
   suppressMessages(suppressWarnings({
     ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),read_comex)
     ncms_merged <- Reduce(dplyr::left_join, ncms_list)
-    ncms_merged <- Reduce(dplyr::left_join, ncms_list)%>%suppressMessages()
     ncms_merged
 }))
 }
