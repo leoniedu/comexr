@@ -70,8 +70,11 @@ comexstat <- function(rewrite=TRUE) {
   }
 }
 
-#' @export
-ncms <- function() {
+
+
+
+
+ncms_0 <- function() {
   suppressWarnings({
   cdir <- path.expand(rappdirs::user_cache_dir("comexstatr"))
   comexstat_board <- pins::board_local()
@@ -82,6 +85,9 @@ ncms <- function() {
   ncms_merged
   }) |> suppressMessages()
 }
+
+#' @export
+ncms <- memoise::memoise(ncms_0)
 
 #' @export
 pais <- function() {
