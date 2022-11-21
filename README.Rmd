@@ -104,7 +104,7 @@ qplot(co_ano, vl_fob_bi, data=cstat_top%>%filter(co_ano<2022)%>%mutate(vl_fob_bi
 
 ```{r}
 
-isic <- cstat |> 
+isic <- comexstat() |> 
   left_join(ncms()%>%select(co_ncm, isic=no_isic_secao_ing))%>%
   group_by(isic, co_ano, fluxo)%>%
   summarise(vl_fob=sum(vl_fob))%>%
@@ -127,7 +127,7 @@ qplot(co_ano, vl_fob_bi,
 
 ```{r}
 
-bystate <- cstat |> 
+bystate <- comexstat() |> 
   group_by(state=sg_uf_ncm, co_ano, fluxo)%>%
   summarise(vl_fob=sum(vl_fob))%>%
   collect
