@@ -41,6 +41,7 @@ comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
     read1_comex()
   local_imp <- tryCatch(read_comex("imp_totais_conferencia"), error = function(e) dplyr::tibble())
   if (force_download | (!setequal(local_imp, check_imp))) {
+    tryCatch({
     msg("downloading files ... can take a while ...")
     ds <- download_comex("all", method=method, extra=extra)
     msg("Unzipping files...")
@@ -52,8 +53,11 @@ comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
       , exdir = cdircomex)
     comexstat_rewrite()
     comexstat_check()
+    }, error=function(e) {
+      print("error downloading file ... ")
+      unlink(file.path(ddircomex,"imp_totais_conferencia.csv"))
+      })
   }
-  msg("Downloading done!")
 }
 
 
