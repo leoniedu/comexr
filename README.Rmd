@@ -47,6 +47,7 @@ comexstat_download(
   )
 ## might need something like this if you get ssl errors. 
 ##comexstat_download(method="wget", extra="--no-check-certificate")
+## if R Session is aborted, try a different download method (e.g. curl, rcurl, wget)
 toc()
 
 

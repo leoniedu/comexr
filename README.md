@@ -75,7 +75,7 @@ comexstat_download(
 toc()
 ```
 
-    ## 0.569 sec elapsed
+    ## 1.05 sec elapsed
 
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
 
