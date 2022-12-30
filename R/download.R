@@ -1,4 +1,13 @@
-download_comex <- function(filenames, outdir=ddircomex, method="auto", extra=NULL) {
+#' Internal function that downloads comextat data
+#'
+#' @param filenames file to download, all for everything
+#' @param outdir where to download the files to
+#' @param ... arguments sent to the base download.file function
+#'
+#' @return paths to the files downloaded
+#'
+#' @examples
+download_comex <- function(filenames, outdir=ddircomex, ...) {
   urls <- c(
     "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
     "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
@@ -19,31 +28,45 @@ download_comex <- function(filenames, outdir=ddircomex, method="auto", extra=NUL
   if (filenames=="all") {
     filenames <- names(urls)
   }
-  res <- purrr::map(filenames, ~download.file(url=urls[.x], destfile = file.path(outdir, .x), method=method, extra=extra))
+  res <- purrr::map(filenames, function(.x) download.file(url=urls[.x], destfile = file.path(outdir, .x)), ...)
   file.path(outdir, filenames)
 }
 
 #' Download raw data from Comexstat
 #'
 #' @param force_download Force downloading data, even if it is (apparently) current.
-#'
+#' @param ... arguments sent to the download.file function
 #' @return NULL
+#'
 #' @export
 #'
+#' @details
+#'
+#' Depending on local cofiguration and network properties, you might need to set the download methods and other parameters, which are sent to the download.file function.
+#'
+#'
 #' @examples
-#' \dontrun{ comexstat_download() }
-comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
+#' \dontrun{
+#' comexstat_download()
+#' ## might need something like this if you get ssl errors.
+##' comexstat_download(method="wget", extra="--no-check-certificate")
+##' ## or this, if the default method does not work
+##' comexstat_download(method="libcurl")
+##' ## or this, if it times out
+##' options(timeout=100)
+#' }
+comexstat_download <- function(..., force_download=FALSE) {
   msg("Downloading data from Comexstat...")
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
-  check_imp_down <- download_comex("imp_totais_conferencia.csv", outdir = cdircomex, method=method, extra=extra)
+  check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, ...)
   check_imp <- check_imp_down |>
     read1_comex()
   local_imp <- tryCatch(read_comex("imp_totais_conferencia"), error = function(e) dplyr::tibble())
   if (force_download | (!setequal(local_imp, check_imp))) {
     tryCatch({
     msg("downloading files ... can take a while ...")
-    ds <- download_comex("all", method=method, extra=extra)
+    ds <- download_comex("all", ...)
     msg("Unzipping files...")
     zip::unzip(
       grep("exp_completa", ds, value = TRUE)
@@ -61,6 +84,11 @@ comexstat_download <- function(force_download=FALSE,method="auto", extra=NULL) {
 }
 
 
+#' Checks the downloaded raw totals to the totals file
+#'
+#' @return
+#'
+#' @examples
 comexstat_check <- function() {
   ccalc <- comexstat() |>
     dplyr::group_by(co_ano, fluxo) |>

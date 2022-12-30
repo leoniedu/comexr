@@ -4,7 +4,7 @@ library(dplyr)
 
 ##downloading
 tic()
-p <- comexstat_download(force_download = FALSE)
+comexstat_download(force_download = FALSE)
 toc()
 
 

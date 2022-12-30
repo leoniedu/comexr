@@ -4,14 +4,25 @@
 \alias{comexstat_download}
 \title{Download raw data from Comexstat}
 \usage{
-comexstat_download(force_download = FALSE, method = "auto", extra = NULL)
+comexstat_download(..., force_download = FALSE)
 }
 \arguments{
+\item{...}{arguments sent to the download.file function}
+
 \item{force_download}{Force downloading data, even if it is (apparently) current.}
 }
 \description{
 Download raw data from Comexstat
 }
+\details{
+Depending on local cofiguration and network properties, you might need to set the download methods and other parameters, which are sent to the download.file function.
+}
 \examples{
-\dontrun{ comexstat_download() }
+\dontrun{
+comexstat_download()
+## might need something like this if you get ssl errors.
+comexstat_download(method="wget", extra="--no-check-certificate")
+## or this, if the default method does not work
+comexstat_download(method="libcurl")
+}
 }
