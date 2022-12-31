@@ -57,9 +57,22 @@ comexstat_raw <- function() {
   df
 }
 
+
+#' Reads comexstat data from the data directory
+#'
+#' @return tibble available columns are
+#' co_ano: aa,
+#' co_mes, co_ncm, fluxo, co_pais, sg_uf_ncm, co_via, co_urf, co_unid, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro, vl_cif
 #' @export
+#' @details After successfully running comexstat_download(), comexstat data will be in the data directory. This function reads the data using arrow, allowing fast read, particularly when reading subsets of the data.
+#'
+#' You have to use collect() to actually read the data.
+#' Note that arrow only accepts a subset of the dplyr functions
+#'
+#' @examples
+#' comexstat_download()
+#' comexstat()|>filter(co_ano>2017)|>group_by(co_ano, fluxo)|>summarise(vl_fob_bi=sum(vl_fob)/1e9)|>arrange(co_ano)|>collect
 comexstat <- function() {
-  ## In the current release, arrow supports the dplyr verbs mutate(), transmute(), select(), rename(), relocate(), filter(), and arrange().
   comexstat_schema <- arrow::schema(
     arrow::field("co_ano", arrow::int32()),
     arrow::field("co_mes", arrow::int32()),
@@ -83,7 +96,13 @@ comexstat <- function() {
 }
 
 
+
+#' Reads and merges all comexstat files with information about  NCM
+#'
+#' @return data.frame/tibble
 #' @export
+#' @details reads the following files:  ncm, ncm_cgce, ncm_cuci, ncm_isic, ncm_unidade then joins them into a single tibble
+#' @examples ncms()
 ncms <- function() {
   suppressMessages(suppressWarnings({
     ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),read_comex)
@@ -102,7 +121,7 @@ ncms <- function() {
 #' @param dir directory where the files are. defaults to the data directory specified in the package using rappdirs::user_data_dir
 #' @param extension file extension to be read, defaults to .csv
 #'
-#' @return data.frame with the read
+#' @return data.frame/tibble
 #' @export
 #'
 #' @examples
