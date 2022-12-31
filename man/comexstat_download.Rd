@@ -24,5 +24,7 @@ comexstat_download()
 comexstat_download(method="wget", extra="--no-check-certificate")
 ## or this, if the default method does not work
 comexstat_download(method="libcurl")
+## or this, if it times out
+options(timeout=100)
 }
 }

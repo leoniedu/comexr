@@ -88,7 +88,6 @@ comexstat_download <- function(..., force_download=FALSE) {
 #'
 #' @return
 #'
-#' @examples
 comexstat_check <- function() {
   ccalc <- comexstat() |>
     dplyr::group_by(co_ano, fluxo) |>

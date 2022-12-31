@@ -1,6 +1,15 @@
 cdircomex <- path.expand(rappdirs::user_cache_dir("comexstatr"))
 ddircomex <- file.path(rappdirs::user_data_dir("comexstatr"))
 
+#' Reads files with comexdata in the cache directory
+#'
+#' @details The downloaded files are one for the exports and other for imports, with data for the entire period available (1997-).
+#'
+#' This function reads those files using arrow. It is used by comexstat_rewrite.
+#'
+#' @return
+#'
+#' @examples
 comexstat_raw <- function() {
   comexstat_schema_e <- arrow::schema(
     arrow::field("CO_ANO", arrow::int32()),
@@ -83,16 +92,29 @@ ncms <- function() {
 }))
 }
 
-read1_comex <- function(fname) {
-  fname |>
-    readr::read_csv2(locale = readr::locale(encoding="latin1")) |>
-    janitor::clean_names()
-}
 
 
+
+
+#' Reads comexstat files from the specified directory
+#'
+#' @param name name of the comexstat files, without extension
+#' @param dir directory where the files are. defaults to the data directory specified in the package using rappdirs::user_data_dir
+#' @param extension file extension to be read, defaults to .csv
+#'
+#' @return data.frame with the read
 #' @export
+#'
+#' @examples
 read_comex <- function(name, dir=ddircomex, extension=".csv") {
-  file.path(dir, paste0(name, extension)) |> read1_comex() |> suppressMessages()
+  read1_comex <- function(fname) {
+    fname |>
+      readr::read_csv2(locale = readr::locale(encoding="latin1")) |>
+      janitor::clean_names()
+  }
+  file.path(dir, paste0(name, extension)) |>
+    read1_comex() |>
+    suppressMessages()
 }
 
 
@@ -103,7 +125,15 @@ pais <- function() read_comex("pais")
 pais_bloco <- function() read_comex("pais_bloco")
 
 
+
+#' Rewrites the data read from cache directory into partitioned files.
+#'
+#' @return
 #' @export
+#' @details The downloaded files are one for the exports and other for imports, with data for the entire period available (1997-).
+#'
+#' This function reads those files using arrow by calling function comexstat_raw. It then writes to the data directory the partitioned files.
+#' @examples
 comexstat_rewrite <- function() {
   df <- comexstat_raw()
   ## write partitioned data
@@ -111,6 +141,8 @@ comexstat_rewrite <- function() {
   unlink(ddir_partition, recursive = TRUE)
   dir.create(ddir_partition, showWarnings = FALSE)
   df |>
+    ## data will be written using the partitions
+    ## in the group_by statement
     dplyr::group_by(co_ano, fluxo) |>
     arrow::write_dataset(ddir_partition, format = "parquet")
   ddir_partition
