@@ -126,16 +126,17 @@ ncms <- function() {
 #'
 #' @examples
 read_comex <- function(name, dir=ddircomex, extension=".csv") {
-  read1_comex <- function(fname) {
-    fname |>
-      readr::read_csv2(locale = readr::locale(encoding="latin1")) |>
-      janitor::clean_names()
-  }
   file.path(dir, paste0(name, extension)) |>
     read1_comex() |>
     suppressMessages()
 }
 
+read1_comex <- function(fname) {
+  fname |>
+    readr::read_csv2(locale = readr::locale(encoding="latin1")) |>
+    suppressMessages() |>
+    janitor::clean_names()
+}
 
 #' @export
 pais <- function() read_comex("pais")
@@ -167,5 +168,58 @@ comexstat_rewrite <- function() {
   ddir_partition
 }
 
+
+#' Create a data frame with a co_ano_mes_m column with an id every m months
+#'
+#' @param m number of months to aggregate
+#' @param data data frame or outpur of comexstat with co_ano and co_mes columns
+#'
+#' @return tibble with columns: co_ano, co_mes, co_ano_mes_m
+#'
+#' @examples
+#' ym(m=6, comexstat()|>filter(co_ano>=2021))
+ym <- function(m, data=comexstat()) {
+  mm <- data|>
+    dplyr::distinct(co_ano, co_mes)|>
+    dplyr::arrange(desc(co_ano), desc(co_mes))|>
+    dplyr::collect()|>
+    head(1) |>
+    dplyr::mutate(co_ano_mes=lubridate::make_date(co_ano, co_mes,1))
+  md <- dplyr::tibble(
+    co_ano_mes=seq.Date(from=mm$co_ano_mes[1]-base::months(m-1), to=mm$co_ano_mes[1], by="month"))|>
+    dplyr::mutate(co_ano=lubridate::year(co_ano_mes),
+           co_mes=lubridate::month(co_ano_mes)
+           )
+  md
+}
+
+#' Create id (co_ano_mes_m) by m months
+#'
+#' @param m number of months
+#'
+#' @return tibble with id variables: co_ano_mes_m, co_pais, fluxo, co_ncm; and sums of qt_estat, vl_cif, vl_fob
+#'
+#' @details Since it outputs every possible combination of co_ano_mes_m, co_pais, fluxo and co_ncm, it can be very large, and time consuming.
+#' @export
+#'
+#' @examples
+comexstat_m <- function(m=12, data=comextat()) {
+  ## fix, allow choosing id variables
+  ymm <- ym(m, data=data)
+  ##aggregate by months
+  res0 <- data|>
+    dplyr::inner_join(ymm)
+  u_ncm <- res0|>dplyr::distinct(co_ncm)|>dplyr::collect()
+  u_pais <- res0|>dplyr::distinct(co_pais)|>dplyr::collect()
+  u_data <- ymm|>dplyr::distinct(co_ano_mes_m)
+  g <- tidyr::expand_grid(u_data, u_pais, fluxo=c("imp", "exp"), u_ncm)
+  res <- res0|>
+    dplyr::group_by(co_ano_mes_m, co_pais, co_ncm, fluxo)|>
+    dplyr::summarise(qt_estat=sum(qt_estat), vl_cif=sum(vl_cif), vl_fob=sum(vl_fob), kg_liquido=sum(kg_liquido), vl_cif=sum(vl_cif), vl_fob=sum(vl_fob))
+  g|>
+    dplyr::left_join(res, copy=TRUE)|>
+    dplyr::mutate_if(is.numeric, tidyr::replace_na, 0)|>
+    dplyr::mutate(vl_cif=dplyr::if_else(fluxo=="imp", vl_cif, NA_real_))
+}
 
 

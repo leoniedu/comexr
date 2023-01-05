@@ -2,6 +2,7 @@
 
 export(comexstat)
 export(comexstat_download)
+export(comexstat_m)
 export(comexstat_rewrite)
 export(ncms)
 export(pais)

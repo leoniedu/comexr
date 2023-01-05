@@ -56,7 +56,7 @@ download_comex <- function(filenames, outdir=ddircomex, ...) {
 ##' options(timeout=100)
 #' }
 comexstat_download <- function(..., force_download=FALSE) {
-  msg("Downloading data from Comexstat...")
+  message("Downloading data from Comexstat...")
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
   check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, ...)
@@ -65,9 +65,9 @@ comexstat_download <- function(..., force_download=FALSE) {
   local_imp <- tryCatch(read_comex("imp_totais_conferencia"), error = function(e) dplyr::tibble())
   if (force_download | (!setequal(local_imp, check_imp))) {
     tryCatch({
-    msg("downloading files ... can take a while ...")
+    message("downloading files ... can take a while ...")
     ds <- download_comex("all", ...)
-    msg("Unzipping files...")
+    message("Unzipping files...")
     zip::unzip(
       grep("exp_completa", ds, value = TRUE)
       , exdir = cdircomex)

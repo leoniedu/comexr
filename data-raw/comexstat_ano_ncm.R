@@ -1,11 +1,4 @@
-library(comexstatr)
-library(tictoc)
-library(dplyr)
 
-##downloading
-tic()
-comexstat_download(force_download = FALSE)
-toc()
 
 
 ## summarise by ncm and year
@@ -20,12 +13,7 @@ cstat_ncm_year <- cstat%>%
 tail(cstat_ncm_year)
 toc()
 
-##aggregate 12 most recent months
-ym <- comexstat()%>%
-  distinct(co_ano, co_mes)%>%
-  arrange(-co_ano, -co_mes)%>%
-  collect%>%
-  head(12)
+
 
   # mutate(id=rep(1:(n()/12), each=12)[1:n()])%>%
   # group_by(id)%>%
