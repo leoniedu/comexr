@@ -57,37 +57,28 @@ comexstat_download(
 
     ## Downloading data from Comexstat...
 
-    ## ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.
-
-    ## Rows: 26 Columns: 8
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## Delimiter: ";"
-    ## chr (1): ARQUIVO
-    ## dbl (7): CO_ANO, QT_ESTAT, KG_LIQUIDO, VL_FOB, VL_FRETE, VL_SEGURO, NUMERO_L...
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-    ## Downloading done!
-
 ``` r
 ## might need something like this if you get ssl errors. 
 ##comexstat_download(method="wget", extra="--no-check-certificate")
+## might need to set the timeout option
+## options(timeout=100)
+## if R Session is aborted, try a different download method (e.g. curl, rcurl, wget)
 toc()
 ```
 
-    ## 1.05 sec elapsed
+    ## 0.59 sec elapsed
 
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
 
 ``` r
-msul <- pais_bloco()%>%
+msul <- read_comex("pais_bloco")%>%
   filter(co_bloco==111)%>%
   pull(co_pais)
-eu <- pais_bloco()%>%
+eu <- read_comex("pais_bloco")%>%
   filter(co_bloco==22)%>%
   pull(co_pais)
 
-pb <- pais()%>%
+pb <- read_comex("pais")%>%
   transmute(co_pais, 
             partner=
               case_when(co_pais%in%msul ~ "Mercosul",

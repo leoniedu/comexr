@@ -4,7 +4,7 @@
 \alias{ym}
 \title{Create a data frame with a co_ano_mes_m column with an id every m months}
 \usage{
-ym(m = 12, data = comexstat())
+ym(m, data = comexstat())
 }
 \arguments{
 \item{m}{number of months to aggregate}

@@ -57,6 +57,9 @@ download_comex <- function(filenames, outdir=ddircomex, ...) {
 #' }
 comexstat_download <- function(..., force_download=FALSE) {
   message("Downloading data from Comexstat...")
+  memoise::forget(ncms)
+  memoise::forget(read_comex)
+  memoise::forget(ym)
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
   check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, ...)
