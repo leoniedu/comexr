@@ -23,9 +23,9 @@ app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 ##install.packages("tictoc")
 ```
 
-\###If you have problems installing arrow, see:
+If you have problems installing arrow, see:
 
-<https://arrow.apache.org/docs/r/articles/install.html#>:\~:text=Step%201%20-%20Using%20a%20computer%20with%20internet,created%20my_arrow_pkg.tar.gz%20to%20the%20computer%20without%20internet%20access
+<https://arrow.apache.org/docs/r/articles/install.html#:~:text=Step%201%20-%20Using%20a%20computer%20with%20internet,created%20my_arrow_pkg.tar.gz%20to%20the%20computer%20without%20internet%20access>
 
 ## Examples
 
@@ -66,7 +66,7 @@ comexstat_download(
 toc()
 ```
 
-    ## 0.59 sec elapsed
+    ## 0.474 sec elapsed
 
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
 

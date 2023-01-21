@@ -15,21 +15,14 @@ License: CC0
 Encoding: UTF-8
 LazyData: false
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Imports:
     tibble,
     purrr,
     tools,
     zip,
     arrow,
-    janitor
-Suggests:
-    testthat,
-    covr,
-    knitr,
-    dplyr,
-    dbplyr,
-    ggplot2,
-    chilemapas
+    janitor,
+    memoise
 Depends:
-    R (>= 4.0)
+    R (>= 4.1)

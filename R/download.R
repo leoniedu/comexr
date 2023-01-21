@@ -28,7 +28,7 @@ download_comex <- function(filenames, outdir=ddircomex, ...) {
   if (filenames=="all") {
     filenames <- names(urls)
   }
-  res <- purrr::map(filenames, function(.x) download.file(url=urls[.x], destfile = file.path(outdir, .x)), ...)
+  res <- lapply(filenames, function(.x) download.file(url=urls[.x], destfile = file.path(outdir, .x), ...))
   file.path(outdir, filenames)
 }
 

@@ -25,12 +25,11 @@ app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 
 ```{r}
 ##devtools::install_github("leoniedu/comexstatr")
-##install.packages("tictoc")
 ```
 
-###If you have problems installing arrow, see:
+If you have problems installing arrow, see:
 
-https://arrow.apache.org/docs/r/articles/install.html#:~:text=Step%201%20-%20Using%20a%20computer%20with%20internet,created%20my_arrow_pkg.tar.gz%20to%20the%20computer%20without%20internet%20access
+<https://arrow.apache.org/docs/r/articles/install.html#:~:text=Step%201%20-%20Using%20a%20computer%20with%20internet,created%20my_arrow_pkg.tar.gz%20to%20the%20computer%20without%20internet%20access>
 
 
 ## Examples
@@ -38,10 +37,8 @@ https://arrow.apache.org/docs/r/articles/install.html#:~:text=Step%201%20-%20Usi
 ``` {r}
 library(comexstatr)
 library(dplyr)
-library(tictoc)
 
 ##downloading
-tic()
 comexstat_download(
   ##force_download = TRUE
   )
@@ -50,7 +47,6 @@ comexstat_download(
 ## might need to set the timeout option
 ## options(timeout=100)
 ## if R Session is aborted, try a different download method (e.g. curl, rcurl, wget)
-toc()
 
 
 ```

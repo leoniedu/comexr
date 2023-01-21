@@ -4,3 +4,4 @@
   read_comex <<- memoise::memoise(read_comex)
   ym <<- memoise::memoise(ym)
 }
+
