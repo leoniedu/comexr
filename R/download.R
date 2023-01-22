@@ -7,7 +7,7 @@
 #' @return paths to the files downloaded
 #'
 #' @examples
-download_comex <- function(filenames, outdir=ddircomex, ...) {
+download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
   urls <- c(
     "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
     "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
@@ -28,7 +28,10 @@ download_comex <- function(filenames, outdir=ddircomex, ...) {
   if (filenames[1]=="all") {
     filenames <- names(urls)
   }
-  res <- lapply(filenames, function(.x) download.file(url=urls[tolower(.x)], destfile = file.path(outdir, .x), ...))
+  dfile <- function(..., destfile, replace=TRUE) {
+    if(file.exists(destfile) & !replace) return(TRUE)  else download.file(..., destfile=destfile)
+  }
+  res <- lapply(filenames, function(.x) dfile(url=urls[tolower(.x)], destfile = file.path(outdir, .x), replace=replace, ...))
   file.path(outdir, filenames)
 }
 
