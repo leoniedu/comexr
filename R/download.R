@@ -25,10 +25,10 @@ download_comex <- function(filenames, outdir=ddircomex, ...) {
     "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_UNIDADE.csv")
   names(urls) <- basename(urls) |>
     tolower()
-  if (filenames=="all") {
+  if (filenames[1]=="all") {
     filenames <- names(urls)
   }
-  res <- lapply(filenames, function(.x) download.file(url=urls[.x], destfile = file.path(outdir, .x), ...))
+  res <- lapply(filenames, function(.x) download.file(url=urls[tolower(.x)], destfile = file.path(outdir, .x), ...))
   file.path(outdir, filenames)
 }
 
