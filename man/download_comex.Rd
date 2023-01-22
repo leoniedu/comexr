@@ -4,7 +4,7 @@
 \alias{download_comex}
 \title{Internal function that downloads comextat data}
 \usage{
-download_comex(filenames, outdir = ddircomex, ...)
+download_comex(filenames, outdir = ddircomex, replace = TRUE, ...)
 }
 \arguments{
 \item{filenames}{file to download, all for everything}
