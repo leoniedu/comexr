@@ -23,6 +23,8 @@ Imports:
     zip,
     arrow,
     janitor,
-    memoise
+    memoise,
+    rappdirs,
+    readr
 Depends:
     R (>= 4.1)
