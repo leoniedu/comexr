@@ -25,6 +25,7 @@ Imports:
     janitor,
     memoise,
     rappdirs,
-    readr
+    readr,
+    dplyr
 Depends:
     R (>= 4.1)
