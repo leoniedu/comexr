@@ -7,9 +7,8 @@ ddircomex <- file.path(rappdirs::user_data_dir("comexstatr"))
 #'
 #' This function reads those files using arrow. It is used by comexstat_rewrite.
 #'
-#' @return
+#' @return arrow::open_dataset
 #'
-#' @examples
 comexstat_raw <- function() {
   comexstat_schema_e <- arrow::schema(
     arrow::field("CO_ANO", arrow::int32()),
@@ -58,6 +57,7 @@ comexstat_raw <- function() {
 }
 
 
+
 #' Reads comexstat data from the data directory
 #'
 #' @return tibble available columns are
@@ -66,33 +66,37 @@ comexstat_raw <- function() {
 #' @export
 #' @details After successfully running comexstat_download(), comexstat data will be in the data directory. This function reads the data using arrow, allowing fast read, particularly when reading subsets of the data.
 #'
-#' You have to use collect() to actually read the data.
-#' Note that arrow only accepts a subset of the dplyr functions
+#' It defaults to the trade data (imports and exports values) using arrow. For this case you might have to use collect() to actually read the data.
+#' Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.
 #'
 #' @examples
 #' comexstat_download()
 #' comexstat()|>filter(co_ano>2017)|>group_by(co_ano, fluxo)|>summarise(vl_fob_bi=sum(vl_fob)/1e9)|>arrange(co_ano)|>collect
-comexstat <- function() {
-  comexstat_schema <- arrow::schema(
-    arrow::field("co_ano", arrow::int32()),
-    arrow::field("co_mes", arrow::int32()),
-    arrow::field("co_ncm", arrow::string()),
-    arrow::field("fluxo", arrow::string()),
-    arrow::field("co_pais", arrow::string()),
-    arrow::field("sg_uf_ncm", arrow::string()),
-    arrow::field("co_via", arrow::string()),
-    arrow::field("co_urf", arrow::string()),
-    arrow::field("co_unid", arrow::string()),
-    arrow::field("qt_estat", double()),
-    arrow::field("kg_liquido", double()),
-    arrow::field("vl_fob", double()),
-    arrow::field("vl_frete", double()),
-    arrow::field("vl_seguro", double()))
-  res <- arrow::open_dataset(
-    file.path(ddircomex, "comexstat_partition"),
-    format = "parquet",schema = comexstat_schema
-  )|>dplyr::rename_with(tolower)
-  res |> dplyr::mutate(vl_cif=vl_fob+vl_frete+vl_seguro)
+comexstat <- function(table="trade", ...) {
+  if (table=="trade") {
+    comexstat_schema <- arrow::schema(
+      arrow::field("co_ano", arrow::int32()),
+      arrow::field("co_mes", arrow::int32()),
+      arrow::field("co_ncm", arrow::string()),
+      arrow::field("fluxo", arrow::string()),
+      arrow::field("co_pais", arrow::string()),
+      arrow::field("sg_uf_ncm", arrow::string()),
+      arrow::field("co_via", arrow::string()),
+      arrow::field("co_urf", arrow::string()),
+      arrow::field("co_unid", arrow::string()),
+      arrow::field("qt_estat", double()),
+      arrow::field("kg_liquido", double()),
+      arrow::field("vl_fob", double()),
+      arrow::field("vl_frete", double()),
+      arrow::field("vl_seguro", double()))
+    res <- arrow::open_dataset(
+      file.path(ddircomex, "comexstat_partition"),
+      format = "parquet",schema = comexstat_schema
+    )|>dplyr::rename_with(tolower)
+    res |> dplyr::mutate(vl_cif=vl_fob+vl_frete+vl_seguro)
+  } else {
+    read_comex(table, ...)
+  }
 }
 
 
@@ -105,26 +109,12 @@ comexstat <- function() {
 #' @examples ncms()
 ncms <- function() {
   suppressMessages(suppressWarnings({
-    ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),read_comex)
+    ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),comexstat)
     ncms_merged <- Reduce(dplyr::left_join, ncms_list)
     ncms_merged
 }))
 }
 
-
-
-
-
-#' Reads comexstat files from the specified directory
-#'
-#' @param name name of the comexstat files, without extension
-#' @param dir directory where the files are. defaults to the data directory specified in the package using rappdirs::user_data_dir
-#' @param extension file extension to be read, defaults to .csv
-#'
-#' @return data.frame/tibble
-#' @export
-#'
-#' @examples
 read_comex <- function(name, dir=ddircomex, extension=".csv") {
   file.path(dir, paste0(name, extension)) |>
     read1_comex() |>
@@ -139,17 +129,16 @@ read1_comex <- function(fname) {
 }
 
 #' @export
-pais <- function() read_comex("pais")
+pais <- function() comexstat("pais")
 
 #' @export
-pais_bloco <- function() read_comex("pais_bloco")
+pais_bloco <- function() comexstat("pais_bloco")
 
 
 
 #' Rewrites the data read from cache directory into partitioned files.
 #'
 #' @return
-#' @export
 #' @details The downloaded files are one for the exports and other for imports, with data for the entire period available (1997-).
 #'
 #' This function reads those files using arrow by calling function comexstat_raw. It then writes to the data directory the partitioned files.
@@ -200,7 +189,6 @@ ym <- function(m, data=comexstat()) {
 #' @return tibble with id variables: co_ano_mes_m, co_pais, fluxo, co_ncm; and sums of qt_estat, vl_cif, vl_fob
 #'
 #' @details Since it outputs every possible combination of co_ano_mes_m, co_pais, fluxo and co_ncm, it can be very large, and time consuming.
-#' @export
 #'
 #' @examples
 comexstat_m <- function(m=12, data=comextat()) {

@@ -6,6 +6,9 @@
 \usage{
 comexstat_raw()
 }
+\value{
+arrow::open_dataset
+}
 \description{
 Reads files with comexdata in the cache directory
 }

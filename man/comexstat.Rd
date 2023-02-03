@@ -4,7 +4,7 @@
 \alias{comexstat}
 \title{Reads comexstat data from the data directory}
 \usage{
-comexstat()
+comexstat(table = "trade", ...)
 }
 \value{
 tibble available columns are
@@ -17,8 +17,8 @@ Reads comexstat data from the data directory
 \details{
 After successfully running comexstat_download(), comexstat data will be in the data directory. This function reads the data using arrow, allowing fast read, particularly when reading subsets of the data.
 
-You have to use collect() to actually read the data.
-Note that arrow only accepts a subset of the dplyr functions
+It defaults to the trade data (imports and exports values) using arrow. For this case you might have to use collect() to actually read the data.
+Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.
 }
 \examples{
 comexstat_download()

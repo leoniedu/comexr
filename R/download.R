@@ -6,7 +6,6 @@
 #'
 #' @return paths to the files downloaded
 #'
-#' @examples
 download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
   urls <- c(
     "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
@@ -61,14 +60,14 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
 comexstat_download <- function(..., force_download=FALSE) {
   message("Downloading data from Comexstat...")
   memoise::forget(ncms)
-  memoise::forget(read_comex)
+  memoise::forget(comexstat)
   memoise::forget(ym)
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
   check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, ...)
   check_imp <- check_imp_down |>
     read1_comex()
-  local_imp <- tryCatch(read_comex("imp_totais_conferencia"), error = function(e) dplyr::tibble())
+  local_imp <- tryCatch(comexstat("imp_totais_conferencia"), error = function(e) dplyr::tibble())
   if (force_download | (!setequal(local_imp, check_imp))) {
     tryCatch({
     message("downloading files ... can take a while ...")
@@ -107,9 +106,9 @@ comexstat_check <- function() {
     ) |>
     dplyr::collect()
   ccheck <- dplyr::bind_rows(
-    read_comex("imp_totais_conferencia") |>
+    comexstat("imp_totais_conferencia") |>
       dplyr::mutate(fluxo="imp"),
-    read_comex("exp_totais_conferencia") |>
+    comexstat("exp_totais_conferencia") |>
       dplyr::mutate(fluxo="exp"))
   res <- ccheck |>
     dplyr::left_join(ccalc, by=c('co_ano', "fluxo")) |>

@@ -4,3 +4,6 @@
 .httr-oauth
 .DS_Store
 .parquet
+comexstatr.Rcheck/
+comexstatr*.tar.gz
+comexstatr*.tgz

@@ -71,14 +71,14 @@ toc()
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
 
 ``` r
-msul <- read_comex("pais_bloco")%>%
+msul <- comexstat("pais_bloco")%>%
   filter(co_bloco==111)%>%
   pull(co_pais)
-eu <- read_comex("pais_bloco")%>%
+eu <- comexstat("pais_bloco")%>%
   filter(co_bloco==22)%>%
   pull(co_pais)
 
-pb <- read_comex("pais")%>%
+pb <- comexstat("pais")%>%
   transmute(co_pais, 
             partner=
               case_when(co_pais%in%msul ~ "Mercosul",
