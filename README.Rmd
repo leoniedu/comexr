@@ -49,6 +49,10 @@ try(comexstat_download(method="wget", extra="--no-check-certificate"))
 
 ```
 
+Automatic downloading can be tricky, due to timeout, (lack of) valid security certificates on the Brazilian government websites, along other issues. 
+
+Everytime one calls comexstat_download it resets the memoisation of the package (which is used to speed up results) and checks the local cache against the validation file in the website. It will download the data if this fails.
+
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
 
 ```{r}
