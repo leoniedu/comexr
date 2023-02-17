@@ -20,7 +20,6 @@ app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 
 ``` r
 ##devtools::install_github("leoniedu/comexstatr")
-##install.packages("tictoc")
 ```
 
 If you have problems installing arrow, see:
@@ -46,27 +45,40 @@ library(dplyr)
     ##     intersect, setdiff, setequal, union
 
 ``` r
-library(tictoc)
-
 ##downloading
-tic()
-comexstat_download(
-  ##force_download = TRUE
-  )
+## might need to set the timeout option
+options(timeout=max(options("timeout")$timeout, 600))
+
+try(comexstat_download())
 ```
 
     ## Downloading data from Comexstat...
 
 ``` r
 ## might need something like this if you get ssl errors. 
-##comexstat_download(method="wget", extra="--no-check-certificate")
-## might need to set the timeout option
-## options(timeout=100)
-## if R Session is aborted, try a different download method (e.g. curl, rcurl, wget)
-toc()
+try(comexstat_download(method="wget", extra="--no-check-certificate"))
 ```
 
-    ## 0.474 sec elapsed
+    ## Downloading data from Comexstat...
+
+    ## Warning in system(paste("wget", paste(extra, collapse = " "), shQuote(url), :
+    ## error in running command
+
+    ## Error in download.file(..., destfile = destfile) : 
+    ##   'wget' call had nonzero exit status
+
+``` r
+## if R Session is aborted, try a different download method (e.g. curl, rcurl, wget)
+```
+
+Automatic downloading can be tricky, due to timeout, (lack of) valid
+security certificates on the Brazilian government websites, along other
+issues.
+
+Everytime one calls comexstat_download it resets the memoisation of the
+package (which is used to speed up results) and checks the local cache
+against the validation file in the website. It will download the data if
+this fails.
 
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
 
@@ -105,7 +117,7 @@ cstat_top <- comexstat() |>
   collect
 
 library(ggplot2)
-qplot(co_ano, vl_fob_bi, data=cstat_top%>%filter(co_ano<2022)%>%mutate(vl_fob_bi=vl_fob/1e9), color=partner, geom="line") +
+qplot(co_ano, vl_fob_bi, data=cstat_top%>%filter(co_ano<2023)%>%mutate(vl_fob_bi=vl_fob/1e9), color=partner, geom="line") +
   facet_wrap(~fluxo) +
   labs(color="", x="", y="US$ Bi (FOB)") +
   theme_linedraw() + theme(legend.position="bottom")
@@ -137,6 +149,7 @@ qplot(co_ano, vl_fob_bi,
 
 ``` r
 bystate <- comexstat() |> 
+  filter(co_ano<2023) |>
   group_by(state=sg_uf_ncm, co_ano, fluxo)%>%
   summarise(vl_fob=sum(vl_fob))%>%
   collect
