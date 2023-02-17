@@ -3,6 +3,7 @@ ddircomex <- file.path(rappdirs::user_data_dir("comexstatr"))
 
 #' Reads files with comexdata in the cache directory
 #'
+#' @noRd
 #' @details The downloaded files are one for the exports and other for imports, with data for the entire period available (1997-).
 #'
 #' This function reads those files using arrow. It is used by comexstat_rewrite.
@@ -137,7 +138,7 @@ pais_bloco <- function() comexstat("pais_bloco")
 
 
 #' Rewrites the data read from cache directory into partitioned files.
-#'
+#' @noRd
 #' @return
 #' @details The downloaded files are one for the exports and other for imports, with data for the entire period available (1997-).
 #'
@@ -159,7 +160,7 @@ comexstat_rewrite <- function() {
 
 
 #' Create a data frame with a co_ano_mes_m column with an id every m months
-#'
+#' @noRd
 #' @param m number of months to aggregate
 #' @param data data frame or outpur of comexstat with co_ano and co_mes columns
 #'
@@ -183,7 +184,7 @@ ym <- function(m, data=comexstat()) {
 }
 
 #' Create id (co_ano_mes_m) by m months
-#'
+#' @noRd
 #' @param m number of months
 #'
 #' @return tibble with id variables: co_ano_mes_m, co_pais, fluxo, co_ncm; and sums of qt_estat, vl_cif, vl_fob

@@ -1,5 +1,6 @@
 #' Internal function that downloads comextat data
 #'
+#' @noRd
 #' @param filenames file to download, all for everything
 #' @param outdir where to download the files to
 #' @param ... arguments sent to the base download.file function
