@@ -137,7 +137,9 @@ isic <- comexstat() |>
 
 
 qplot(co_ano, vl_fob_bi, 
-      data=isic%>%mutate(vl_fob_bi=vl_fob/1e9), color=isic, geom="line") +
+      data=isic%>%
+        filter(co_ano<2023)%>%
+        mutate(vl_fob_bi=vl_fob/1e9), color=isic, geom="line") +
   facet_wrap(~fluxo) +
   labs(color="", x="", y="US$ Bi (FOB)") +
   theme_linedraw() + theme(legend.position="bottom")
