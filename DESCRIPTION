@@ -25,9 +25,9 @@ Imports:
     janitor,
     memoise,
     rappdirs,
-    readr
+    readr,
+    dplyr
 Suggests:
-    dplyr,
     ggplot2,
     rmarkdown
 Depends:
