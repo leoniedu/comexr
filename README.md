@@ -56,18 +56,7 @@ try(comexstat_download())
 
 ``` r
 ## might need something like this if you get ssl errors. 
-try(comexstat_download(method="wget", extra="--no-check-certificate"))
-```
-
-    ## Downloading data from Comexstat...
-
-    ## Warning in system(paste("wget", paste(extra, collapse = " "), shQuote(url), :
-    ## error in running command
-
-    ## Error in download.file(..., destfile = destfile) : 
-    ##   'wget' call had nonzero exit status
-
-``` r
+# try(comexstat_download(method="wget", extra="--no-check-certificate"))
 ## if R Session is aborted, try a different download method (e.g. curl, rcurl, wget)
 ```
 
@@ -83,14 +72,14 @@ this fails.
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
 
 ``` r
-msul <- comexstat("pais_bloco")%>%
-  filter(co_bloco==111)%>%
+msul <- comexstat("pais_bloco")|>
+  filter(co_bloco==111)|>
   pull(co_pais)
-eu <- comexstat("pais_bloco")%>%
-  filter(co_bloco==22)%>%
+eu <- comexstat("pais_bloco")|>
+  filter(co_bloco==22)|>
   pull(co_pais)
 
-pb <- comexstat("pais")%>%
+pb <- comexstat("pais")|>
   transmute(co_pais, 
             partner=
               case_when(co_pais%in%msul ~ "Mercosul",
@@ -110,14 +99,19 @@ cstat_top_0 <- comexstat()|>
 
 cstat_top <- comexstat() |>
   left_join(pb) |> 
-  #filter(co_ano>=2017)%>%
-  semi_join(cstat_top_0, by=c("partner"))%>%
+  #filter(co_ano>=2017)|>
+  semi_join(cstat_top_0, by=c("partner"))|>
   group_by(co_ano, partner, fluxo)|>
-  summarise(vl_fob=sum(vl_fob))%>%
-  collect
+  summarise(vl_fob=sum(vl_fob))|>
+  collect()
 
 library(ggplot2)
-qplot(co_ano, vl_fob_bi, data=cstat_top%>%filter(co_ano<2023)%>%mutate(vl_fob_bi=vl_fob/1e9), color=partner, geom="line") +
+ggplot(aes(x=co_ano, 
+           y=vl_fob_bi), 
+       data=cstat_top|>
+         filter(co_ano<2023)|>
+         mutate(vl_fob_bi=vl_fob/1e9)) +
+  geom_line(aes(color=partner)) +
   facet_wrap(~fluxo) +
   labs(color="", x="", y="US$ Bi (FOB)") +
   theme_linedraw() + theme(legend.position="bottom")
@@ -125,48 +119,30 @@ qplot(co_ano, vl_fob_bi, data=cstat_top%>%filter(co_ano<2023)%>%mutate(vl_fob_bi
 
 ![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-## By ISIC - International Standard Industrial Classification of All Economic Activities
+### Imports and exports by brazilian state
 
 ``` r
-isic <- comexstat() |> 
-  left_join(ncms()%>%select(co_ncm, isic=no_isic_secao_ing))%>%
-  group_by(isic, co_ano, fluxo)%>%
-  summarise(vl_fob=sum(vl_fob))%>%
-  collect
+bystate <- comexstat() |> 
+  filter(co_ano<2023) |>
+  group_by(state=sg_uf_ncm, co_ano, fluxo)|>
+  summarise(vl_fob=sum(vl_fob))|>
+  collect()
+
+topstate <- bystate|>
+  group_by(state)|>
+  summarise(vl_fob=sum(vl_fob))|>
+  arrange(-vl_fob)|>
+  head(3)
 
 
-
-qplot(co_ano, vl_fob_bi, 
-      data=isic%>%
-        filter(co_ano<2023)%>%
-        mutate(vl_fob_bi=vl_fob/1e9), color=isic, geom="line") +
+ggplot(aes(x=co_ano, y=vl_fob_bi, color=state), 
+       data=bystate|>
+        semi_join(topstate, by="state")|>
+        mutate(vl_fob_bi=vl_fob/1e9)) +
+  geom_line() +
   facet_wrap(~fluxo) +
   labs(color="", x="", y="US$ Bi (FOB)") +
   theme_linedraw() + theme(legend.position="bottom")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
-### By state
-
-``` r
-bystate <- comexstat() |> 
-  filter(co_ano<2023) |>
-  group_by(state=sg_uf_ncm, co_ano, fluxo)%>%
-  summarise(vl_fob=sum(vl_fob))%>%
-  collect
-
-topstate <- bystate%>%group_by(state)%>%summarise(vl_fob=sum(vl_fob))%>%arrange(-vl_fob)%>%head(3)
-
-
-
-qplot(co_ano, vl_fob_bi, 
-      data=bystate%>%
-        semi_join(topstate, by="state")%>%
-        mutate(vl_fob_bi=vl_fob/1e9), color=state, geom="line") +
-  facet_wrap(~fluxo) +
-  labs(color="", x="", y="US$ Bi (FOB)") +
-  theme_linedraw() + theme(legend.position="bottom")
-```
-
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
