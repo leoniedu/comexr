@@ -3,5 +3,3 @@
 export(comexstat)
 export(comexstat_download)
 export(ncms)
-export(pais)
-export(pais_bloco)
