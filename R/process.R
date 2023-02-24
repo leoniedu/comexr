@@ -17,7 +17,7 @@ comexstat_raw <- function() {
     arrow::field("CO_NCM", arrow::string()),
     arrow::field("CO_UNID", arrow::string()),
     arrow::field("CO_PAIS", arrow::string()),
-    arrow::field("SG_UF_NCM", arrow::string()),
+    arrow::field("SG_UF_MUN", arrow::string()),
     arrow::field("CO_VIA", arrow::string()),
     arrow::field("CO_URF", arrow::string()),
     arrow::field("QT_ESTAT", double()),
@@ -32,6 +32,8 @@ comexstat_raw <- function() {
   cnames <- read.csv2(fname, nrows = 3) |>
     janitor::clean_names() |>
     names()
+  ##FIX: col names coming with different names on raw data
+  cnames <- if_else(cnames=='sg_uf_ncm', "sg_uf_mun", cnames)
   df_e <- arrow::open_dataset(
     fname,
     delim = ";",
@@ -43,6 +45,8 @@ comexstat_raw <- function() {
   cnames <- read.csv2(fname, nrows = 3) |>
     janitor::clean_names() |>
     names()
+  ##FIX: col names coming with different names on raw data
+  cnames <- if_else(cnames=='sg_uf_ncm', "sg_uf_mun", cnames)
   df_i <- arrow::open_dataset(
     fname,
     delim = ";",
@@ -63,7 +67,7 @@ comexstat_raw <- function() {
 #'
 #' @return tibble available columns are
 #' co_ano: aa,
-#' co_mes, co_ncm, fluxo, co_pais, sg_uf_ncm, co_via, co_urf, co_unid, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro, vl_cif
+#' co_mes, co_ncm, fluxo, co_pais, sg_uf_mun, co_via, co_urf, co_unid, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro, vl_cif
 #' @export
 #' @details After successfully running comexstat_download(), comexstat data will be in the data directory. This function reads the data using arrow, allowing fast read, particularly when reading subsets of the data.
 #'
@@ -81,7 +85,7 @@ comexstat <- function(table="trade", ...) {
       arrow::field("co_ncm", arrow::string()),
       arrow::field("fluxo", arrow::string()),
       arrow::field("co_pais", arrow::string()),
-      arrow::field("sg_uf_ncm", arrow::string()),
+      arrow::field("sg_uf_mun", arrow::string()),
       arrow::field("co_via", arrow::string()),
       arrow::field("co_urf", arrow::string()),
       arrow::field("co_unid", arrow::string()),
@@ -128,14 +132,6 @@ read1_comex <- function(fname) {
     suppressMessages() |>
     janitor::clean_names()
 }
-
-#' @export
-pais <- function() comexstat("pais")
-
-#' @export
-pais_bloco <- function() comexstat("pais_bloco")
-
-
 
 #' Rewrites the data read from cache directory into partitioned files.
 #' @noRd

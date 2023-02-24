@@ -9,7 +9,7 @@ comexstat(table = "trade", ...)
 \value{
 tibble available columns are
 co_ano: aa,
-co_mes, co_ncm, fluxo, co_pais, sg_uf_ncm, co_via, co_urf, co_unid, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro, vl_cif
+co_mes, co_ncm, fluxo, co_pais, sg_uf_mun, co_via, co_urf, co_unid, qt_estat, kg_liquido, vl_fob, vl_frete, vl_seguro, vl_cif
 }
 \description{
 Reads comexstat data from the data directory
