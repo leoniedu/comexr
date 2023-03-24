@@ -58,8 +58,14 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
 ##' ## or this, if it times out
 ##' options(timeout=100)
 #' }
-comexstat_download <- function(..., force_download=FALSE) {
+comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE) {
   message("Downloading data from Comexstat...")
+  oldtimeout <- options("timeout")$timeout
+  newtimeout <- 6000
+  if (increase_timeout & (oldtimeout<newtimeout)) {
+    message("Increasing timeout limit ...")
+    options(timeout=newtimeout)
+  }
   memoise::forget(ncms)
   memoise::forget(comexstat)
   memoise::forget(ym)
@@ -87,6 +93,7 @@ comexstat_download <- function(..., force_download=FALSE) {
       unlink(file.path(ddircomex,"imp_totais_conferencia.csv"))
       })
   }
+  options(timeout=oldtimeout)
 }
 
 
