@@ -61,7 +61,7 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
 comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE) {
   message("Downloading data from Comexstat...")
   oldtimeout <- options("timeout")$timeout
-  newtimeout <- 6000
+  newtimeout <- 60*60*4 ## 4 horas
   if (increase_timeout & (oldtimeout<newtimeout)) {
     message("Increasing timeout limit ...")
     options(timeout=newtimeout)
@@ -72,10 +72,11 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
   check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, ...)
+  #check_exp_down <- download_comex(filenames = "exp_totais_conferencia.csv", outdir = cdircomex, ...)
   check_imp <- check_imp_down |>
     read1_comex()
-  local_imp <- tryCatch(comexstat("imp_totais_conferencia"), error = function(e) dplyr::tibble())
-  if (force_download | (!setequal(local_imp, check_imp))) {
+  local_imp <- purrr::possibly(comexstat, otherwise=dplyr::tibble())("imp_totais_conferencia")
+  if (any(force_download,(!setequal(local_imp, check_imp)),(!purrr::possibly(comexstat_check, FALSE)()))) {
     tryCatch({
     message("downloading files ... can take a while ...")
     ds <- download_comex("all", ...)
@@ -129,5 +130,9 @@ comexstat_check <- function() {
               numero_linhas=sum(abs(numero_linhas.x-numero_linhas.y))
               )
   expected <- structure(list(fluxo = c("exp", "imp"), vl_fob = c(0, 0), vl_seguro = c(NA,0), kg_liquido = c(0, 0), vl_frete = c(NA, 0), numero_linhas = c(0, 0)), class = c("tbl_df", "tbl", "data.frame"), row.names = c(NA, -2L))
-  if (!dplyr::setequal(expected,res)) stop("Results not matching check (conferencia) file.")
+  ok <- dplyr::setequal(expected,res)
+  if (!ok) {
+    warning("Results not matching check (conferencia) file.")
+  }
+  ok
 }
