@@ -33,7 +33,7 @@ comexstat_raw <- function() {
     janitor::clean_names() |>
     names()
   ##FIX: col names coming with different names on raw data
-  cnames <- if_else(cnames=='sg_uf_ncm', "sg_uf_mun", cnames)
+  cnames <- dplyr::if_else(cnames=='sg_uf_ncm', "sg_uf_mun", cnames)
   df_e <- arrow::open_dataset(
     fname,
     delim = ";",
@@ -46,7 +46,7 @@ comexstat_raw <- function() {
     janitor::clean_names() |>
     names()
   ##FIX: col names coming with different names on raw data
-  cnames <- if_else(cnames=='sg_uf_ncm', "sg_uf_mun", cnames)
+  cnames <- dplyr::if_else(cnames=='sg_uf_ncm', "sg_uf_mun", cnames)
   df_i <- arrow::open_dataset(
     fname,
     delim = ";",
@@ -94,6 +94,8 @@ comexstat <- function(table="trade", ...) {
       arrow::field("vl_fob", double()),
       arrow::field("vl_frete", double()),
       arrow::field("vl_seguro", double()))
+    fe <- file.exists(file.path(comexstatr:::ddircomex, "comexstat_partition"))
+    if (!fe) stop("Please, first download and process data using the comexstat_download function.")
     res <- arrow::open_dataset(
       file.path(ddircomex, "comexstat_partition"),
       format = "parquet",schema = comexstat_schema

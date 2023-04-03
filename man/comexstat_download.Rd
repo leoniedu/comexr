@@ -4,7 +4,7 @@
 \alias{comexstat_download}
 \title{Download raw data from Comexstat}
 \usage{
-comexstat_download(..., force_download = FALSE)
+comexstat_download(..., force_download = FALSE, increase_timeout = TRUE)
 }
 \arguments{
 \item{...}{arguments sent to the download.file function}
