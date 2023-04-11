@@ -124,7 +124,7 @@ ggplot(aes(x=co_ano,
 
 ![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-### Imports and exports by brazilian state
+### Imports and exports by Brazilian state
 
 You will have access to information not available via the web interface
 <http://comexstat.mdic.gov.br/en/home>, such as

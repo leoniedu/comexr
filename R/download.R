@@ -97,10 +97,6 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
 }
 
 
-#' Checks the downloaded raw totals to the totals file
-#'
-#' @return
-#'
 comexstat_check <- function() {
   ccalc <- comexstat() |>
     dplyr::group_by(co_ano, fluxo) |>

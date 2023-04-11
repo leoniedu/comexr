@@ -109,7 +109,7 @@ ggplot(aes(x=co_ano,
 
 
 
-### Imports and exports by brazilian state
+### Imports and exports by Brazilian state
 
 You will have access to information not available via the web interface <http://comexstat.mdic.gov.br/en/home>, such as 
 ```{r}
