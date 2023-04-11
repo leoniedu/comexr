@@ -54,6 +54,8 @@ try(comexstat_download())
 
     ## Downloading data from Comexstat...
 
+    ## Increasing timeout limit ...
+
 ``` r
 ## might need something like this if you get ssl errors. 
 # try(comexstat_download(method="wget", extra="--no-check-certificate"))
@@ -70,6 +72,9 @@ against the validation file in the website. It will download the data if
 this fails.
 
 ### Main trade partners, treating countries in Mercosul and European Union as blocks.
+
+Using a programming language like R makes it easy to generate statistics
+and reports at the intended level of analysis.
 
 ``` r
 msul <- comexstat("pais_bloco")|>
@@ -121,10 +126,13 @@ ggplot(aes(x=co_ano,
 
 ### Imports and exports by brazilian state
 
+You will have access to information not available via the web interface
+<http://comexstat.mdic.gov.br/en/home>, such as
+
 ``` r
 bystate <- comexstat() |> 
   filter(co_ano<2023) |>
-  group_by(state=sg_uf_ncm, co_ano, fluxo)|>
+  group_by(state=sg_uf_mun, co_ano, fluxo)|>
   summarise(vl_fob=sum(vl_fob))|>
   collect()
 

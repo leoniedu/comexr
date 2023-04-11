@@ -4,6 +4,5 @@
   ## memoise from scratch while loading package
   ncms <<- memoise::memoise(ncms)
   ym <<- memoise::memoise(ym)
-  comexstat <<- memoise::memoise(comexstat)
 }
 

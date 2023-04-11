@@ -67,7 +67,6 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
     options(timeout=newtimeout)
   }
   memoise::forget(ncms)
-  memoise::forget(comexstat)
   memoise::forget(ym)
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
@@ -90,8 +89,8 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
     comexstat_rewrite()
     comexstat_check()
     }, error=function(e) {
-      print("error downloading file ... ")
       unlink(file.path(ddircomex,"imp_totais_conferencia.csv"))
+      stop("error downloading file ... ")
       })
   }
   options(timeout=oldtimeout)
