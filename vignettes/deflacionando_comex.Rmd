@@ -65,37 +65,9 @@ my_mean <- function(data, ...) {
 }
 
 
-comex_complete <- function(data=comexstat(),k=12) {
-  require(rlang)
-  ## get the full date range
-  range_dates <- data|>
-    dplyr::ungroup()|>
-    dplyr::summarise(min_date=min(co_ano_mes), max_date=max(co_ano_mes))|>
-    dplyr::collect()
-  date_min <- as.Date(date_min %||% (range_dates$min_date))
-  date_max <- as.Date(date_max %||% (range_dates$max_date))
-  ## expected months
-  seq_d <- seq.Date(from = date_min, to=date_max, by="month")
-  ## throws an error if
-  stopifnot(all(lubridate::day(seq_d)==1))
-  df <- data|>
-    group_by(co_ano_mes, .add=TRUE)%>%
-    summarise(vl_fob=sum(vl_fob, na.rm=TRUE), vl_cif=sum(vl_cif, na.rm=TRUE), kg_liquido=sum(kg_liquido, na.rm=TRUE), qt_estat=sum(qt_estat, na.rm=TRUE), .groups = "keep")|>
-    collect()
-  g1 <- group_vars(df)
-  df%>%
-    ungroup()|>
-    tidyr::complete(co_ano_mes=seq_d , !!!data_syms(g1%>%setdiff("co_ano_mes")), 
-                    fill = list(vl_fob=0, vl_cif=0, kg_liquido=0, qt_estat=0))%>%
-    group_by(!!!data_syms(g1))
-}
 
-comex_roll <- function(.x) {
-  slider::slide_index_dbl(.x = .x, 
-                          .before = months(k-1), 
-                          .complete = TRUE, 
-                          .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes, .names = "{.col}_roll_{k}")
-}
+
+
 
 res <- comexstat()%>%
   filter(co_ano>=2020)%>%

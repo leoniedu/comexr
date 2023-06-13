@@ -80,8 +80,8 @@ comexstat_raw <- function() {
 comexstat <- function(table="trade", ...) {
   if (table=="trade") {
     comexstat_schema <- arrow::schema(
-      arrow::field("co_ano", arrow::int32()),
-      arrow::field("co_mes", arrow::int32()),
+      #arrow::field("co_ano", arrow::int32()),
+      #arrow::field("co_mes", arrow::int32()),
       arrow::field("co_ano_mes", arrow::date32()),
       arrow::field("co_ncm", arrow::string()),
       arrow::field("fluxo", arrow::string()),
@@ -100,11 +100,13 @@ comexstat <- function(table="trade", ...) {
     res <- arrow::open_dataset(
       file.path(ddircomex, "comexstat_partition"),
       format = "parquet",schema = comexstat_schema
-    )|>dplyr::rename_with(tolower)
+    )#|>dplyr::rename_with(tolower)
     res |>
       dplyr::mutate(vl_cif=vl_fob+vl_frete+vl_seguro,
-                    co_ano_mes=lubridate::make_date(co_ano, co_mes))|>
-      dplyr::select(co_ano_mes, everything())
+                    co_ano=as.character(lubridate::year(co_ano_mes)),
+                    co_mes=as.character(lubridate::month(co_ano_mes))
+                    )|>
+      dplyr::select(co_ano_mes, co_ano, co_mes, everything())
   } else {
     read_comex(table, ...)
   }
@@ -149,7 +151,7 @@ read1_comex <- function(fname) {
 #' @examples
 comexstat_rewrite <- function() {
   df <- comexstat_raw()|>
-    dplyr::mutate(co_ano_mes=lubridate::make_date(co_ano, co_mes))|>
+    dplyr::mutate(co_ano_mes=lubridate::make_date(co_ano, co_mes), co_ano=NULL, co_mes=NULL)|>
     dplyr::select(co_ano_mes, everything())
   ## write partitioned data
   ddir_partition <- file.path(ddircomex, "comexstat_partition")
@@ -158,7 +160,7 @@ comexstat_rewrite <- function() {
   df |>
     ## data will be written using the partitions
     ## in the group_by statement
-    dplyr::group_by(co_ano, co_ano_mes, fluxo) |>
+    dplyr::group_by(fluxo, co_ano_mes) |>
     arrow::write_dataset(ddir_partition, format = "parquet")
   ddir_partition
 }
@@ -259,4 +261,37 @@ comexstat_deflated <- function(data=comexstat(), deflators=get_deflators(), base
       vl_cif_current_usd=vl_cif*(cpi_r),
       vl_cif_current_brl=vl_cif*brlusd*ipca_r,
     )
+}
+
+## complete with implicit zeros
+comexstat_complete <- function(data=comexstat(),k=12) {
+  require(rlang)
+  ## get the full date range
+  range_dates <- data|>
+    dplyr::ungroup()|>
+    dplyr::summarise(min_date=min(co_ano_mes), max_date=max(co_ano_mes))|>
+    dplyr::collect()
+  ## expected months
+  seq_d <- seq.Date(from = range_dates$min_date, to=range_dates$max_date, by="month")
+  ## throws an error if
+  stopifnot(all(lubridate::day(seq_d)==1))
+  df <- data|>
+    dplyr::group_by(co_ano_mes, .add=TRUE)%>%
+    #dplyr::summarise(vl_fob=sum(vl_fob, na.rm=TRUE), vl_cif=sum(vl_cif, na.rm=TRUE), kg_liquido=sum(kg_liquido, na.rm=TRUE), qt_estat=sum(qt_estat, na.rm=TRUE), .groups = "keep")|>
+    dplyr::summarise(across(where(is.numeric), sum), .groups = "keep")
+    collect()
+  g1 <- dplyr::group_vars(df)
+  df%>%
+    dplyr::ungroup()|>
+    tidyr::complete(co_ano_mes=seq_d , !!!data_syms(g1%>%setdiff("co_ano_mes")),
+                    fill = list(vl_fob=0, vl_cif=0, kg_liquido=0, qt_estat=0))%>%
+    group_by(!!!data_syms(g1))
+}
+
+
+comex_roll <- function(.x) {
+  slider::slide_index_dbl(.x = .x,
+                          .before = months(k-1),
+                          .complete = TRUE,
+                          .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes, .names = "{.col}_roll_{k}")
 }
