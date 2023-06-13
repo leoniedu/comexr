@@ -1,0 +1,326 @@
+---
+title: "Deflacionando o Comex"
+author: "Eduardo Leoni"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(comexstatr)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
+```
+
+
+```{r}
+
+comexstat_download()
+
+tmp <- comexstat()%>%
+  filter(co_ano>2020)%>%
+  comexstat_deflated()%>%
+  group_by(date=lubridate::make_date(co_ano, co_mes), fluxo,
+           ipca_basedate, cpi_basedate)%>%
+  summarise(vl_fob=sum(vl_fob), 
+            vl_fob_current_brl=sum(vl_fob_current_brl), 
+            vl_fob_current_usd=sum(vl_fob_current_usd), 
+            vl_cif=sum(vl_cif), 
+            vl_cif_current_brl=sum(vl_cif_current_brl),
+            vl_cif_current_usd=sum(vl_cif_current_usd)
+            )%>%
+  arrange(date,fluxo)%>%
+  collect()
+
+
+tmp%>%
+  group_by(fluxo)%>%
+  mutate(vl_cif_12=runner::runner(vl_cif, k="12 months", idx = date, f=sum),
+         vl_fob_current_brl_12=runner::runner(vl_fob_current_brl, k="12 months", idx = date, f=sum),
+         vl_cif_current_brl_12=runner::runner(vl_cif_current_brl, k="12 months", idx = date, f=sum),
+         vl_fob_current_usd_12=runner::runner(vl_fob_current_usd, k="12 months", idx = date, f=sum),
+         vl_cif_current_brl_12=runner::runner(vl_cif_current_brl, k="12 months", idx = date, f=sum) 
+  )
+
+library(slider)
+rsum_runner <- function(x, date) {
+  runner::runner(x, k="12 months", idx = date, f=sum)
+}
+rsum_slider <- function(x, date, k=12, date_min=NULL, date_max=NULL) {
+  require(rlang)
+  date_min <- as.Date(date_min %||% min(date))
+  date_max <- as.Date(date_max %||% date)
+  seq_d <- seq.Date(from = date_min, to=date_max, by="month")
+  day(seq_d) <- 1
+  df <- tibble(x,date)%>%tidyr::complete(date=seq_d, fill=list(x=0))%>%
+    arrange(date)
+  #return(df)
+  #dates <- x%>%ungroup%>%summarise(date_min=min(date), date_max=max(date))
+  res <- slider::slide_index_dbl(.x = df$x, .before = months(k-1), .complete = TRUE, .f = ~ sum(.x, na.rm = TRUE), .i = df$date)
+  res[df$date<(date_min+months(k-1))] <- NA_real_
+  tibble(x=df$x, newx=res, date=df$date)
+}
+
+my_mean <- function(data, ...) {
+  data %>% dplyr::summarise(across(c(...), ~ mean(.x, na.rm = TRUE)))
+}
+
+
+comex_complete <- function(data=comexstat(),k=12) {
+  require(rlang)
+  ## get the full date range
+  range_dates <- data|>
+    dplyr::ungroup()|>
+    dplyr::summarise(min_date=min(co_ano_mes), max_date=max(co_ano_mes))|>
+    dplyr::collect()
+  date_min <- as.Date(date_min %||% (range_dates$min_date))
+  date_max <- as.Date(date_max %||% (range_dates$max_date))
+  ## expected months
+  seq_d <- seq.Date(from = date_min, to=date_max, by="month")
+  ## throws an error if
+  stopifnot(all(lubridate::day(seq_d)==1))
+  df <- data|>
+    group_by(co_ano_mes, .add=TRUE)%>%
+    summarise(vl_fob=sum(vl_fob, na.rm=TRUE), vl_cif=sum(vl_cif, na.rm=TRUE), kg_liquido=sum(kg_liquido, na.rm=TRUE), qt_estat=sum(qt_estat, na.rm=TRUE), .groups = "keep")|>
+    collect()
+  g1 <- group_vars(df)
+  df%>%
+    ungroup()|>
+    tidyr::complete(co_ano_mes=seq_d , !!!data_syms(g1%>%setdiff("co_ano_mes")), 
+                    fill = list(vl_fob=0, vl_cif=0, kg_liquido=0, qt_estat=0))%>%
+    group_by(!!!data_syms(g1))
+}
+
+comex_roll <- function(.x) {
+  slider::slide_index_dbl(.x = .x, 
+                          .before = months(k-1), 
+                          .complete = TRUE, 
+                          .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes, .names = "{.col}_roll_{k}")
+}
+
+res <- comexstat()%>%
+  filter(co_ano>=2020)%>%
+  group_by(fluxo)%>%
+  comex_complete()%>%
+  mutate(across(c(vl_fob, vl_cif, kg_liquido, qt_estat), comex_roll))
+
+  
+  rsum <- rsum_slider
+  tmp2 <- tmp%>%
+    group_by(fluxo)%>%
+    mutate(vl_fob_12=rsum(vl_fob, date = date),
+           vl_cif_12=rsum(vl_cif, date = date),
+           vl_fob_current_brl_12=rsum(vl_fob_current_brl, date, date_min=min(tmp$date)),
+           vl_cif_current_brl_12=rsum(vl_cif_current_brl, date, date_min=min(tmp$date)),
+           vl_fob_current_usd_12=rsum(vl_fob_current_usd, date, date_min=min(tmp$date)),
+           vl_cif_current_brl_12=rsum(vl_cif_current_brl, date, date_min=min(tmp$date))
+    )
+  
+
+tmp%>%
+  group_by(fluxo)%>%
+  mutate(vl_cif_12=runner::runner(vl_cif, k="12 months", idx = date, f=sum),
+         vl_fob_current_brl_12=runner::runner(vl_fob_current_brl, k="12 months", idx = date, f=sum),
+         vl_cif_current_brl_12=runner::runner(vl_cif_current_brl, k="12 months", idx = date, f=sum),
+         vl_fob_current_usd_12=slide_index(vl_fob_current_usd, k="12 months", idx = date, f=sum),
+         vl_cif_current_brl_12=runner::runner(vl_cif_current_brl, k="12 months", idx = date, f=sum) 
+  )
+
+
+deflators <- get_deflators()
+
+```
+
+## Estatísticas de Comércio Exterio e Inflação
+
+
+## Dados de comércio exterior do Brasil
+
+
+```{r}
+
+## value in BRL -> adjust for inflation
+trade0 <- comexstat()%>%
+  ## filtra país (EUA é 249)
+  ##filter(co_pais=="249")%>%
+  ## agrupa por ano, mes, e fluxo
+  group_by(co_ano, co_mes, fluxo)%>%
+  ## soma o valor fob
+  summarise(vl_fob=sum(vl_fob))%>%
+  ungroup%>%
+  mutate(date=lubridate::make_date(co_ano, co_mes), co_ano=NULL, co_mes=NULL)%>%
+  collect()
+
+head(trade0)
+```
+
+
+Junta (join) dos dados de comércio com os de câmbio e inflação
+```{r}
+
+trade1 <- trade0%>%
+  ## joins com dados de inflação e câmbio
+  left_join(deflators)
+head(trade1)
+
+```
+
+
+Agora colocamos o fluxo (imp - importações e exp - exportações) nas colunas (long-wide) usando o pacote tydir, pra poder calcular corrente de comércio (imp+exp) e deficit/superávit (exp-imp)
+
+```{r}
+trade2 <- trade1%>%
+  tidyr::pivot_wider(names_from="fluxo", values_from=c("vl_fob"), names_glue = "{fluxo}")%>%
+  mutate(sum=imp+exp,
+         dif=exp-imp
+  )
+head(trade2)
+```
+
+Transforma pra long,  para facilitar os cálculos de ajuste com dados de inflação e câmbio.
+
+```{r}
+
+
+  
+trade3 <- trade2%>%
+  tidyr::pivot_longer(cols = c("sum", "dif", "imp", "exp"), values_to = "nominal_usd", names_to="direction")%>%
+  ungroup%>%
+  arrange(date)%>%
+  ## ajustes
+  mutate(
+    last_cpi=dplyr::last(cpi, na_rm = TRUE),
+    ## valor corrente usd usando cpi
+    current_usd=nominal_usd*(last_cpi/cpi),
+    ## valor nomianl brl convertendo o valor nominal em usd usando média do cambio mensal
+    nominal_brl=nominal_usd*brlusd,
+      ## valor corrente brl corrigindo o valor nominal pelo ipca
+    current_brl=nominal_brl*(dplyr::last(ipca_i, na_rm = TRUE)/ipca_i)
+  )
+head(trade3)
+```
+
+
+Mais uma transformação para long agora para facilitar o cálculo de soma parcial/running sum.
+```{r}
+trade4 <- trade3%>%
+  tidyr::pivot_longer(cols=matches("nominal|current"), names_to = "adjustment")%>%
+  tidyr::separate(adjustment, c("type", "currency"))%>%
+  group_by(currency, type,direction)%>%
+  arrange(date)%>%
+  mutate(
+    value_bi=value/1e9,
+    value_bi_12=zoo::rollsum(value_bi,12, fill=NA, align = "right"),
+    value_bi_3=zoo::rollsum(value_bi,3, fill=NA, align = "right"))
+head(trade4)
+```
+
+
+## Replicando o relatório da Amcham
+
+```{r}
+library(ggplot2)
+library(hrbrthemes)
+```
+
+
+```{r}
+##hrbrthemes::import_roboto_condensed()
+ggplot(aes(x=date, y=value_bi_3), 
+       data=trade4%>%
+         filter(currency=="usd", 
+                direction%in%c("exp", "imp", "dif"), 
+                type=="nominal",
+                grepl("03-01$", date)
+                , date>="2014-01-01"
+         )) +
+  geom_col(aes(fill=direction), position="dodge") +
+  #facet_wrap(.~direction) + 
+  labs(x="", y="USD Bilhões", color="", fill="")+
+  theme_ipsum()+
+  theme(legend.position = "bottom") +
+  scale_fill_viridis_d()
+
+```
+
+
+## Deflacionando o relatório da Amcham
+
+### Desde 2014: 
+```{r}
+ggplot(aes(x=date, y=value_bi_3), 
+       data=trade4%>%
+         filter(currency=="usd", 
+                direction%in%c("exp", "imp", "dif"), 
+                type=="current",
+                grepl("03-01$", date)
+                , date>="2014-01-01"
+         )) +
+  geom_col(aes(fill=direction), position="dodge") +
+  #facet_wrap(.~direction) + 
+  labs(x="", y="USD Bilhões", color="", fill="")+
+  theme_ipsum()+
+  theme(legend.position = "bottom") +
+  scale_fill_viridis_d()
+```
+
+
+### Desde 1997
+```{r}
+ggplot(aes(x=date, y=value_bi_3), 
+       data=trade4%>%
+         filter(currency=="usd", 
+                grepl("03-01$", date),
+                direction%in%c("exp", "imp", "dif"), 
+                type=="current"
+         )) +
+  geom_line(aes(color=direction)) +
+  #facet_wrap(.~direction) + 
+  labs(x="", y="USD Bilhões", color="", fill="")+
+  theme_ipsum()+
+  theme(legend.position = "bottom") +
+  scale_fill_viridis_c()
+
+```
+
+
+
+## Deflacionando a série em Reais, soma móvel de 12 meses
+
+```{r}
+ggplot(aes(x=date, y=value_bi_12), 
+       data=trade4%>%
+         filter(currency=="brl", 
+                #grepl("03-01$", date),
+                direction%in%c("exp", "imp", "dif"), 
+                type=="current"
+         )) +
+  geom_line(aes(color=direction)) +
+  #facet_wrap(.~direction) + 
+  labs(x="", y="BRL Bilhões Correntes (IPCA)", color="", fill="")+
+  theme_ipsum()+
+  theme(legend.position = "bottom") +
+  scale_fill_viridis_c()
+
+```
+
+
+## Deflacionando a série em USD, soma móvel de 12 meses
+
+```{r}
+ggplot(aes(x=date, y=value_bi_12), 
+       data=trade4%>%
+         filter(
+           date>="2008-01-01",
+           currency=="usd", 
+           #grepl("03-01$", date),
+           direction%in%c("exp", "imp", "dif", "sum"), 
+           type=="current"
+         )) +
+  geom_line(aes(color=direction)) +
+  #facet_wrap(.~direction) + 
+  labs(x="", y="USD Bilhões Correntes (CPI)", color="", fill="")+
+  theme_ipsum()+
+  theme(legend.position = "bottom") +
+  scale_fill_viridis_c()
+
+```
