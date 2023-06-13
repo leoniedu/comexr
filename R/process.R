@@ -82,6 +82,7 @@ comexstat <- function(table="trade", ...) {
     comexstat_schema <- arrow::schema(
       arrow::field("co_ano", arrow::int32()),
       arrow::field("co_mes", arrow::int32()),
+      arrow::field("co_ano_mes", arrow::date32()),
       arrow::field("co_ncm", arrow::string()),
       arrow::field("fluxo", arrow::string()),
       arrow::field("co_pais", arrow::string()),
@@ -100,7 +101,10 @@ comexstat <- function(table="trade", ...) {
       file.path(ddircomex, "comexstat_partition"),
       format = "parquet",schema = comexstat_schema
     )|>dplyr::rename_with(tolower)
-    res |> dplyr::mutate(vl_cif=vl_fob+vl_frete+vl_seguro)
+    res |>
+      dplyr::mutate(vl_cif=vl_fob+vl_frete+vl_seguro,
+                    co_ano_mes=lubridate::make_date(co_ano, co_mes))|>
+      dplyr::select(co_ano_mes, everything())
   } else {
     read_comex(table, ...)
   }
@@ -118,7 +122,8 @@ ncms <- function() {
   suppressMessages(suppressWarnings({
     ncms_list <- purrr::map(c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"),comexstat)
     ncms_merged <- Reduce(dplyr::left_join, ncms_list)
-    ncms_merged
+    ncms_merged |>
+      dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
 }))
 }
 
@@ -143,7 +148,9 @@ read1_comex <- function(fname) {
 #' This function reads those files using arrow by calling function comexstat_raw. It then writes to the data directory the partitioned files.
 #' @examples
 comexstat_rewrite <- function() {
-  df <- comexstat_raw()
+  df <- comexstat_raw()|>
+    dplyr::mutate(co_ano_mes=lubridate::make_date(co_ano, co_mes))|>
+    dplyr::select(co_ano_mes, everything())
   ## write partitioned data
   ddir_partition <- file.path(ddircomex, "comexstat_partition")
   unlink(ddir_partition, recursive = TRUE)
@@ -151,7 +158,7 @@ comexstat_rewrite <- function() {
   df |>
     ## data will be written using the partitions
     ## in the group_by statement
-    dplyr::group_by(co_ano, fluxo) |>
+    dplyr::group_by(co_ano, co_ano_mes, fluxo) |>
     arrow::write_dataset(ddir_partition, format = "parquet")
   ddir_partition
 }
@@ -210,3 +217,46 @@ comexstat_m <- function(m=12, data=comextat()) {
 }
 
 
+
+#' Deflate comexstat series
+#'
+#' @param data
+#' @param deflators
+#' @param basedate
+#'
+#' @return
+#' @export
+#'
+#' @examples
+comexstat_deflated <- function(data=comexstat(), deflators=get_deflators(), basedate=NULL) {
+  get_base <- function(x, date, basedate=NULL) {
+    if (is.null(basedate)) {
+      basedate <- max(date[!is.na(x)])
+    }
+    r <- date==basedate
+    if (sum(r)!=1) stop()
+    dplyr::tibble(x=x[r], basedate=as.Date(basedate))
+  }
+  deflators_0 <- get_deflators()|>
+    dplyr::arrange(date)
+  base_cpi <- with(deflators_0, get_base(x=cpi, date=date, basedate=basedate))
+  base_ipca <- with(deflators_0, get_base(x=ipca_i, date=date, basedate=basedate))
+  deflators <- deflators_0|>
+    dplyr::mutate(
+      co_ano=as.integer(lubridate::year(date)),
+      co_mes=as.integer(lubridate::month(date)),
+      cpi_r=base_cpi$x/cpi,
+      cpi_basedate=base_cpi$basedate,
+      ipca_r=base_ipca$x/ipca_i,
+      ipca_basedate=base_ipca$basedate
+    )
+  data|>
+    dplyr::left_join(deflators, by=c("co_ano", "co_mes"))|>
+    mutate(
+      date=lubridate::make_date(co_ano, co_mes),
+      vl_fob_current_usd=vl_fob*(cpi_r),
+      vl_fob_current_brl=vl_fob*brlusd*ipca_r,
+      vl_cif_current_usd=vl_cif*(cpi_r),
+      vl_cif_current_brl=vl_cif*brlusd*ipca_r,
+    )
+}

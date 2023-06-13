@@ -4,5 +4,6 @@
   ## memoise from scratch while loading package
   ncms <<- memoise::memoise(ncms)
   ym <<- memoise::memoise(ym)
+  get_deflators <<- memoise::memoise(get_deflators)
 }
 
