@@ -1,6 +1,7 @@
 cdircomex <- path.expand(rappdirs::user_cache_dir("comexstatr"))
 ddircomex <- file.path(rappdirs::user_data_dir("comexstatr"))
 
+
 #' Reads files with comexdata in the cache directory
 #'
 #' @noRd
@@ -230,7 +231,7 @@ comexstat_m <- function(m=12, data=comextat()) {
 #' @export
 #'
 #' @examples
-comexstat_deflated <- function(data=comexstat(), deflators=get_deflators(), basedate=NULL) {
+comexstat_deflated <- function(data=comexstat(), basedate=NULL) {
   get_base <- function(x, date, basedate=NULL) {
     if (is.null(basedate)) {
       basedate <- max(date[!is.na(x)])
@@ -240,22 +241,22 @@ comexstat_deflated <- function(data=comexstat(), deflators=get_deflators(), base
     dplyr::tibble(x=x[r], basedate=as.Date(basedate))
   }
   deflators_0 <- get_deflators()|>
-    dplyr::arrange(date)
-  base_cpi <- with(deflators_0, get_base(x=cpi, date=date, basedate=basedate))
-  base_ipca <- with(deflators_0, get_base(x=ipca_i, date=date, basedate=basedate))
+    dplyr::arrange(co_ano_mes)
+  base_cpi <- with(deflators_0, get_base(x=cpi, date=co_ano_mes, basedate=basedate))
+  base_ipca <- with(deflators_0, get_base(x=ipca_i, date=co_ano_mes, basedate=basedate))
   deflators <- deflators_0|>
     dplyr::mutate(
-      co_ano=as.integer(lubridate::year(date)),
-      co_mes=as.integer(lubridate::month(date)),
+      #co_ano=as.integer(lubridate::year(date)),
+      #co_mes=as.integer(lubridate::month(date)),
       cpi_r=base_cpi$x/cpi,
       cpi_basedate=base_cpi$basedate,
       ipca_r=base_ipca$x/ipca_i,
       ipca_basedate=base_ipca$basedate
     )
   data|>
-    dplyr::left_join(deflators, by=c("co_ano", "co_mes"))|>
-    mutate(
-      date=lubridate::make_date(co_ano, co_mes),
+    dplyr::left_join(deflators, by=c("co_ano_mes"))|>
+    dplyr::mutate(
+      #date=lubridate::make_date(co_ano, co_mes),
       vl_fob_current_usd=vl_fob*(cpi_r),
       vl_fob_current_brl=vl_fob*brlusd*ipca_r,
       vl_cif_current_usd=vl_cif*(cpi_r),
@@ -273,18 +274,19 @@ comexstat_complete <- function(data=comexstat(),k=12) {
     dplyr::collect()
   ## expected months
   seq_d <- seq.Date(from = range_dates$min_date, to=range_dates$max_date, by="month")
-  ## throws an error if
+  ## throws an error if any day!=1
   stopifnot(all(lubridate::day(seq_d)==1))
   df <- data|>
-    dplyr::group_by(co_ano_mes, .add=TRUE)%>%
+    dplyr::group_by(co_ano_mes, .add=TRUE)|>
     #dplyr::summarise(vl_fob=sum(vl_fob, na.rm=TRUE), vl_cif=sum(vl_cif, na.rm=TRUE), kg_liquido=sum(kg_liquido, na.rm=TRUE), qt_estat=sum(qt_estat, na.rm=TRUE), .groups = "keep")|>
-    dplyr::summarise(across(where(is.numeric), sum), .groups = "keep")
+    #dplyr::mutate(across(where(is.numeric), tidyr::replace_na))|>
+    dplyr::summarise(across(where(is.numeric), sum), .groups = "keep")|>
     collect()
   g1 <- dplyr::group_vars(df)
   df%>%
     dplyr::ungroup()|>
-    tidyr::complete(co_ano_mes=seq_d , !!!data_syms(g1%>%setdiff("co_ano_mes")),
-                    fill = list(vl_fob=0, vl_cif=0, kg_liquido=0, qt_estat=0))%>%
+    tidyr::complete(co_ano_mes=seq_d , !!!data_syms(g1%>%setdiff("co_ano_mes")) #,fill = list(vl_fob=0, vl_cif=0, kg_liquido=0, qt_estat=0)
+                    )%>%
     group_by(!!!data_syms(g1))
 }
 

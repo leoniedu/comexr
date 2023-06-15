@@ -148,15 +148,19 @@ get_ipca <- function() {
   ipca
 }
 
-get_brlusd <- function() {
-  lastmonth <- {
+
+
+get_brlusd <- function(from="1997-01-01", to=NULL) {
+  if (is.null(to)) {
+    lastmonth <- {
     m <- Sys.Date()
     lubridate::day(m) <- 1
     m-1
-  }
-  brlusd0 <- rbcb::get_currency("USD", "1997-01-01", lastmonth)
+    }
+  } else lastmonth <- to
+  brlusd0 <- rbcb::olinda_get_currency("USD", from, lastmonth)
   brlusd <- brlusd0|>
-    dplyr::group_by(date)|>
+    dplyr::group_by(date=as.Date(datetime))|>
     dplyr::summarise(bid=mean(bid), ask=mean(ask))|>
     dplyr::group_by(date=lubridate::make_date(lubridate::year(date),lubridate::month(date)))|>
     dplyr::summarise(brlusd=(mean(bid)+mean(ask))/2)
@@ -175,7 +179,8 @@ get_deflators <- function(updated=Sys.Date()) {
   get_ipca()|>
     dplyr::full_join(get_brlusd(), by= "date")|>
     dplyr::full_join(get_cpi(), by= "date")|>
-    dplyr::arrange(date)
+    dplyr::rename(co_ano_mes=date)|>
+    dplyr::arrange(co_ano_mes)
 }
 
 
