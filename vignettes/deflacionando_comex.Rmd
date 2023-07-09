@@ -21,12 +21,12 @@ tmp <- comexstat()%>%
   comexstat_deflated()%>%
   group_by(date=lubridate::make_date(co_ano, co_mes), fluxo,
            ipca_basedate, cpi_basedate)%>%
-  summarise(vl_fob=sum(vl_fob), 
-            vl_fob_current_brl=sum(vl_fob_current_brl), 
-            vl_fob_current_usd=sum(vl_fob_current_usd), 
-            vl_cif=sum(vl_cif), 
-            vl_cif_current_brl=sum(vl_cif_current_brl),
-            vl_cif_current_usd=sum(vl_cif_current_usd)
+  summarise(vl_fob=sum(vl_fob,na.rm=TRUE), 
+            vl_fob_current_brl=sum(vl_fob_current_brl,na.rm=TRUE), 
+            vl_fob_current_usd=sum(vl_fob_current_usd,na.rm=TRUE), 
+            vl_cif=sum(vl_cif,na.rm=TRUE), 
+            vl_cif_current_brl=sum(vl_cif_current_brl,na.rm=TRUE),
+            vl_cif_current_usd=sum(vl_cif_current_usd,na.rm=TRUE)
             )%>%
   arrange(date,fluxo)%>%
   collect()

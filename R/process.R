@@ -13,8 +13,8 @@ ddircomex <- file.path(rappdirs::user_data_dir("comexstatr"))
 #'
 comexstat_raw <- function() {
   comexstat_schema_e <- arrow::schema(
-    arrow::field("CO_ANO", arrow::int32()),
-    arrow::field("CO_MES", arrow::int32()),
+    arrow::field("CO_ANO", arrow::string()),
+    arrow::field("CO_MES", arrow::string()),
     arrow::field("CO_NCM", arrow::string()),
     arrow::field("CO_UNID", arrow::string()),
     arrow::field("CO_PAIS", arrow::string()),
@@ -109,7 +109,8 @@ comexstat <- function(table="trade", ...) {
                     )|>
       dplyr::select(co_ano_mes, co_ano, co_mes, everything())
   } else {
-    read_comex(table, ...)
+    read_comex(table, ...)|>
+      dplyr::mutate(across(c(tidyselect::any_of(c("co_ano", "co_mes"))), as.character))
   }
 }
 
@@ -231,7 +232,7 @@ comexstat_m <- function(m=12, data=comextat()) {
 #' @export
 #'
 #' @examples
-comexstat_deflated <- function(data=comexstat(), basedate=NULL) {
+comexstat_deflated <- function(data=comexstat(), basedate=NULL, deflators=get_deflators()) {
   get_base <- function(x, date, basedate=NULL) {
     if (is.null(basedate)) {
       basedate <- max(date[!is.na(x)])
@@ -240,11 +241,11 @@ comexstat_deflated <- function(data=comexstat(), basedate=NULL) {
     if (sum(r)!=1) stop()
     dplyr::tibble(x=x[r], basedate=as.Date(basedate))
   }
-  deflators_0 <- get_deflators()|>
+  deflators_0 <- deflators|>
     dplyr::arrange(co_ano_mes)
   base_cpi <- with(deflators_0, get_base(x=cpi, date=co_ano_mes, basedate=basedate))
   base_ipca <- with(deflators_0, get_base(x=ipca_i, date=co_ano_mes, basedate=basedate))
-  deflators <- deflators_0|>
+  deflators_1 <- deflators_0|>
     dplyr::mutate(
       #co_ano=as.integer(lubridate::year(date)),
       #co_mes=as.integer(lubridate::month(date)),
@@ -254,7 +255,7 @@ comexstat_deflated <- function(data=comexstat(), basedate=NULL) {
       ipca_basedate=base_ipca$basedate
     )
   data|>
-    dplyr::left_join(deflators, by=c("co_ano_mes"))|>
+    dplyr::left_join(deflators_1, by=c("co_ano_mes"))|>
     dplyr::mutate(
       #date=lubridate::make_date(co_ano, co_mes),
       vl_fob_current_usd=vl_fob*(cpi_r),

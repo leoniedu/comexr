@@ -71,11 +71,15 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
   check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, ...)
-  #check_exp_down <- download_comex(filenames = "exp_totais_conferencia.csv", outdir = cdircomex, ...)
-  check_imp <- check_imp_down |>
-    read1_comex()
+  check_exp_down <- download_comex(filenames = "exp_totais_conferencia.csv", outdir = cdircomex, ...)
+  check_imp <- comexstat("imp_totais_conferencia", dir=cdircomex)
+  check_exp <- comexstat("exp_totais_conferencia", dir=cdircomex)
+  # check_imp <- check_imp_down |>
+  #   read1_comex()
   local_imp <- purrr::possibly(comexstat, otherwise=dplyr::tibble())("imp_totais_conferencia")
-  if (any(force_download,(!setequal(local_imp, check_imp)),(!purrr::possibly(comexstat_check, FALSE)()))) {
+  local_exp <- purrr::possibly(comexstat, otherwise=dplyr::tibble())("exp_totais_conferencia")
+  ok <- setequal(dplyr::bind_rows(local_imp, local_exp), dplyr::bind_rows(check_imp, check_exp))
+  if (any(force_download,!ok,(!purrr::possibly(comexstat_check, FALSE)()))) {
     tryCatch({
     message("downloading files ... can take a while ...")
     ds <- download_comex("all", ...)
@@ -89,7 +93,7 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
     comexstat_rewrite()
     comexstat_check()
     }, error=function(e) {
-      unlink(file.path(ddircomex,"imp_totais_conferencia.csv"))
+      #unlink(file.path(ddircomex,"imp_totais_conferencia.csv"))
       stop("error downloading file ... ")
       })
   }
@@ -131,7 +135,6 @@ comexstat_check <- function() {
   }
   ok
 }
-
 
 
 get_cpi <- function() {
