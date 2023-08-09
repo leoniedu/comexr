@@ -175,15 +175,17 @@ get_brlusd <- function(from="1997-01-01", to=NULL) {
 #'
 #' @param updated
 #'
-#' @return
+#' @return A data frame with columns co_ano_mes (date), ipca (monthly inflation from Brazil), ipca_i (monthly inflation from Brazil indexed such as 1997-01-01 is 1), cpi index (monthly inflation from USA).
 #' @export
 #'
-get_deflators <- function(updated=Sys.Date()) {
-  get_ipca()|>
+get_deflators <- function(updated=Sys.Date(), na_omit=FALSE) {
+  res <- get_ipca()|>
     dplyr::full_join(get_brlusd(), by= "date")|>
     dplyr::full_join(get_cpi(), by= "date")|>
     dplyr::rename(co_ano_mes=date)|>
     dplyr::arrange(co_ano_mes)
+  if (na_omit) res <- na.omit(res)
+  res
 }
 
 
