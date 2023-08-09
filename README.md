@@ -46,8 +46,6 @@ library(dplyr)
 
 ``` r
 ##downloading
-## might need to set the timeout option
-options(timeout=max(options("timeout")$timeout, 600))
 
 try(comexstat_download())
 ```
@@ -111,7 +109,7 @@ cstat_top <- comexstat() |>
   collect()
 
 library(ggplot2)
-ggplot(aes(x=co_ano, 
+ggplot(aes(x=as.numeric(co_ano), 
            y=vl_fob_bi), 
        data=cstat_top|>
          filter(co_ano<2023)|>
@@ -143,7 +141,7 @@ topstate <- bystate|>
   head(3)
 
 
-ggplot(aes(x=co_ano, y=vl_fob_bi, color=state), 
+ggplot(aes(x=as.numeric(co_ano), y=vl_fob_bi, color=state), 
        data=bystate|>
         semi_join(topstate, by="state")|>
         mutate(vl_fob_bi=vl_fob/1e9)) +
@@ -154,3 +152,41 @@ ggplot(aes(x=co_ano, y=vl_fob_bi, color=state),
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+## Deflate using CPI (for USD) or IPCA (for BRL) (Experimental)
+
+``` r
+selected_deflated <- comexstat()%>%
+  filter(co_pais%in%c("249", "160", "063"))%>%
+  group_by(fluxo, co_ano_mes, co_pais)%>%
+  summarise(vl_fob=sum(vl_fob), vl_cif=sum(vl_cif, na.rm=TRUE))%>%
+  comexstat_deflated()%>%
+  collect()
+
+library(runner)
+selected_deflated_r <- selected_deflated%>%
+  left_join(comexstat("pais"))%>%
+  group_by(fluxo, co_pais, no_pais_ing)%>%
+  arrange(co_ano_mes)%>%
+  filter(!is.na(vl_fob_current_usd))%>%
+  mutate(vl_fob_current_usd_bi_deflated=
+           slider::slide_index_dbl(.x=vl_fob_current_usd, 
+                                   .before = months(11),
+                                   .complete = TRUE,
+                                   .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes)/1e9)
+```
+
+    ## Joining with `by = join_by(co_pais)`
+
+``` r
+ggplot(aes(x=co_ano_mes, y=vl_fob_current_usd_bi_deflated, color=no_pais_ing), 
+       data=selected_deflated_r) +
+  facet_wrap(~fluxo)+
+  geom_line() +
+  labs(color="", x="", y="US$ Bi (FOB) Deflated by CPI "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
+  theme_linedraw() + theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
+```
+
+    ## Warning: Removed 33 rows containing missing values (`geom_line()`).
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
