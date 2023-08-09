@@ -9,6 +9,9 @@ get_deflators(updated = Sys.Date())
 \arguments{
 \item{updated}{}
 }
+\value{
+A data frame with columns co_ano_mes (date), ipca (monthly inflation from Brazil), ipca_i (monthly inflation from Brazil indexed such as 1997-01-01 is 1), cpi index (monthly inflation from USA).
+}
 \description{
 Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USE)
 }
