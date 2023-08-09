@@ -146,11 +146,10 @@ read1_comex <- function(fname) {
 
 #' Rewrites the data read from cache directory into partitioned files.
 #' @noRd
-#' @return
+#' @return the directory where the partition is written to.
 #' @details The downloaded files are one for the exports and other for imports, with data for the entire period available (1997-).
 #'
 #' This function reads those files using arrow by calling function comexstat_raw. It then writes to the data directory the partitioned files.
-#' @examples
 comexstat_rewrite <- function() {
   df <- comexstat_raw()|>
     dplyr::mutate(co_ano_mes=lubridate::make_date(co_ano, co_mes), co_ano=NULL, co_mes=NULL)|>
@@ -200,7 +199,6 @@ ym <- function(m, data=comexstat()) {
 #'
 #' @details Since it outputs every possible combination of co_ano_mes_m, co_pais, fluxo and co_ncm, it can be very large, and time consuming.
 #'
-#' @examples
 comexstat_m <- function(m=12, data=comextat()) {
   ## fix, allow choosing id variables
   ymm <- ym(m, data=data)
@@ -224,15 +222,16 @@ comexstat_m <- function(m=12, data=comextat()) {
 
 #' Deflate comexstat series
 #'
-#' @param data
-#' @param deflators
-#' @param basedate
+#' @param data trade data to deflate
+#' @param deflators data.frame with deflators
+#' @param basedate base date to deflate to.
 #'
-#' @return
+#' @return deflated data.
 #' @export
 #'
-#' @examples
-comexstat_deflated <- function(data=comexstat(), basedate=NULL, deflators=get_deflators()) {
+comexstat_deflated <- function(data=comexstat(), basedate=NULL, deflators=get_deflators(na_omit = TRUE)) {
+  deflators_complete <- deflators|>na.omit()
+  if (nrow(deflators_complete)!=nrow(deflators)) stop("Missing data in deflators.")
   get_base <- function(x, date, basedate=NULL) {
     if (is.null(basedate)) {
       basedate <- max(date[!is.na(x)])
@@ -255,7 +254,8 @@ comexstat_deflated <- function(data=comexstat(), basedate=NULL, deflators=get_de
       ipca_basedate=base_ipca$basedate
     )
   data|>
-    dplyr::left_join(deflators_1, by=c("co_ano_mes"))|>
+    ## right join so as get up to the last data
+    dplyr::right_join(deflators_1, by=c("co_ano_mes"))|>
     dplyr::mutate(
       #date=lubridate::make_date(co_ano, co_mes),
       vl_fob_current_usd=vl_fob*(cpi_r),
