@@ -120,7 +120,7 @@ ggplot(aes(x=as.numeric(co_ano),
   theme_linedraw() + theme(legend.position="bottom")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](README_files/figure-gfm/topblocks-1.png)<!-- -->
 
 ### Imports and exports by Brazilian state
 
@@ -151,7 +151,7 @@ ggplot(aes(x=as.numeric(co_ano), y=vl_fob_bi, color=state),
   theme_linedraw() + theme(legend.position="bottom")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](README_files/figure-gfm/bystate-1.png)<!-- -->
 
 ## Deflate using CPI (for USD) or IPCA (for BRL) (Experimental)
 
@@ -189,4 +189,4 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_current_usd_bi_deflated, color=no_pais_ing),
 
     ## Warning: Removed 33 rows containing missing values (`geom_line()`).
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/deflated-1.png)<!-- -->

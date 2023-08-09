@@ -23,7 +23,7 @@ app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 
 ## Installation
 
-```{r}
+```{r options}
 ##devtools::install_github("leoniedu/comexstatr")
 ```
 
@@ -34,7 +34,7 @@ If you have problems installing arrow, see:
 
 ## Examples
 
-``` {r}
+``` {r setup}
 library(comexstatr)
 library(dplyr)
 
@@ -56,7 +56,7 @@ Everytime one calls comexstat_download it resets the memoisation of the package 
 
 Using a programming language like R makes it easy to generate statistics and reports at the intended level of analysis. 
 
-```{r}
+```{r topblocks}
 
 msul <- comexstat("pais_bloco")|>
   filter(co_bloco==111)|>
@@ -110,7 +110,7 @@ ggplot(aes(x=as.numeric(co_ano),
 ### Imports and exports by Brazilian state
 
 You will have access to information not available via the web interface <http://comexstat.mdic.gov.br/en/home>, such as 
-```{r}
+```{r bystate}
 
 bystate <- comexstat() |> 
   filter(co_ano<2023) |>
@@ -140,7 +140,7 @@ ggplot(aes(x=as.numeric(co_ano), y=vl_fob_bi, color=state),
 ## Deflate using CPI (for USD) or IPCA (for BRL) (Experimental)
 
 
-```{r}
+```{r deflated}
 selected_deflated <- comexstat()%>%
   filter(co_pais%in%c("249", "160", "063"))%>%
   group_by(fluxo, co_ano_mes, co_pais)%>%
