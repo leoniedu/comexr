@@ -58,7 +58,7 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
 ##' ## or this, if it times out
 ##' options(timeout=100)
 #' }
-comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE) {
+comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE, replace=TRUE) {
   message("Downloading data from Comexstat...")
   oldtimeout <- options("timeout")$timeout
   newtimeout <- 60*60*4 ## 4 horas
@@ -70,8 +70,8 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
   memoise::forget(ym)
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
   dir.create(ddircomex, showWarnings = FALSE, recursive = TRUE)
-  check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, ...)
-  check_exp_down <- download_comex(filenames = "exp_totais_conferencia.csv", outdir = cdircomex, ...)
+  check_imp_down <- download_comex(filenames = "imp_totais_conferencia.csv", outdir = cdircomex, replace=TRUE, ...)
+  check_exp_down <- download_comex(filenames = "exp_totais_conferencia.csv", outdir = cdircomex, replace=TRUE, ...)
   check_imp <- comexstat("imp_totais_conferencia", dir=cdircomex)
   check_exp <- comexstat("exp_totais_conferencia", dir=cdircomex)
   # check_imp <- check_imp_down |>
@@ -82,7 +82,7 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE)
   if (any(force_download,!ok,(!purrr::possibly(comexstat_check, FALSE)()))) {
     tryCatch({
     message("downloading files ... can take a while ...")
-    ds <- download_comex("all", ...)
+    ds <- download_comex("all", ..., replace=replace)
     message("Unzipping files...")
     zip::unzip(
       grep("exp_completa", ds, value = TRUE)
@@ -131,6 +131,7 @@ comexstat_check <- function() {
   expected <- structure(list(fluxo = c("exp", "imp"), vl_fob = c(0, 0), vl_seguro = c(NA,0), kg_liquido = c(0, 0), vl_frete = c(NA, 0), numero_linhas = c(0, 0)), class = c("tbl_df", "tbl", "data.frame"), row.names = c(NA, -2L))
   ok <- dplyr::setequal(expected,res)
   if (!ok) {
+    browser()
     warning("Results not matching check (conferencia) file.")
   }
   ok

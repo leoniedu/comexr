@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
 ```
 
 
+
 ```{r}
 
 comexstat_download()
@@ -296,3 +297,111 @@ ggplot(aes(x=date, y=value_bi_12),
   scale_fill_viridis_c()
 
 ```
+
+
+
+```{r}
+
+bk <- ncms()%>%filter(no_cgce_n3=="Bens de capital (exceto equipamentos de transporte)")
+
+covid <- c("1702.60.20", "2833.21.00", "2836.50.00", "2847.00.00", "2905.44.00", "2909.19.20", "2922.39.21", "2924.29.13", "2924.29.14", "2924.29.52", "2925.29.23", "2933.91.22", "2933.91.53", "2934.99.34", "2937.19.50", "3002.12.35", "3003.20.71", "3003.39.22", "3003.90.42", "3003.90.55", "3003.90.97", "3004.10.14", "3004.20.71", "3004.32.20", "3004.39.22", "3004.90.32", "3004.90.45", "3004.90.54", "3004.90.97", "3005.90.19", "3005.90.20", "3822.19.90", "3906.90.19", "3926.90.40", "4001.10.00", "5601.22.99", "6505.00.22", "8413.70.10", "8419.20.00", "8419.40.90", "8419.60.00", "8419.90.20", "8481.40.00", "8713.10.00", "9018.11.00", "9018.31.90", "9018.32.19", "9018.39.10", "9018.39.26", "9018.39.29", "9018.39.91", "9018.39.99", "9019.20.10", "9019.20.20", "9019.20.30", "9020.00.90", "9025.11.19")%>%gsub("\\.", "", .)
+
+
+
+r0 <- comexstat()%>%
+  #filter(co_ncm%in%c("29242913", "30039055", "30049045"))%>%
+  filter(co_ncm%in%covid)%>%
+  #filter(co_pais=="063")%>%
+  group_by(co_ano_mes, co_ano, co_mes, fluxo, co_ncm
+           #, bk=co_ncm%in%bk$co_ncm
+           )%>%
+  summarise(vl_fob=sum(vl_fob, na.rm=TRUE), vl_cif=sum(vl_cif, na.rm=TRUE))%>%
+  collect()
+
+rbk <- r0%>%
+  comexstat_deflated(basedate = "2023-05-01", deflators = d)
+
+
+library(slider)
+rsum_slider <- function(x, date, k=12, date_min=NULL, date_max=NULL) {
+  require(rlang)
+  date_min <- as.Date(date_min %||% min(date))
+  date_max <- as.Date(date_max %||% max(date))
+  seq_d <- seq.Date(from = date_min, to=date_max, by="month")
+  lubridate::day(seq_d) <- 1
+  df <- tibble(x,date)%>%tidyr::complete(date=seq_d, fill=list(x=0))%>%
+    arrange(date)
+  #return(df)
+  #dates <- x%>%ungroup%>%summarise(date_min=min(date), date_max=max(date))
+  res <- slider::slide_index_dbl(.x = df$x, .before = months(k-1), .complete = TRUE, .f = ~ sum(.x, na.rm = TRUE), .i = df$date)
+  res[df$date<(date_min+months(k-1))] <- NA_real_
+  #tibble(x=df$x, newx=res, date=df$date)
+  df$x
+}
+
+s <- function(x,date,k) slider::slide_index_dbl(.x = x, 
+                                                .before = months(k-1), 
+                                                .f = ~ sum(.x, na.rm = TRUE), .i = date)
+
+
+rbkd <- rbk%>%group_by(fluxo#, bk
+                       ,co_ncm
+                       )%>%
+  arrange(co_ano_mes)%>%
+  mutate(vl_fob_12=s(x=vl_fob, date=co_ano_mes, k=12),
+         vl_fob_current_usd_12=s(x=vl_fob_current_usd, 
+                                           date=co_ano_mes, k=12),
+         vl_fob_current_brl_12=s(x=vl_fob_current_brl, 
+                                 date=co_ano_mes, k=12)
+  )
+
+ggplot(aes(x=co_ano_mes, y=vl_fob_current_usd_12/1e9, color=fluxo), data=rbkd%>%filter(co_ncm%in%c("90183929", "84814000", "39069019", "39269040", "30021235", 
+  "28470000", "40011000", "90183219", "90192010", "84137010"))) + geom_line() +
+ facet_wrap(~co_ncm#bk+ fluxo#, scales="free_y"
+             ) + 
+scale_x_date(limits=(as.Date(c(min(rbkd$co_ano_mes)+months(12), NA_real_))))
+
+
+r <- r0%>%
+  tidyr::pivot_wider(values_from = c("vl_fob", "vl_cif"), names_from="fluxo")%>%
+  mutate(superavit_fob=vl_fob_exp-vl_fob_imp, semestre=co_mes%in%(7:12)+1)#%>%
+#rsum <- r%>%group_by(co_ano, semestre)%>%summarise(across(where(is.numeric), sum))
+
+
+
+d <- get_deflators()%>%arrange(co_ano_mes)%>%mutate(across(c(ipca_i,cpi), ~if_else(is.na(.x), lag(.x), .x)))
+
+
+tmp <- comexstat()%>%
+  filter(co_ano>=1997)%>%
+  comexstat_deflated(basedate = "2023-05-01", deflators = d)%>%
+  group_by(co_ano, co_mes, date=lubridate::make_date(co_ano, co_mes), fluxo,
+           ipca_basedate, cpi_basedate)%>%
+  summarise(vl_fob=sum(vl_fob,na.rm=TRUE), 
+            vl_fob_current_brl=sum(vl_fob_current_brl,na.rm=TRUE), 
+            vl_fob_current_usd=sum(vl_fob_current_usd,na.rm=TRUE), 
+            vl_cif=sum(vl_cif,na.rm=TRUE), 
+            vl_cif_current_brl=sum(vl_cif_current_brl,na.rm=TRUE),
+            vl_cif_current_usd=sum(vl_cif_current_usd,na.rm=TRUE)
+  )%>%
+  arrange(date,fluxo)%>%
+  collect()%>%
+  mutate(semestre=co_mes%in%(7:12)+1)
+
+
+rsum <- tmp%>%
+  group_by(co_ano, semestre, fluxo)%>%
+  summarise(across(where(is.numeric), ~sum(.x)/1e9))
+s <- rsum%>%
+  group_by(co_ano, semestre)%>%
+  filter(semestre==1)%>%
+  summarise(across(where(is.numeric), ~.x[fluxo=="exp"]-.x[fluxo=="imp"]))
+
+
+
+
+tidyr::pivot_wider(values_from = c("vl_fob", "vl_fob_current_brl", "vl_fob_current_usd", "vl_cif", 
+                                   "vl_cif_current_brl", "vl_cif_current_usd"), names_from=fluxo)
+
+```
+

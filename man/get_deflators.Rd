@@ -4,7 +4,7 @@
 \alias{get_deflators}
 \title{Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USE)}
 \usage{
-get_deflators(updated = Sys.Date())
+get_deflators(updated = Sys.Date(), na_omit = FALSE)
 }
 \arguments{
 \item{updated}{}

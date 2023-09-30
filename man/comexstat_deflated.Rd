@@ -7,7 +7,7 @@
 comexstat_deflated(
   data = comexstat(),
   basedate = NULL,
-  deflators = get_deflators()
+  deflators = get_deflators(na_omit = TRUE)
 )
 }
 \arguments{
