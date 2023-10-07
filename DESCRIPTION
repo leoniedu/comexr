@@ -26,7 +26,8 @@ Imports:
     memoise,
     rappdirs,
     readr,
-    dplyr
+    dplyr,
+    assertthat
 Suggests:
     ggplot2,
     rmarkdown
