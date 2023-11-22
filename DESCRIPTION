@@ -27,7 +27,8 @@ Imports:
     rappdirs,
     readr,
     dplyr,
-    assertthat
+    assertthat,
+    xts
 Suggests:
     ggplot2,
     rmarkdown

@@ -298,3 +298,8 @@ comex_roll <- function(.x) {
                           .complete = TRUE,
                           .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes, .names = "{.col}_roll_{k}")
 }
+
+
+ncm <- function(x) {
+  gsub("[^0-9]", "", x)
+}
