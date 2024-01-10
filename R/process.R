@@ -258,10 +258,10 @@ comexstat_deflated <- function(data=comexstat(), basedate=NULL, deflators=get_de
     dplyr::right_join(deflators_1, by=c("co_ano_mes"))|>
     dplyr::mutate(
       #date=lubridate::make_date(co_ano, co_mes),
-      vl_fob_current_usd=vl_fob*(cpi_r),
-      vl_fob_current_brl=vl_fob*brlusd*ipca_r,
-      vl_cif_current_usd=vl_cif*(cpi_r),
-      vl_cif_current_brl=vl_cif*brlusd*ipca_r,
+      vl_fob_constant_usd=vl_fob*(cpi_r),
+      vl_fob_constant_brl=vl_fob*brlusd*ipca_r,
+      vl_cif_constant_usd=vl_cif*(cpi_r),
+      vl_cif_constant_brl=vl_cif*brlusd*ipca_r,
     )
 }
 

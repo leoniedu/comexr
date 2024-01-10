@@ -131,7 +131,7 @@ comexstat_check <- function() {
   expected <- structure(list(fluxo = c("exp", "imp"), vl_fob = c(0, 0), vl_seguro = c(NA,0), kg_liquido = c(0, 0), vl_frete = c(NA, 0), numero_linhas = c(0, 0)), class = c("tbl_df", "tbl", "data.frame"), row.names = c(NA, -2L))
   ok <- dplyr::setequal(expected,res)
   if (!ok) {
-    browser()
+    #browser()
     warning("Results not matching check (conferencia) file.")
   }
   ok
