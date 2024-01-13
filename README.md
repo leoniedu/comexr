@@ -169,7 +169,7 @@ selected_deflated_r <- selected_deflated%>%
   group_by(fluxo, co_pais, no_pais_ing)%>%
   arrange(co_ano_mes)%>%
   filter(!is.na(vl_fob_constant_usd))%>%
-  mutate(vl_fob_constant_usd_bi_deflated=
+  mutate(vl_fob_constant_usd=
            slider::slide_index_dbl(.x=vl_fob_constant_usd, 
                                    .before = months(11),
                                    .complete = TRUE,
@@ -179,7 +179,7 @@ selected_deflated_r <- selected_deflated%>%
     ## Joining with `by = join_by(co_pais)`
 
 ``` r
-ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd_bi_deflated, color=no_pais_ing), 
+ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd, color=no_pais_ing), 
        data=selected_deflated_r) +
   facet_wrap(~fluxo)+
   geom_line() +
@@ -196,7 +196,7 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd_bi_deflated, color=no_pais_ing),
 ``` r
 saldo_deflated <- comexstat()%>%
   group_by(fluxo, co_ano_mes)%>%
-  summarise(vl_fob=sum(vl_fob), vl_cif=sum(vl_cif, na.rm=TRUE))%>%
+  summarise(vl_fob=sum(vl_fob), vl_cif=sum(vl_cif, na.rm=TRUE), qt_estat=sum(qt_estat, na.rm=TRUE))%>%
   comexstat_deflated()%>%
   collect()
 
@@ -212,20 +212,29 @@ saldo_deflated_r <- saldo_deflated%>%
                               .before = months(nperiods),
                               .complete = TRUE,
                               .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes)/1e9,
-    vl_fob_constant_usd_bi_deflated=
+    vl_fob_brl_bi=
+      slider::slide_index_dbl(.x=vl_fob*brlusd, 
+                              .before = months(nperiods),
+                              .complete = TRUE,
+                              .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes)/1e9,
+    vl_fob_constant_usd=
       slider::slide_index_dbl(.x=vl_fob_constant_usd, 
                               .before = months(nperiods),
                               .complete = TRUE,
                               .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes)/1e9,
-    vl_fob_constant_brl_bi_deflated=
+    vl_fob_constant_brl=
       slider::slide_index_dbl(.x=vl_fob_constant_brl, 
                               .before = months(nperiods),
                               .complete = TRUE,
                               .f = function(z) sum(z, na.rm=TRUE), .i = co_ano_mes)/1e9
     )%>%
-  mutate(vl_fob_constant_usd_bi_deflated_i=vl_fob_constant_usd_bi_deflated/vl_fob_constant_usd_bi_deflated[co_ano_mes=="2022-01-01"])
+  mutate(vl_fob_constant_usd_i=vl_fob_constant_usd/vl_fob_constant_usd[co_ano_mes=="2022-01-01"])
 
-ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd_bi_deflated, color=fluxo), 
+corrente_deflated_r <- saldo_deflated_r%>%
+  group_by(co_ano_mes)%>%
+  summarise(across(matches("^(vl_|qt_)"), sum))
+
+ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd, color=fluxo), 
        data=saldo_deflated_r) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
@@ -241,28 +250,33 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd_bi_deflated, color=fluxo),
 
 ![](README_files/figure-gfm/deflated2-1.png)<!-- -->
 
+### Somente Dezembro (anos completos)
+
 ``` r
-ggplot(aes(x=co_ano_mes, y=vl_fob_constant_brl_bi_deflated, color=fluxo), 
-       data=saldo_deflated_r) +
+ggplot(aes(x=co_ano_mes, y=vl_fob_constant_brl, color=fluxo), 
+       data=saldo_deflated_r%>%filter(lubridate::month(co_ano_mes)==12)) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
+  geom_line(aes(y=vl_fob_brl_bi), linetype='dashed')+
+  geom_point(aes(y=vl_fob_brl_bi), linetype='dashed')+
   labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
   geom_vline(xintercept=as.Date("2023-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
-    ## Warning: Removed 22 rows containing missing values (`geom_line()`).
+    ## Warning in geom_point(aes(y = vl_fob_brl_bi), linetype = "dashed"): Ignoring
+    ## unknown parameters: `linetype`
 
 ![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 ``` r
-ggplot(aes(x=co_ano_mes, y=saldo_constant_usd_bi_deflated), 
+ggplot(aes(x=co_ano_mes, y=saldo_constant_usd), 
        data=
          saldo_deflated_r%>%
          group_by(co_ano_mes)%>%
          arrange(desc(fluxo))%>%
-         summarise(saldo_constant_usd_bi_deflated=vl_fob_constant_usd_bi_deflated[2]-vl_fob_constant_usd_bi_deflated[1])%>%
+         summarise(saldo_constant_usd=vl_fob_constant_usd[2]-vl_fob_constant_usd[1])%>%
          na.omit()
                    )+
   #scale_color_manual(values=c("blue", "red")) +
@@ -277,12 +291,12 @@ ggplot(aes(x=co_ano_mes, y=saldo_constant_usd_bi_deflated),
 ### BRL
 
 ``` r
-ggplot(aes(x=co_ano_mes, y=saldo_constant_brl_bi_deflated), 
+ggplot(aes(x=co_ano_mes, y=saldo_constant_brl), 
        data=
          saldo_deflated_r%>%
          group_by(co_ano_mes)%>%
          arrange(desc(fluxo))%>%
-         summarise(saldo_constant_brl_bi_deflated=vl_fob_constant_brl_bi_deflated[2]-vl_fob_constant_brl_bi_deflated[1])%>%
+         summarise(saldo_constant_brl=vl_fob_constant_brl[2]-vl_fob_constant_brl[1])%>%
          na.omit()
                    )+
   #scale_color_manual(values=c("blue", "red")) +
@@ -293,3 +307,23 @@ ggplot(aes(x=co_ano_mes, y=saldo_constant_brl_bi_deflated),
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+## 6 dígitos
+
+``` r
+by_dig <- comexstat() |> 
+  filter(co_ano>=2022) |>
+  group_by(hs_dig=substr(co_ncm,1,6), fluxo, co_ano=lubridate::year(co_ano_mes))|>
+  summarise(vl_fob=sum(vl_fob))|>
+  collect()|>
+  tidyr::pivot_wider(names_from=c("fluxo", "co_ano"), values_from = vl_fob)%>%
+  mutate(ep=exp_2023-exp_2022-1, ip=imp_2023-imp_2022-1, si=imp_2022+imp_2023)%>%
+  arrange(desc(si))%>%
+  head(30)
+```
+
+``` r
+ggplot(aes(y=hs_dig, x=ip), data=by_dig) + geom_col()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
