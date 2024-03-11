@@ -52,12 +52,6 @@ try(comexstat_download())
 
     ## Downloading data from Comexstat...
 
-``` r
-## might need something like this if you get ssl errors. 
-# try(comexstat_download(method="wget", extra="--no-check-certificate"))
-## if R Session is aborted, try a different download method (e.g. curl, rcurl, wget)
-```
-
 Automatic downloading can be tricky, due to timeout, (lack of) valid
 security certificates on the Brazilian government websites, along other
 issues.
