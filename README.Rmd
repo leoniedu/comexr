@@ -95,7 +95,7 @@ library(ggplot2)
 ggplot(aes(x=as.numeric(co_ano), 
            y=vl_fob_bi), 
        data=cstat_top|>
-         filter(co_ano<2023)|>
+         filter(co_ano<=2023)|>
          mutate(vl_fob_bi=vl_fob/1e9)) +
   geom_line(aes(color=partner)) +
   facet_wrap(~fluxo) +
@@ -113,7 +113,7 @@ You will have access to information not available via the web interface <http://
 ```{r bystate}
 
 bystate <- comexstat() |> 
-  filter(co_ano<2023) |>
+  filter(co_ano<=2023) |>
   group_by(state=sg_uf_mun, co_ano, fluxo)|>
   summarise(vl_fob=sum(vl_fob))|>
   collect()
@@ -221,7 +221,7 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd, color=fluxo),
   geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
   labs(color="", x="", y="US$ Bi (FOB) Deflated by CPI "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
-  geom_vline(xintercept=as.Date("2023-01-01"))+
+  geom_vline(xintercept=as.Date("2024-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 
 ```
@@ -235,7 +235,7 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_brl, color=fluxo),
   #geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
   labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
-  geom_vline(xintercept=as.Date("2023-01-01"))+
+  geom_vline(xintercept=as.Date("2024-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 
 ```
@@ -252,7 +252,7 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_brl, color=fluxo),
   geom_point(aes(y=vl_fob_brl_bi), linetype='dashed')+
   labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
-  geom_vline(xintercept=as.Date("2023-01-01"))+
+  geom_vline(xintercept=as.Date("2024-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 

@@ -7,8 +7,9 @@
 comexstat_download(
   ...,
   force_download = FALSE,
-  increase_timeout = TRUE,
-  replace = TRUE
+  timeout = 600,
+  replace = TRUE,
+  resume = FALSE
 )
 }
 \arguments{
@@ -20,16 +21,5 @@ comexstat_download(
 Download raw data from Comexstat
 }
 \details{
-Depending on local cofiguration and network properties, you might need to set the download methods and other parameters, which are sent to the download.file function.
-}
-\examples{
-\dontrun{
-comexstat_download()
-## might need something like this if you get ssl errors.
-comexstat_download(method="wget", extra="--no-check-certificate")
-## or this, if the default method does not work
-comexstat_download(method="libcurl")
-## or this, if it times out
-options(timeout=100)
-}
+#'
 }

@@ -3,11 +3,13 @@
 #' @noRd
 #' @param filenames file to download, all for everything
 #' @param outdir where to download the files to
+#' @param resume resume partial downloads?
 #' @param ... arguments sent to the base download.file function
 #'
 #' @return paths to the files downloaded
 #'
-download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
+download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, resume=TRUE, timeout=600, ...) {
+  if (resume) n_try <- 10 else n_try <- 1
   urls <- c(
     "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
     "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
@@ -15,7 +17,6 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_COMPLETA.zip",
     "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_COMPLETA.zip",
-    "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM.csv",
     "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS_BLOCO.csv",
     "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CUCI.csv",
     "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM.csv",
@@ -28,10 +29,14 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
   if (filenames[1]=="all") {
     filenames <- names(urls)
   }
-  dfile <- function(..., destfile, replace=TRUE) {
-    if(file.exists(destfile) & !replace) return(TRUE)  else download.file(..., destfile=destfile)
+  res <- data.frame(success=FALSE)
+  j <- 1
+  while ((j<=n_try)&any(!res$success)) {
+    res <- curl::multi_download(urls[tolower(filenames)], destfiles = file.path(outdir, tolower(filenames)), progress = TRUE,
+                                resume = resume, timeout = timeout, ...)
+    j <- j+1
   }
-  res <- lapply(filenames, function(.x) dfile(url=urls[tolower(.x)], destfile = file.path(outdir, .x), replace=replace, ...))
+  #res <- lapply(filenames, function(.x) dfile(url=urls[tolower(.x)], destfile = file.path(outdir, .x), replace=replace, ...))
   file.path(outdir, filenames)
 }
 
@@ -44,28 +49,13 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, ...) {
 #' @export
 #'
 #' @details
-#'
-#' Depending on local cofiguration and network properties, you might need to set the download methods and other parameters, which are sent to the download.file function.
-#'
+#'#'
 #'
 #' @examples
 #' \dontrun{
 #' comexstat_download()
-#' ## might need something like this if you get ssl errors.
-##' comexstat_download(method="wget", extra="--no-check-certificate")
-##' ## or this, if the default method does not work
-##' comexstat_download(method="libcurl")
-##' ## or this, if it times out
-##' options(timeout=100)
-#' }
-comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE, replace=TRUE) {
+comexstat_download <- function(..., force_download=FALSE, timeout=600, replace=TRUE, resume=FALSE) {
   message("Downloading data from Comexstat...")
-  oldtimeout <- options("timeout")$timeout
-  newtimeout <- 60*60*4 ## 4 horas
-  if (increase_timeout & (oldtimeout<newtimeout)) {
-    message("Increasing timeout limit ...")
-    options(timeout=newtimeout)
-  }
   memoise::forget(ncms)
   memoise::forget(ym)
   dir.create(cdircomex, showWarnings = FALSE, recursive = TRUE)
@@ -82,8 +72,9 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE,
   if (any(force_download,!ok,(!purrr::possibly(comexstat_check, FALSE)()))) {
     tryCatch({
     message("downloading files ... can take a while ...")
-    ds <- download_comex("all", ..., replace=replace)
+    ds <- download_comex("all", ..., replace=replace, resume=resume)
     message("Unzipping files...")
+    browser()
     zip::unzip(
       grep("exp_completa", ds, value = TRUE)
       , exdir = cdircomex)
@@ -97,7 +88,6 @@ comexstat_download <- function(..., force_download=FALSE, increase_timeout=TRUE,
       stop("error downloading file ... ")
       })
   }
-  options(timeout=oldtimeout)
 }
 
 

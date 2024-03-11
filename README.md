@@ -52,8 +52,6 @@ try(comexstat_download())
 
     ## Downloading data from Comexstat...
 
-    ## Increasing timeout limit ...
-
 ``` r
 ## might need something like this if you get ssl errors. 
 # try(comexstat_download(method="wget", extra="--no-check-certificate"))
@@ -112,7 +110,7 @@ library(ggplot2)
 ggplot(aes(x=as.numeric(co_ano), 
            y=vl_fob_bi), 
        data=cstat_top|>
-         filter(co_ano<2023)|>
+         filter(co_ano<=2023)|>
          mutate(vl_fob_bi=vl_fob/1e9)) +
   geom_line(aes(color=partner)) +
   facet_wrap(~fluxo) +
@@ -129,7 +127,7 @@ You will have access to information not available via the web interface
 
 ``` r
 bystate <- comexstat() |> 
-  filter(co_ano<2023) |>
+  filter(co_ano<=2023) |>
   group_by(state=sg_uf_mun, co_ano, fluxo)|>
   summarise(vl_fob=sum(vl_fob))|>
   collect()
@@ -241,7 +239,7 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd, color=fluxo),
   geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
   labs(color="", x="", y="US$ Bi (FOB) Deflated by CPI "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
-  geom_vline(xintercept=as.Date("2023-01-01"))+
+  geom_vline(xintercept=as.Date("2024-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
@@ -249,6 +247,22 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd, color=fluxo),
     ## Removed 22 rows containing missing values (`geom_line()`).
 
 ![](README_files/figure-gfm/deflated2-1.png)<!-- -->
+
+``` r
+ggplot(aes(x=co_ano_mes, y=vl_fob_constant_brl, color=fluxo), 
+       data=saldo_deflated_r) +
+  scale_color_manual(values=c("blue", "red")) +
+  geom_line() +
+  #geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
+  labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
+  theme_linedraw() + 
+  geom_vline(xintercept=as.Date("2024-01-01"))+
+  theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
+```
+
+    ## Warning: Removed 22 rows containing missing values (`geom_line()`).
+
+![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 ### Somente Dezembro (anos completos)
 
@@ -261,14 +275,14 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_brl, color=fluxo),
   geom_point(aes(y=vl_fob_brl_bi), linetype='dashed')+
   labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
-  geom_vline(xintercept=as.Date("2023-01-01"))+
+  geom_vline(xintercept=as.Date("2024-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
     ## Warning in geom_point(aes(y = vl_fob_brl_bi), linetype = "dashed"): Ignoring
     ## unknown parameters: `linetype`
 
-![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ``` r
 ggplot(aes(x=co_ano_mes, y=saldo_constant_usd), 
@@ -286,7 +300,7 @@ ggplot(aes(x=co_ano_mes, y=saldo_constant_usd),
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ### BRL
 
@@ -306,7 +320,7 @@ ggplot(aes(x=co_ano_mes, y=saldo_constant_brl),
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ## 6 dígitos
 
@@ -326,4 +340,4 @@ by_dig <- comexstat() |>
 ggplot(aes(y=hs_dig, x=ip), data=by_dig) + geom_col()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
