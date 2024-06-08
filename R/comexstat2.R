@@ -26,6 +26,7 @@ comexstat_rename <- function(x) {
     file="arquivo"
     )
   x|>
+    dplyr::rename_with(tolower)|>
     dplyr::rename(dplyr::any_of(lookup))|>
     dplyr::mutate(across(dplyr::any_of(c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd")), bit64::as.integer64))
 }
@@ -39,14 +40,16 @@ comexstat2_check <- function() {
   cached_hs4 <- comexstat_hs4()|>
     dplyr::group_by(year, direction)|>
     dplyr::mutate(number_of_lines=1)|>
-    dplyr::summarise(across(c(qt_stat, kg_net, fob_usd, freight_usd, insurance_usd,number_of_lines), sum))%>%
+    dplyr::summarise(across(c(fob_usd, number_of_lines), sum))%>%
     dplyr::collect()
   conf <- comexstat2("imp_totais_conferencia")|>
     dplyr::bind_rows(comexstat2("exp_totais_conferencia"))|>
     dplyr::mutate(direction=dplyr::if_else(grepl("IMP", file), "imp", "exp"))
   checked <- conf|>dplyr::anti_join(cached, by = join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines, direction))
-  if (nrow(checked)>0) stop("Conference file mismatch with downloaded data!")
-  checked_hs4 <- conf|>dplyr::anti_join(cached_hs4, by = join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines, direction))
+  if (nrow(checked)>0) stop("Conference file mismatch NCM with downloaded data!")
+  checked_hs4 <- conf|>dplyr::anti_join(cached_hs4, by = join_by(year, fob_usd, direction))
+  if (nrow(checked_hs4)>0) stop("Conference file mismatch HS4 with downloaded data!")
+  print("All clear!")
 }
 
 #' Open ComexStat HS4 Trade Dataset
@@ -80,22 +83,25 @@ comexstat2_check <- function() {
 #' @export
 comexstat_hs4 <- function() {
   # Define schema for HS4 data
-  schema_hs4 <- arrow::schema(
-    year = arrow::int32(),
-    month = arrow::int32(),
-    hs4 = arrow::int32(),
-    country_code = arrow::int32(),
-    state_abb = arrow::string(),
-    mun_code = arrow::int32(),
-    kg_net = arrow::int64(),
-    fob_usd = arrow::int64()
-  )
+  # FIX: how to set schema including hive data
+  # schema_hs4 <- arrow::schema(
+  #   #direction = arrow::string(),
+  #   year = arrow::int32(),
+  #   month = arrow::int32(),
+  #   hs4 = arrow::int32(),
+  #   country_code = arrow::int32(),
+  #   state_abb = arrow::string(),
+  #   mun_code = arrow::int32(),
+  #   kg_net = arrow::int64(),
+  #   fob_usd = arrow::int64()
+  # )
   # Open import and export HS4 datasets
   hs4 <- arrow::open_delim_dataset(
     sources = file.path(comexstatr:::cdircomex, "hs4"),
     delim = ";",
-    schema = schema_hs4,
-    skip = 1)
+    #partitioning = arrow::schema(direction = arrow::string()),
+    #schema = schema_hs4,
+    skip = 0)|>comexstat_rename()
   hs4
 }
 
