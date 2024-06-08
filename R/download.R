@@ -33,7 +33,7 @@ download_comex <- function(filenames, outdir=ddircomex, replace=TRUE, resume=TRU
   j <- 1
   while ((j<=n_try)&any(!res$success)) {
     res <- curl::multi_download(urls[tolower(filenames)], destfiles = file.path(outdir, tolower(filenames)), progress = TRUE,
-                                resume = resume, timeout = timeout, ...)
+                                resume = resume, timeout = 10000, ...)
     j <- j+1
   }
   #res <- lapply(filenames, function(.x) dfile(url=urls[tolower(.x)], destfile = file.path(outdir, .x), replace=replace, ...))

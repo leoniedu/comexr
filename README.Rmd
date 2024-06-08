@@ -215,10 +215,10 @@ ggplot(aes(x=co_ano_mes, y=vl_fob_constant_usd, color=fluxo),
        data=saldo_deflated_r) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
-  geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
+  #geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
   labs(color="", x="", y="US$ Bi (FOB) Deflated by CPI "%>%paste0(format(max(selected_deflated_r$co_ano_mes), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
-  geom_vline(xintercept=as.Date("2024-01-01"))+
+  geom_vline(xintercept=as.Date("2023-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 
 ```
