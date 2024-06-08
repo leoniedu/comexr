@@ -19,8 +19,8 @@ get_deflators <- function(updated=Sys.Date(), na_omit=FALSE) {
 #' Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.
 #'
 #' @examples
-#' comexstat2_download()
-#' comexstat2("ncm")|>head()
+#' comexstat_download()
+#' comexstat("ncm")|>head()
 #' @export
 comexstat <- function(table, ...) {
   read_comex <- function(name, dir=ddircomex, extension=".csv") {
@@ -72,8 +72,8 @@ comexstat_check <- function() {
     dplyr::mutate(number_of_lines=1)|>
     dplyr::summarise(across(c(fob_usd, number_of_lines), sum))%>%
     dplyr::collect()
-  conf <- comexstat2("imp_totais_conferencia")|>
-    dplyr::bind_rows(comexstat2("exp_totais_conferencia"))|>
+  conf <- comexstat("imp_totais_conferencia")|>
+    dplyr::bind_rows(comexstat("exp_totais_conferencia"))|>
     dplyr::mutate(direction=dplyr::if_else(grepl("IMP", file), "imp", "exp"))
   checked <- conf|>dplyr::anti_join(cached, by = join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines, direction))
   if (nrow(checked)>0) stop("Conference file mismatch NCM with downloaded data!")

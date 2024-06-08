@@ -642,14 +642,14 @@ trade partners, treating countries in Mercosul and European Union as
 blocks.</h3>
 <p>Using a programming language like R makes it easy to generate
 statistics and reports at the intended level of analysis.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>msul <span class="ot">&lt;-</span> <span class="fu">comexstat2</span>(<span class="st">&quot;pais_bloco&quot;</span>)<span class="sc">|&gt;</span></span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>msul <span class="ot">&lt;-</span> <span class="fu">comexstat</span>(<span class="st">&quot;pais_bloco&quot;</span>)<span class="sc">|&gt;</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">filter</span>(block_code<span class="sc">==</span><span class="dv">111</span>)<span class="sc">|&gt;</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">pull</span>(country_code)</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>eu <span class="ot">&lt;-</span> <span class="fu">comexstat2</span>(<span class="st">&quot;pais_bloco&quot;</span>)<span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>eu <span class="ot">&lt;-</span> <span class="fu">comexstat</span>(<span class="st">&quot;pais_bloco&quot;</span>)<span class="sc">|&gt;</span></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="fu">filter</span>(block_code<span class="sc">==</span><span class="dv">22</span>)<span class="sc">|&gt;</span></span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="fu">pull</span>(country_code)</span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>pb <span class="ot">&lt;-</span> <span class="fu">comexstat2</span>(<span class="st">&quot;pais&quot;</span>)<span class="sc">|&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>pb <span class="ot">&lt;-</span> <span class="fu">comexstat</span>(<span class="st">&quot;pais&quot;</span>)<span class="sc">|&gt;</span></span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="fu">transmute</span>(country_code, </span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>            <span class="at">partner=</span></span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>              <span class="fu">case_when</span>(country_code<span class="sc">%in%</span>msul <span class="sc">~</span> <span class="st">&quot;Mercosul&quot;</span>,</span>
@@ -724,7 +724,7 @@ using CPI (for USD) or IPCA (for BRL) (Experimental)</h2>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="fu">library</span>(runner)</span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>selected_deflated_r <span class="ot">&lt;-</span> selected_deflated<span class="sc">%&gt;%</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">comexstat2</span>(<span class="st">&quot;pais&quot;</span>))<span class="sc">%&gt;%</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">comexstat</span>(<span class="st">&quot;pais&quot;</span>))<span class="sc">%&gt;%</span></span>
 <span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="fu">group_by</span>(direction, country_name)<span class="sc">%&gt;%</span></span>
 <span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="fu">arrange</span>(date)<span class="sc">%&gt;%</span></span>
 <span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(fob_usd))<span class="sc">%&gt;%</span></span>

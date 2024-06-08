@@ -10,6 +10,6 @@ comexstat(table, ...)
 Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.
 }
 \examples{
-comexstat2_download()
-comexstat2("ncm")|>head()
+comexstat_download()
+comexstat("ncm")|>head()
 }

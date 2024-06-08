@@ -61,14 +61,14 @@ Using a programming language like R makes it easy to generate statistics
 and reports at the intended level of analysis.
 
 ``` r
-msul <- comexstat2("pais_bloco")|>
+msul <- comexstat("pais_bloco")|>
   filter(block_code==111)|>
   pull(country_code)
-eu <- comexstat2("pais_bloco")|>
+eu <- comexstat("pais_bloco")|>
   filter(block_code==22)|>
   pull(country_code)
 
-pb <- comexstat2("pais")|>
+pb <- comexstat("pais")|>
   transmute(country_code, 
             partner=
               case_when(country_code%in%msul ~ "Mercosul",
@@ -151,7 +151,7 @@ selected_deflated <- comexstat_ncm()%>%
 
 library(runner)
 selected_deflated_r <- selected_deflated%>%
-  left_join(comexstat2("pais"))%>%
+  left_join(comexstat("pais"))%>%
   group_by(direction, country_name)%>%
   arrange(date)%>%
   filter(!is.na(fob_usd))%>%
