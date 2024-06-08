@@ -22,7 +22,7 @@ get_deflators <- function(updated=Sys.Date(), na_omit=FALSE) {
 #' comexstat2_download()
 #' comexstat2("ncm")|>head()
 #' @export
-comexstat2 <- function(table, ...) {
+comexstat <- function(table, ...) {
   read_comex <- function(name, dir=ddircomex, extension=".csv") {
     file.path(dir, paste0(name, extension)) |>
       read1_comex() |>
@@ -61,7 +61,7 @@ comexstat_rename <- function(x) {
     dplyr::mutate(across(dplyr::any_of(c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd")), bit64::as.integer64))
 }
 
-comexstat2_check <- function() {
+comexstat_check <- function() {
   cached <- comexstat_ncm()|>
     dplyr::group_by(year, direction)|>
     dplyr::mutate(number_of_lines=1)|>
