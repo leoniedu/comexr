@@ -1,4 +1,27 @@
+#' Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USE)
+#'
+#' @param updated
+#'
+#' @return A data frame with columns co_ano_mes (date), ipca (monthly inflation from Brazil), ipca_i (monthly inflation from Brazil indexed such as 1997-01-01 is 1), cpi index (monthly inflation from USA).
+#' @export
+#'
+get_deflators <- function(updated=Sys.Date(), na_omit=FALSE) {
+  res <- get_ipca()|>
+    dplyr::full_join(get_brlusd(), by= "date")|>
+    dplyr::full_join(get_cpi(), by= "date")|>
+    dplyr::rename(co_ano_mes=date)|>
+    dplyr::arrange(co_ano_mes)
+  if (na_omit) res <- na.omit(res)
+  res
+}
 
+
+#' Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.
+#'
+#' @examples
+#' comexstat2_download()
+#' comexstat2("ncm")|>head()
+#' @export
 comexstat2 <- function(table, ...) {
   read_comex <- function(name, dir=ddircomex, extension=".csv") {
     file.path(dir, paste0(name, extension)) |>
@@ -17,17 +40,24 @@ comexstat2 <- function(table, ...) {
 
 comexstat_rename <- function(x) {
   lookup <- c(year = "co_ano",
-    qt_stat = "qt_estat",
-    kg_net="kg_liquido",
-    fob_usd="vl_fob",
-    freight_usd="vl_frete",
-    insurance_usd="vl_seguro",
-    number_of_lines="numero_linhas",
-    file="arquivo"
-    )
+              month = "co_mes",
+              country_code = "co_pais",
+              country_name = "no_pais_ing",
+              block_code = "co_bloco",
+              block_name = "no_bloco_ing",
+              qt_stat = "qt_estat",
+              kg_net="kg_liquido",
+              fob_usd="vl_fob",
+              freight_usd="vl_frete",
+              insurance_usd="vl_seguro",
+              number_of_lines="numero_linhas",
+              file="arquivo"
+  )
   x|>
     dplyr::rename_with(tolower)|>
     dplyr::rename(dplyr::any_of(lookup))|>
+    dplyr::mutate(across(dplyr::any_of(c("country_code")), as.integer))|>
+    dplyr::mutate(across(dplyr::any_of(c("ncm")), as.character))|>
     dplyr::mutate(across(dplyr::any_of(c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd")), bit64::as.integer64))
 }
 
@@ -61,7 +91,7 @@ comexstat2_check <- function() {
 #'   - `month`: Month (integer)
 #'   - `hs4`: 4-digit HS product code (integer)
 #'   - `country_code`: Country code (integer)
-#'   - `state_abb`: Brazilian state abbreviation (string)
+#'   - `state`: Brazilian state abbreviation (string)
 #'   - `mun_code`: Municipality code (integer)
 #'   - `kg_net`: Net weight in kilograms (integer64)
 #'   - `fob_usd`: FOB value in US dollars (integer64)
@@ -88,7 +118,7 @@ comexstat_hs4 <- function() {
   #   #direction = arrow::string(),
   #   year = arrow::int32(),
   #   month = arrow::int32(),
-  #   hs4 = arrow::int32(),
+  #   hs4 = arrow::string(),
   #   country_code = arrow::int32(),
   #   state_abb = arrow::string(),
   #   mun_code = arrow::int32(),
@@ -112,10 +142,10 @@ comexstat_hs4 <- function() {
 #' @return An Arrow Dataset containing combined import and export NCM trade data, with an additional `direction` column indicating "exp" (export) or "imp" (import). The dataset has the following columns:
 #'   - `year`: Year (integer)
 #'   - `month`: Month (integer)
-#'   - `ncm`: 8-digit NCM product code (integer)
+#'   - `ncm`: 8-digit NCM product code (string)
 #'   - `unit_code`: Unit of measurement code (integer)
 #'   - `country_code`: Country code (integer)
-#'   - `state_abb_ncm`: Brazilian state abbreviation (string)
+#'   - `state_abb`: Brazilian state abbreviation (string)
 #'   - `transp_mode_code`: Transportation mode code (integer)
 #'   - `urf_code`: Customs clearance unit code (integer)
 #'   - `qt_stat`: Statistical quantity (integer64)
@@ -149,10 +179,10 @@ comexstat_ncm <- function() {
   schema_exp_ncm <- arrow::schema(
     year = arrow::int32(),
     month = arrow::int32(),
-    ncm = arrow::int32(),
+    ncm = arrow::string(),
     unit_code = arrow::int32(),
     country_code = arrow::int32(),
-    state_abb_ncm = arrow::string(),
+    state_abb = arrow::string(),
     transp_mode_code = arrow::int32(),
     urf_code = arrow::int32(),
     qt_stat = arrow::int64(),
@@ -188,7 +218,56 @@ comexstat_ncm <- function() {
   )
   # Combine imports and exports, adding direction column
   df <- arrow::open_dataset(list(imp_ncm, exp_ncm)) %>%
-    dplyr::mutate(direction = if_else(is.na(freight_usd), "exp", "imp"))
+    dplyr::mutate(direction = if_else(is.na(freight_usd), "exp", "imp"),
+                  date=lubridate::make_date(year, month),
+                  cif_usd=fob_usd+freight_usd+insurance_usd)
   df
 }
 
+
+
+
+
+#' Deflate comexstat series
+#'
+#' @param data trade data to deflate
+#' @param deflators data.frame with deflators
+#' @param basedate base date to deflate to.
+#'
+#' @return deflated data.
+#' @export
+#'
+comexstat_deflated <- function(data=comexstat_ncm(), basedate=NULL, deflators=get_deflators(na_omit = TRUE)) {
+  deflators_complete <- deflators|>na.omit()
+  if (nrow(deflators_complete)!=nrow(deflators)) stop("Missing data in deflators.")
+  get_base <- function(x, date, basedate=NULL) {
+    if (is.null(basedate)) {
+      basedate <- max(date[!is.na(x)])
+    }
+    r <- date==basedate
+    if (sum(r)!=1) stop()
+    dplyr::tibble(x=x[r], basedate=as.Date(basedate))
+  }
+  deflators_0 <- deflators|>
+    dplyr::arrange(date)
+  base_cpi <- with(deflators_0, get_base(x=cpi, date=date, basedate=basedate))
+  base_ipca <- with(deflators_0, get_base(x=ipca_i, date=date, basedate=basedate))
+  deflators_1 <- deflators_0|>
+    dplyr::mutate(
+      #co_ano=as.integer(lubridate::year(date)),
+      #co_mes=as.integer(lubridate::month(date)),
+      cpi_r=base_cpi$x/cpi,
+      cpi_basedate=base_cpi$basedate,
+      ipca_r=base_ipca$x/ipca_i,
+      ipca_basedate=base_ipca$basedate
+    )
+  data|>
+    ## right join so as get up to the last data
+    dplyr::right_join(deflators_1, by=c("date"))|>
+    dplyr::mutate(
+      fob_usd_constant=fob_usd*(cpi_r),
+      fob_brl_constant=fob_usd*brlusd*ipca_r,
+      cif_usd_constant=cif_usd*(cpi_r),
+      cif_brl_constant=cif_usd*brlusd*ipca_r,
+    )
+}

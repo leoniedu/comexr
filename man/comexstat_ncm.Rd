@@ -11,10 +11,10 @@ An Arrow Dataset containing combined import and export NCM trade data, with an a
 \itemize{
 \item \code{year}: Year (integer)
 \item \code{month}: Month (integer)
-\item \code{ncm}: 8-digit NCM product code (integer)
+\item \code{ncm}: 8-digit NCM product code (string)
 \item \code{unit_code}: Unit of measurement code (integer)
 \item \code{country_code}: Country code (integer)
-\item \code{state_abb_ncm}: Brazilian state abbreviation (string)
+\item \code{state_abb}: Brazilian state abbreviation (string)
 \item \code{transp_mode_code}: Transportation mode code (integer)
 \item \code{urf_code}: Customs clearance unit code (integer)
 \item \code{qt_stat}: Statistical quantity (integer64)

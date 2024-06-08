@@ -229,7 +229,7 @@ comexstat_m <- function(m=12, data=comextat()) {
 #' @return deflated data.
 #' @export
 #'
-comexstat_deflated <- function(data=comexstat(), basedate=NULL, deflators=get_deflators(na_omit = TRUE)) {
+comexstat_deflated_old <- function(data=comexstat(), basedate=NULL, deflators=get_deflators(na_omit = TRUE)) {
   deflators_complete <- deflators|>na.omit()
   if (nrow(deflators_complete)!=nrow(deflators)) stop("Missing data in deflators.")
   get_base <- function(x, date, basedate=NULL) {

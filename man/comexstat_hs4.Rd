@@ -13,7 +13,7 @@ An Arrow Dataset containing combined import and export HS4 trade data. The datas
 \item \code{month}: Month (integer)
 \item \code{hs4}: 4-digit HS product code (integer)
 \item \code{country_code}: Country code (integer)
-\item \code{state_abb}: Brazilian state abbreviation (string)
+\item \code{state}: Brazilian state abbreviation (string)
 \item \code{mun_code}: Municipality code (integer)
 \item \code{kg_net}: Net weight in kilograms (integer64)
 \item \code{fob_usd}: FOB value in US dollars (integer64)
