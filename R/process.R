@@ -110,10 +110,10 @@ comexstat_rewrite <- function() {
 #     dplyr::summarise(across(where(is.numeric), sum), .groups = "keep")|>
 #     collect()
 #   g1 <- dplyr::group_vars(df)
-#   df%>%
+#   df|>
 #     dplyr::ungroup()|>
-#     tidyr::complete(co_ano_mes=seq_d , !!!data_syms(g1%>%setdiff("co_ano_mes")) #,fill = list(vl_fob=0, vl_cif=0, kg_liquido=0, qt_estat=0)
-#                     )%>%
+#     tidyr::complete(co_ano_mes=seq_d , !!!data_syms(g1|>setdiff("co_ano_mes")) #,fill = list(vl_fob=0, vl_cif=0, kg_liquido=0, qt_estat=0)
+#                     )|>
 #     group_by(!!!data_syms(g1))
 # }
 

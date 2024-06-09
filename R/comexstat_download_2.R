@@ -61,7 +61,7 @@ comexstat_download <- function(years=2023:2024,
       "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_ISIC.csv",
       "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CGCE.csv",
       "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS.csv",
-      "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_UNIDADE.csv"))%>%
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_UNIDADE.csv"))|>
       dplyr::mutate(path=file.path(comexstatr:::cdircomex,basename(url) |>
                                      tolower()))
     todownload <- todownload|>dplyr::bind_rows(aux_data)
@@ -79,7 +79,7 @@ comexstat_download <- function(years=2023:2024,
     j <- j+1
   }
   ## delete urls not found
-  todelete <- res|>dplyr::filter(!grepl("balanca.economia.gov.br", url))%>%pull(destfile)
+  todelete <- res|>dplyr::filter(!grepl("balanca.economia.gov.br", url))|>pull(destfile)
   unlink(todelete)
   if (length(todelete)>0) warning(glue::glue("{length(todelete)} urls not found."))
   if (any(!todownload$ok)) stop("Error downloading data.")

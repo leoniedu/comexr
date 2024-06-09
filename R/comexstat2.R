@@ -65,12 +65,12 @@ comexstat_check <- function() {
   cached <- comexstat_ncm()|>
     dplyr::group_by(year, direction)|>
     dplyr::mutate(number_of_lines=1)|>
-    dplyr::summarise(across(c(qt_stat, kg_net, fob_usd, freight_usd, insurance_usd,number_of_lines), sum))%>%
+    dplyr::summarise(across(c(qt_stat, kg_net, fob_usd, freight_usd, insurance_usd,number_of_lines), sum))|>
     dplyr::collect()
   cached_hs4 <- comexstat_hs4()|>
     dplyr::group_by(year, direction)|>
     dplyr::mutate(number_of_lines=1)|>
-    dplyr::summarise(across(c(fob_usd, number_of_lines), sum))%>%
+    dplyr::summarise(across(c(fob_usd, number_of_lines), sum))|>
     dplyr::collect()
   conf <- comexstat("imp_totais_conferencia")|>
     dplyr::bind_rows(comexstat("exp_totais_conferencia"))|>
@@ -169,8 +169,8 @@ comexstat_hs4 <- function() {
 #'
 #' # Explore the dataset:
 #' print(ncm_dataset)
-#' ncm_dataset|>group_by(year, direction)|>summarise(fob_usd=sum(fob_usd), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)%>%collect()
-#' comexstat_ncm()%>%group_by(country_code)%>%summarise(fob_usd=sum(fob_usd, na.rm=TRUE), freight_usd=sum(freight_usd))%>%mutate(p=freight_usd/fob_usd)%>%arrange(desc(p))%>%collect()
+#' ncm_dataset|>group_by(year, direction)|>summarise(fob_usd=sum(fob_usd), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)|>collect()
+#' comexstat_ncm()|>group_by(country_code)|>summarise(fob_usd=sum(fob_usd, na.rm=TRUE), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)|>arrange(desc(p))|>collect()
 #' }
 #'
 #' @export
@@ -191,12 +191,12 @@ comexstat_ncm <- function() {
   )
 
   schema_imp_ncm <- schema_exp_ncm$AddField(
-    schema_exp_ncm %>% length(),
+    schema_exp_ncm |> length(),
     field = arrow::field("freight_usd", arrow::int64())
   )
 
   schema_imp_ncm <- schema_imp_ncm$AddField(
-    schema_exp_ncm %>% length() + 1,
+    schema_exp_ncm |> length() + 1,
     field = arrow::field("insurance_usd", arrow::int64())
   )
 
@@ -217,7 +217,7 @@ comexstat_ncm <- function() {
     skip = 1
   )
   # Combine imports and exports, adding direction column
-  df <- arrow::open_dataset(list(imp_ncm, exp_ncm)) %>%
+  df <- arrow::open_dataset(list(imp_ncm, exp_ncm)) |>
     dplyr::mutate(direction = if_else(is.na(freight_usd), "exp", "imp"),
                   date=lubridate::make_date(year, month),
                   cif_usd=fob_usd+freight_usd+insurance_usd)
