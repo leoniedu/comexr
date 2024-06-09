@@ -26,7 +26,7 @@ An Arrow Dataset containing combined import and export NCM trade data, with an a
 }
 }
 \description{
-This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the \code{comexstat_download2()} function.
+This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the \code{comexstat_download()} function.
 }
 \details{
 This function assumes that the NCM data files are named according to the following pattern:

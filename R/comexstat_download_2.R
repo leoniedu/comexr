@@ -1,4 +1,4 @@
-' Download ComexStat Trade Data (v2)
+' Download ComexStat Trade Data
 #'
 #' This function downloads Brazilian international trade data (ComexStat) from the Ministry of Economy's website. It supports various data types, years, and trade directions.
 #'
@@ -19,19 +19,20 @@
 #' @examples
 #' \dontrun{
 #' # Download import and export data for 1997-1998 in both NCM and HS4 formats:
-#' comexstat_download2()
+#' comexstat_download()
 #'
 #' # Download only import data for 2020-2022 in NCM format:
-#' comexstat_download2(years = 2020:2022, directions = "imp", types = "ncm")
+#' comexstat_download(years = 2020:2022, directions = "imp", types = "ncm")
 #' }
 #'
 #' @export
-comexstat_download2 <- function(years=2023:2024,
+comexstat_download <- function(years=2023:2024,
                                 directions=c("imp", "exp"),
                                 types=c("ncm", "hs4"),
                                 download_aux=TRUE,
                                 cache=TRUE,
                                 .progress=TRUE, n_tries=30) {
+  sapply(file.path(comexstatr:::cdircomex, directions), dir.create(showWarnings = TRUE, recursive=TRUE))
   stopifnot(all(types%in%c("hs4", "ncm")))
   todownload <- tidyr::crossing(tibble::tibble(year=years), tibble::tibble(direction=directions), tibble::tibble(type=types))|>
     dplyr::mutate(

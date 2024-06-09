@@ -3,7 +3,6 @@
 export(comexstat)
 export(comexstat_deflated)
 export(comexstat_download)
-export(comexstat_download2)
 export(comexstat_hs4)
 export(comexstat_ncm)
 export(get_deflators)

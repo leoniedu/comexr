@@ -21,7 +21,7 @@ An Arrow Dataset containing combined import and export HS4 trade data. The datas
 }
 }
 \description{
-This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data is assumed to be located in the ComexStat data directory and to have been downloaded using the \code{comexstat_download2()} function.
+This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data is assumed to be located in the ComexStat data directory and to have been downloaded using the \code{comexstat_download()} function.
 }
 \details{
 This function assumes that the HS4 data files are named according to the following pattern:

@@ -84,7 +84,7 @@ comexstat_check <- function() {
 
 #' Open ComexStat HS4 Trade Dataset
 #'
-#' This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data is assumed to be located in the ComexStat data directory and to have been downloaded using the `comexstat_download2()` function.
+#' This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data is assumed to be located in the ComexStat data directory and to have been downloaded using the `comexstat_download()` function.
 #'
 #' @return An Arrow Dataset containing combined import and export HS4 trade data. The dataset has the following columns:
 #'   - `year`: Year (integer)
@@ -137,7 +137,7 @@ comexstat_hs4 <- function() {
 
 #' Open ComexStat NCM Trade Dataset
 #'
-#' This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the `comexstat_download2()` function.
+#' This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the `comexstat_download()` function.
 #'
 #' @return An Arrow Dataset containing combined import and export NCM trade data, with an additional `direction` column indicating "exp" (export) or "imp" (import). The dataset has the following columns:
 #'   - `year`: Year (integer)
