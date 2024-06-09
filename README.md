@@ -47,7 +47,7 @@ library(dplyr)
 ``` r
 ##downloading
 
-try(comexstat_download2(years = 1997:2024))
+try(comexstat_download2(years = 2022:2024, types = "ncm"))
 ```
 
 Automatic downloading can be tricky, due to timeout, (lack of) valid
@@ -61,6 +61,11 @@ Using a programming language like R makes it easy to generate statistics
 and reports at the intended level of analysis.
 
 ``` r
+# library(duckdb)
+# library(dplyr)
+# library(comexstatr)
+# duckdb <- dbConnect(duckdb())
+# a <- comexstat_ncm()%>% arrow::to_duckdb()
 msul <- comexstat("pais_bloco")|>
   filter(block_code==111)|>
   pull(country_code)
@@ -250,7 +255,7 @@ ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction),
 
 ![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
-### Somente último mês
+### Last month
 
 ``` r
 ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction), 
@@ -309,27 +314,31 @@ ggplot(aes(x=date, y=balance_brl_constant),
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-## By HS Code (6 digits)
+## By CGCE
 
 ``` r
-by_dig <- comexstat_ncm() |> 
-  filter(year>=2022) |>
-  group_by(hs_dig=substr(ncm,1,6), direction, year)|>
+by_cat <- comexstat_ncm() |> 
+  filter(year>=2022
+         ## usa
+         #, country_code==249
+         ## china
+         , country_code==160
+         ) |>
+  left_join(ncms()%>%select(ncm=co_ncm, 
+                            name=no_cgce_n3_ing, code=co_cgce_n3
+                            #name=no_ncm_ing, code=co_ncm
+                            ))|>
+  group_by(name,code, direction, year)|>
   summarise(fob_usd=sum(fob_usd))|>
   collect()|>
   tidyr::pivot_wider(names_from=c("direction", "year"), values_from = fob_usd)%>%
   mutate(ep=exp_2023-exp_2022-1, ip=imp_2023-imp_2022-1, si=imp_2022+imp_2023)%>%
   arrange(desc(si))%>%
-  head(30)
+  head(10)
 ```
 
 ``` r
-ggplot(aes(y=hs_dig, x=ip), data=by_dig) + geom_col()
+ggplot(aes(y=paste0(code, ": ", substr(name,1,40)), x=as.numeric(ip)/1e9), data=by_cat%>%mutate(code=forcats::fct_inseq(code))) + geom_col() + labs(x="", y="")
 ```
-
-    ## Don't know how to automatically pick scale for object of type <integer64>.
-    ## Defaulting to continuous.
-
-    ## Warning: Removed 30 rows containing missing values (`position_stack()`).
 
 ![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->

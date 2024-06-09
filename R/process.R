@@ -24,21 +24,18 @@ ncms <- function() {
 #' @details The downloaded files are one for the exports and other for imports, with data for the entire period available (1997-).
 #'
 #' This function reads those files using arrow by calling function comexstat_raw. It then writes to the data directory the partitioned files.
-# comexstat_rewrite <- function() {
-#   df <- comexstat_raw()|>
-#     dplyr::mutate(co_ano_mes=lubridate::make_date(co_ano, co_mes), co_ano=NULL, co_mes=NULL)|>
-#     dplyr::select(co_ano_mes, everything())
-#   ## write partitioned data
-#   ddir_partition <- file.path(ddircomex, "comexstat_partition")
-#   unlink(ddir_partition, recursive = TRUE)
-#   dir.create(ddir_partition, showWarnings = FALSE)
-#   df |>
-#     ## data will be written using the partitions
-#     ## in the group_by statement
-#     dplyr::group_by(fluxo, co_ano_mes) |>
-#     arrow::write_dataset(ddir_partition, format = "parquet")
-#   ddir_partition
-# }
+comexstat_rewrite <- function() {
+  ## write partitioned data
+  ddir_partition <- file.path(ddircomex, "comexstat_partition")
+  unlink(ddir_partition, recursive = TRUE)
+  dir.create(ddir_partition, showWarnings = FALSE)
+  comexstat_ncm() |>
+    ## data will be written using the partitions
+    ## in the group_by statement
+    dplyr::group_by(direction, year, month) |>
+    arrow::write_dataset(ddir_partition, format = "parquet")
+  ddir_partition
+}
 
 
 #' Create a data frame with a co_ano_mes_m column with an id every m months
