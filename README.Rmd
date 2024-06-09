@@ -40,7 +40,7 @@ library(dplyr)
 
 ##downloading
 
-try(comexstat_download2(years = 2022:2024, types = "ncm"))
+try(comexstat_download(years = 2022:2024, types = "ncm"))
 
 
 ```

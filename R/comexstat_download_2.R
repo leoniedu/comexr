@@ -32,7 +32,7 @@ comexstat_download <- function(years=2023:2024,
                                 download_aux=TRUE,
                                 cache=TRUE,
                                 .progress=TRUE, n_tries=30) {
-  sapply(file.path(comexstatr:::cdircomex, directions), dir.create(showWarnings = TRUE, recursive=TRUE))
+  sapply(file.path(comexstatr:::cdircomex, directions), dir.create, showWarnings = TRUE, recursive=TRUE)
   stopifnot(all(types%in%c("hs4", "ncm")))
   todownload <- tidyr::crossing(tibble::tibble(year=years), tibble::tibble(direction=directions), tibble::tibble(type=types))|>
     dplyr::mutate(
