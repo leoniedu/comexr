@@ -11,7 +11,8 @@ comexstat_download(
   download_aux = TRUE,
   cache = TRUE,
   .progress = TRUE,
-  n_tries = 30
+  n_tries = 30,
+  ...
 )
 }
 \arguments{

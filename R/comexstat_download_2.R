@@ -31,8 +31,8 @@ comexstat_download <- function(years=2023:2024,
                                 types=c("ncm", "hs4"),
                                 download_aux=TRUE,
                                 cache=TRUE,
-                                .progress=TRUE, n_tries=30) {
-  sapply(file.path(comexstatr:::cdircomex, directions), dir.create, showWarnings = TRUE, recursive=TRUE)
+                                .progress=TRUE, n_tries=30, ...) {
+  sapply(file.path(comexstatr:::cdircomex, directions), dir.create, showWarnings = FALSE, recursive=TRUE)
   stopifnot(all(types%in%c("hs4", "ncm")))
   todownload <- tidyr::crossing(tibble::tibble(year=years), tibble::tibble(direction=directions), tibble::tibble(type=types))|>
     dplyr::mutate(
@@ -74,12 +74,12 @@ comexstat_download <- function(years=2023:2024,
     if (j>1) print(glue::glue("Try #{j}!"))
     res <- curl::multi_download(todownload$url,
                                 destfiles = todownload$path, progress = .progress,
-                                resume = cache, timeout = 100, multiplex = TRUE)
+                                resume = cache, timeout = 100, multiplex = TRUE, ...)
     todownload$ok <- (res$success%in%TRUE)
     j <- j+1
   }
   ## delete urls not found
-  todelete <- res|>dplyr::filter(!grepl("balanca.economia.gov.br", url))|>pull(destfile)
+  todelete <- res|>dplyr::filter(!grepl("balanca.economia.gov.br", url))|>dplyr::pull(destfile)
   unlink(todelete)
   if (length(todelete)>0) warning(glue::glue("{length(todelete)} urls not found."))
   if (any(!todownload$ok)) stop("Error downloading data.")

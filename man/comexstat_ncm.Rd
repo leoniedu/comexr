@@ -45,8 +45,8 @@ ncm_dataset <- comexstat_ncm()
 
 # Explore the dataset:
 print(ncm_dataset)
-ncm_dataset|>group_by(year, direction)|>summarise(fob_usd=sum(fob_usd), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)\%>\%collect()
-comexstat_ncm()\%>\%group_by(country_code)\%>\%summarise(fob_usd=sum(fob_usd, na.rm=TRUE), freight_usd=sum(freight_usd))\%>\%mutate(p=freight_usd/fob_usd)\%>\%arrange(desc(p))\%>\%collect()
+ncm_dataset|>group_by(year, direction)|>summarise(fob_usd=sum(fob_usd), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)|>collect()
+comexstat_ncm()|>group_by(country_code)|>summarise(fob_usd=sum(fob_usd, na.rm=TRUE), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)|>arrange(desc(p))|>collect()
 }
 
 }
