@@ -46,7 +46,7 @@ comexstat_download <- function(years=2023:2024,
       url=dplyr::if_else(type=="hs4",
                          glue::glue("https://balanca.economia.gov.br/balanca/bd/comexstat-bd/mun/{toupper(direction)}_{year}_MUN.csv"),
                          glue::glue("https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/{toupper(direction)}_{year}.csv")))
-  purrr::walk(todownload$dir%>%unique, dir.create, showWarnings=FALSE)
+  purrr::walk(todownload$dir|>unique(), dir.create, showWarnings=FALSE)
   if (download_aux) {
     aux_data <- tibble::tibble(url=c(
       "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
