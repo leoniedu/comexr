@@ -41,7 +41,7 @@ library(dplyr)
 ##downloading
 #comexstat_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
 try(comexstat_download(years = 2022:2024, types = "ncm"
-                       #, ssl_verifypeer=FALSE
+                       , ssl_verifypeer=FALSE
                        ))
 
 
@@ -55,11 +55,6 @@ Automatic downloading can be tricky, due to timeout, (lack of) valid security ce
 Using a programming language like R makes it easy to generate statistics and reports at the intended level of analysis. 
 
 ```{r topblocks}
-# library(duckdb)
-# library(dplyr)
-# library(comexstatr)
-# duckdb <- dbConnect(duckdb())
-# a <- comexstat_ncm()%>% arrow::to_duckdb()
 msul <- comexstat("pais_bloco")|>
   filter(block_code==111)|>
   pull(country_code)

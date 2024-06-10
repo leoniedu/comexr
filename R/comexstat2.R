@@ -23,7 +23,7 @@ get_deflators <- function(updated=Sys.Date(), na_omit=FALSE) {
 #' comexstat("ncm")|>head()
 #' @export
 comexstat <- function(table, ...) {
-  read_comex <- function(name, dir=ddircomex, extension=".csv") {
+  read_comex <- function(name, dir=cdircomex, extension=".csv") {
     file.path(dir, paste0(name, extension)) |>
       read1_comex() |>
       suppressMessages()
