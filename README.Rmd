@@ -39,8 +39,10 @@ library(comexstatr)
 library(dplyr)
 
 ##downloading
-
-try(comexstat_download(years = 2022:2024, types = "ncm"))
+#comexstat_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
+try(comexstat_download(years = 2022:2024, types = "ncm"
+                       #, ssl_verifypeer=FALSE
+                       ))
 
 
 ```
