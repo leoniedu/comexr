@@ -76,7 +76,7 @@ comexstat_download <- function(years=2023:2024,
                                 destfiles = todownload$path, progress = .progress,
                                 resume = cache, timeout = 100, multiplex = TRUE, ...)
     todownload$ok <- (res$success%in%TRUE)
-    if (any(!res$sucess) print(res|>dplyr::filter(sucess%in%FALSE)))
+    #if (any(!res$sucess)) (res|>dplyr::filter(sucess%in%FALSE))
     j <- j+1
   }
   ## delete urls not found
