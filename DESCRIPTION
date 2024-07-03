@@ -9,7 +9,7 @@ Authors@R: c(
                comment = c(ORCID = "0000-0003-0955-5232"))
         )
 Description: Easy acess to Brazilian foreign trade statustics using Apache Arrow.
-URL: https://github.com/leoniedu/comexstatr
+URL: https://github.com/leoniedu/comexstatr, https://leoniedu.github.io/comexstatr/
 BugReports: https://github.com/leoniedu/comexstatr/issues
 License: CC0
 Encoding: UTF-8

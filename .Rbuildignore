@@ -11,3 +11,6 @@
 ^comexstatr\.Rcheck$
 ^comexstatr.*\.tar\.gz$
 ^comexstatr.*\.tgz$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

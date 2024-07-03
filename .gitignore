@@ -8,3 +8,4 @@ comexstatr.Rcheck/
 comexstatr*.tar.gz
 comexstatr*.tgz
 inst/doc
+docs
