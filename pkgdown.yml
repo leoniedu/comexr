@@ -3,7 +3,7 @@ pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
   auto_china_brazil: auto_china_brazil.html
-last_built: 2024-07-03T16:12Z
+last_built: 2024-07-03T16:34Z
 urls:
   reference: https://leoniedu.github.io/comexstatr/reference
   article: https://leoniedu.github.io/comexstatr/articles
