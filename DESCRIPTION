@@ -31,6 +31,8 @@ Imports:
     xts
 Suggests:
     ggplot2,
+    knitr,
     rmarkdown
 Depends:
     R (>= 4.1)
+VignetteBuilder: knitr

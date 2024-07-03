@@ -46,8 +46,10 @@ library(dplyr)
 
 ``` r
 ##downloading
-
-try(comexstat_download2(years = 2022:2024, types = "ncm"))
+#comexstat_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
+try(comexstat_download(years = 2022:2024, types = "ncm"
+                       , ssl_verifypeer=FALSE
+                       ))
 ```
 
 Automatic downloading can be tricky, due to timeout, (lack of) valid
@@ -61,11 +63,6 @@ Using a programming language like R makes it easy to generate statistics
 and reports at the intended level of analysis.
 
 ``` r
-# library(duckdb)
-# library(dplyr)
-# library(comexstatr)
-# duckdb <- dbConnect(duckdb())
-# a <- comexstat_ncm()%>% arrow::to_duckdb()
 msul <- comexstat("pais_bloco")|>
   filter(block_code==111)|>
   pull(country_code)
@@ -154,7 +151,6 @@ selected_deflated <- comexstat_ncm()%>%
   comexstat_deflated()%>%
   collect()
 
-library(runner)
 selected_deflated_r <- selected_deflated%>%
   left_join(comexstat("pais"))%>%
   group_by(direction, country_name)%>%
@@ -240,20 +236,50 @@ ggplot(aes(x=date, y=fob_usd_constant_bi, color=direction),
 ![](README_files/figure-gfm/deflated2-1.png)<!-- -->
 
 ``` r
+usdmax <- balance_deflated_r%>%
+  group_by(direction)%>%
+  arrange(desc(fob_usd_constant_bi))%>%
+  slice(1)
+
+ggplot(aes(x=date, y=fob_usd_constant_bi, color=direction), 
+       data=balance_deflated_r) +
+  geom_line(aes(y=fob_usd_bi), linetype=2) +
+  scale_color_manual(values=c("blue", "red")) +
+  geom_line() +
+  #geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
+  labs(color="", x="", y="USD Bi (FOB) Deflated by CPI "%>%paste0(format(max(selected_deflated_r$date), "%m/%Y")), caption = "* 12 month rolling sums", title="Deflated by CPI vs Nominal",
+       subtitle = glue::glue("Max of 12 month exports value occurred on {usdmax%>%filter(direction=='exp')%>%pull(date)},\n imports on {usdmax%>%filter(direction=='imp')%>%pull(date)}")) +
+  theme_linedraw() + 
+  geom_vline(xintercept=as.Date("2023-01-01"))+
+  theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
+```
+
+    ## Warning: Removed 22 rows containing missing values (`geom_line()`).
+    ## Removed 22 rows containing missing values (`geom_line()`).
+
+![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
+``` r
+brlmax <- balance_deflated_r%>%
+  group_by(direction)%>%
+  arrange(desc(fob_brl_constant_bi))%>%
+  slice(1)
+
 ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction), 
        data=balance_deflated_r) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
   #geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
-  labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$date), "%m/%Y")), caption = "* 12 month rolling sums") +
+  labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$date), "%m/%Y")), caption = "* 12 month rolling sums", title="Deflated by IPCA",
+       subtitle = glue::glue("Max of 12 month exports value occurred on {brlmax%>%filter(direction=='exp')%>%pull(date)},\n imports on {brlmax%>%filter(direction=='imp')%>%pull(date)}")) +
   theme_linedraw() + 
-  geom_vline(xintercept=as.Date("2024-01-01"))+
+  geom_vline(xintercept=as.Date("2023-01-01"))+
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
     ## Warning: Removed 22 rows containing missing values (`geom_line()`).
 
-![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ### Last month
 
@@ -274,7 +300,7 @@ ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction),
     ## Warning: Removed 2 rows containing missing values (`geom_line()`).
     ## Removed 2 rows containing missing values (`geom_line()`).
 
-![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 ggplot(aes(x=date, y=balance_usd_constant), 
@@ -292,7 +318,7 @@ ggplot(aes(x=date, y=balance_usd_constant),
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ### BRL
 
@@ -312,7 +338,7 @@ ggplot(aes(x=date, y=balance_brl_constant),
   theme(legend.position="bottom") #+ scale_color_manual(values=c("red",  "blue")) 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ## By CGCE
 
@@ -341,4 +367,4 @@ by_cat <- comexstat_ncm() |>
 ggplot(aes(y=paste0(code, ": ", substr(name,1,40)), x=as.numeric(ip)/1e9), data=by_cat%>%mutate(code=forcats::fct_inseq(code))) + geom_col() + labs(x="", y="")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->

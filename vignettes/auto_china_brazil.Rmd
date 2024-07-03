@@ -1,0 +1,84 @@
+---
+title: "Brazil Car Imports: China vs Others"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Brazil Car Imports: China vs Others}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comexstatr)
+library(dplyr)
+library(ggplot2)
+library(slider)
+#library(lubridate)
+
+```
+
+
+```{r download_data}
+comexstat_download(years = 2009:2024, types = "ncm"
+                   #, ssl_verifypeer=FALSE ## might need this for Brazilian gov websites
+                   )
+```
+
+
+
+```{r extract_data}
+cars <- comexstat_ncm() |>
+  filter(year>=2009)%>%
+  left_join(ncms()%>%select(ncm=co_ncm, co_cgce_n3
+  ))|>
+  filter(co_cgce_n3==312 ## passenger vehicles
+  )|>
+  group_by(direction, date
+           , china=country_code==160
+  )|>
+  summarise(fob_usd=sum(fob_usd), qt_stat=sum(qt_stat))|>
+  collect()
+
+```
+
+
+
+
+
+```{r aggregate}
+library(lubridate) ## needs to import for slide_index_dbl to work
+cars_sum <- cars|>
+  group_by(direction, china
+  )|>
+  arrange(date)|>
+  mutate(qt_stat_12=slide_index_dbl(.x=qt_stat,
+                                            .before = months(11),
+                                            .complete = TRUE,
+                                            .f = function(z) sum(z, na.rm=TRUE), .i = date))
+
+```
+
+
+```{r plot, fig.width=8,fig.height=7}
+ggplot(aes(x=date,y=qt_stat_12,
+           , fill = china
+), data=
+  cars_sum%>%
+  mutate(china=if_else(china, "China", "Outos países"))%>%
+  filter(date>="2010-01-01",
+         direction=="imp",
+         !is.na(qt_stat_12))) +
+  scale_y_continuous(labels=scales::label_number_auto(), limits=c(0,NA), expand = c(0,0))+
+  geom_area() +
+  scale_fill_manual(values = c("red", "lightblue"))+
+  labs(x="", y="Importados pelo Brasil*", caption="* Unidades. Total acumulado em 12 meses.", fill="", title="Automóveis para passageiros", linetype="") +
+  theme_bw()+theme(legend.position="bottom")
+
+```
+

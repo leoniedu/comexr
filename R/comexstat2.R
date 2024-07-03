@@ -233,24 +233,27 @@ comexstat_ncm <- function() {
 #' @param data trade data to deflate
 #' @param deflators data.frame with deflators
 #' @param basedate base date to deflate to.
-#'
 #' @return deflated data.
+#' #' @examples
+#' library(dplyr)
+#' total_trade <- comexstat_ncm()%>%group_by(year, date)%>%summarise(fob_usd=sum(fob_usd))%>%comexstat_deflated()%>%group_by(year)%>%summarise(fob_usd=sum(fob_usd),fob_usd_constant=sum(fob_usd_constant))%>%collect()
+#' total_trade%>%select(year, fob_usd, fob_usd_constant)%>%arrange(desc(fob_usd_constant))
 #' @export
 #'
 comexstat_deflated <- function(data=comexstat_ncm(), basedate=NULL, deflators=get_deflators(na_omit = TRUE)) {
   deflators_complete <- deflators|>na.omit()
-  if (nrow(deflators_complete)!=nrow(deflators)) stop("Missing data in deflators.")
+  if (nrow(deflators_complete)!=nrow(deflators)) warning("Missing data in deflators.")
   get_base <- function(x, date, basedate=NULL) {
     if (is.null(basedate)) {
       basedate <- max(date[!is.na(x)])
     }
     r <- date==basedate
-    if (sum(r)!=1) stop()
+    if (sum(r)!=1) stop("Incomplete deflators.")
     dplyr::tibble(x=x[r], basedate=as.Date(basedate))
   }
   deflators_0 <- deflators|>
     dplyr::arrange(date)
-  base_cpi <- with(deflators_0, get_base(x=cpi, date=date, basedate=basedate))
+  base_cpi <- get_base(x=deflators_0$cpi, date=deflators_0$date, basedate=basedate)
   base_ipca <- with(deflators_0, get_base(x=ipca_i, date=date, basedate=basedate))
   deflators_1 <- deflators_0|>
     dplyr::mutate(
@@ -262,12 +265,14 @@ comexstat_deflated <- function(data=comexstat_ncm(), basedate=NULL, deflators=ge
       ipca_basedate=base_ipca$basedate
     )
   data|>
+    dplyr::left_join(deflators_1, by=c("date"), copy = TRUE)|>
     ## right join so as get up to the last data
-    dplyr::right_join(deflators_1, by=c("date"))|>
+    ##dplyr::right_join(deflators_1, by=c("date"))|>
     dplyr::mutate(
       fob_usd_constant=fob_usd*(cpi_r),
-      fob_brl_constant=fob_usd*brlusd*ipca_r,
-      cif_usd_constant=cif_usd*(cpi_r),
-      cif_brl_constant=cif_usd*brlusd*ipca_r,
-    )
+      fob_brl_constant=fob_usd*brlusd*ipca_r
+      #, cif_usd_constant=cif_usd*(cpi_r),
+      #cif_brl_constant=cif_usd*brlusd*ipca_r
+    )|>
+    arrange(date)
 }

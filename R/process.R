@@ -32,7 +32,7 @@ comexstat_rewrite <- function() {
   comexstat_ncm() |>
     ## data will be written using the partitions
     ## in the group_by statement
-    dplyr::group_by(direction, year, month) |>
+    dplyr::group_by(direction, year) |>
     arrow::write_dataset(ddir_partition, format = "parquet")
   ddir_partition
 }
@@ -126,6 +126,14 @@ comexstat_rewrite <- function() {
 # }
 
 
-# ncm <- function(x) {
-#   gsub("[^0-9]", "", x)
-# }
+#' @export
+ncm <- function(x, checkncm=TRUE) {
+  x <- gsub("[^0-9]", "", x)
+  x[nchar(x)==0] <- NA_character_
+  if (checkncm) {
+    if (!all(nchar(x %>% na.omit()) == 8)) {
+      stop("Not all NCMs valid or NA!")
+    }
+  }
+  x
+}

@@ -19,6 +19,10 @@ comexstat_deflated(
 }
 \value{
 deflated data.
+#' @examples
+library(dplyr)
+total_trade <- comexstat_ncm()\%>\%group_by(year, date)\%>\%summarise(fob_usd=sum(fob_usd))\%>\%comexstat_deflated()\%>\%group_by(year)\%>\%summarise(fob_usd=sum(fob_usd),fob_usd_constant=sum(fob_usd_constant))\%>\%collect()
+total_trade\%>\%select(year, fob_usd, fob_usd_constant)\%>\%arrange(desc(fob_usd_constant))
 }
 \description{
 Deflate comexstat series
