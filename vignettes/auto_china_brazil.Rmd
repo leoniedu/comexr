@@ -22,7 +22,7 @@ library(slider)
 
 ```r
 comexstat_download(years = 2009:2024, types = "ncm"
-                   #, ssl_verifypeer=FALSE ## might need this for Brazilian gov websites
+                   , ssl_verifypeer=FALSE ## might need this for Brazilian gov websites
                    )
 ```
 
