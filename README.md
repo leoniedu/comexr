@@ -187,7 +187,7 @@ balance_deflated <- comexstat_ncm()%>%
   comexstat_deflated()%>%
   collect()
 
-library(runner)
+
 nperiods <- 11
 balance_deflated_r <- balance_deflated%>%
   group_by(direction)%>%
