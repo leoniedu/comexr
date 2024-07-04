@@ -66,14 +66,14 @@ ggplot(aes(x=date,y=qt_stat_12,
            , fill = china
 ), data=
   cars_sum%>%
-  mutate(china=if_else(china, "China", "Outos países"))%>%
+  mutate(china=if_else(china, "China", "Other countries"))%>%
   filter(date>="2010-01-01",
          direction=="imp",
          !is.na(qt_stat_12))) +
   scale_y_continuous(labels=scales::label_number_auto(), limits=c(0,NA), expand = c(0,0))+
   geom_area() +
   scale_fill_manual(values = c("red", "lightblue"))+
-  labs(x="", y="Importados pelo Brasil*", caption="* Unidades. Total acumulado em 12 meses.", fill="", title="Automóveis para passageiros", linetype="") +
+  labs(x="", y="Imports by Brazil*", caption="* Units. 12 month totals.", fill="", title="Automóveis para passageiros", linetype="") +
   theme_bw()+theme(legend.position="bottom")
 
 ```
