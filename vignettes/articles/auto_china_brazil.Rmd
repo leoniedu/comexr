@@ -1,10 +1,5 @@
 ---
-title: "Brazil Car Imports: China vs Others"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Brazil Car Imports: China vs Others}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+title: "auto_china_brazil"
 ---
 
 ```{r, include = FALSE}
@@ -13,6 +8,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
 
 ```{r setup}
 library(comexstatr)
@@ -24,9 +20,9 @@ library(slider)
 
 
 ```{r download_data}
-comexstat_download(years = 2009:2024, types = "ncm"
+try({comexstat_download(years = 2009:2024, types = "ncm"
                    , ssl_verifypeer=FALSE ## might need this for Brazilian gov websites
-                   )
+                   )})
 ```
 
 
