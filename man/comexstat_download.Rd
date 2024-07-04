@@ -2,7 +2,7 @@
 % Please edit documentation in R/comexstat_download_2.R
 \name{comexstat_download}
 \alias{comexstat_download}
-\title{This function downloads Brazilian international trade data (ComexStat) from the Ministry of Economy's website. It supports various data types, years, and trade directions.}
+\title{This function downloads Brazilian international trade data (ComexStat) from the Ministry of Development, Commerce and Services' (MDIC)  website. It supports various data types, years, and trade directions.}
 \usage{
 comexstat_download(
   years = 2023:2024,
@@ -34,7 +34,7 @@ comexstat_download(
 Downloads data files to the ComexStat data directory. Returns invisibly a logical vector indicating the success of each download.
 }
 \description{
-This function downloads Brazilian international trade data (ComexStat) from the Ministry of Economy's website. It supports various data types, years, and trade directions.
+This function downloads Brazilian international trade data (ComexStat) from the Ministry of Development, Commerce and Services' (MDIC)  website. It supports various data types, years, and trade directions.
 }
 \details{
 The downloaded data files will be saved in CSV format. The file names will be structured as follows:

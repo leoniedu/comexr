@@ -1,5 +1,6 @@
 ---
 title: "auto_china_brazil"
+output: pdf_document
 ---
 
 ```{r, include = FALSE}

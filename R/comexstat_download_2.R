@@ -1,6 +1,6 @@
 ' Download ComexStat Trade Data
 #'
-#' This function downloads Brazilian international trade data (ComexStat) from the Ministry of Economy's website. It supports various data types, years, and trade directions.
+#' This function downloads Brazilian international trade data (ComexStat) from the Ministry of Development, Commerce and Services' (MDIC)  website. It supports various data types, years, and trade directions.
 #'
 #' @param years Numeric vector of years for which to download data (default: 1997:1998).
 #' @param directions Character vector indicating trade directions: "imp" for imports, "exp" for exports (default: c("imp", "exp")).
@@ -51,10 +51,8 @@ comexstat_download <- function(years=2023:2024,
     aux_data <- tibble::tibble(url=c(
       "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
       "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
-      "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
-      "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
-      # "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_COMPLETA.zip",
-      # "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_COMPLETA.zip",
+      # "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
+      # "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
       "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS_BLOCO.csv",
       "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CUCI.csv",
       "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM.csv",
@@ -76,7 +74,6 @@ comexstat_download <- function(years=2023:2024,
                                 destfiles = todownload$path, progress = .progress,
                                 resume = cache, timeout = 100, multiplex = TRUE, ...)
     todownload$ok <- (res$success%in%TRUE)
-    #if (any(!res$sucess)) (res|>dplyr::filter(sucess%in%FALSE))
     j <- j+1
   }
   ## delete urls not found

@@ -257,8 +257,6 @@ comexstat_deflated <- function(data=comexstat_ncm(), basedate=NULL, deflators=ge
   base_ipca <- with(deflators_0, get_base(x=ipca_i, date=date, basedate=basedate))
   deflators_1 <- deflators_0|>
     dplyr::mutate(
-      #co_ano=as.integer(lubridate::year(date)),
-      #co_mes=as.integer(lubridate::month(date)),
       cpi_r=base_cpi$x/cpi,
       cpi_basedate=base_cpi$basedate,
       ipca_r=base_ipca$x/ipca_i,
@@ -266,8 +264,6 @@ comexstat_deflated <- function(data=comexstat_ncm(), basedate=NULL, deflators=ge
     )
   data|>
     dplyr::left_join(deflators_1, by=c("date"), copy = TRUE)|>
-    ## right join so as get up to the last data
-    ##dplyr::right_join(deflators_1, by=c("date"))|>
     dplyr::mutate(
       fob_usd_constant=fob_usd*(cpi_r),
       fob_brl_constant=fob_usd*brlusd*ipca_r
