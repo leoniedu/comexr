@@ -141,75 +141,84 @@ ncms <- function(files = c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unida
 # }
 
 
-#' Summarize Comex Data by Summation
+#' Aggregate Comex Data by Summing Columns with Matching Prefixes
 #'
-#' This function calculates the sum of specified columns in a Comex (Brazilian trade) dataset.
+#' This function aggregates a Comex (Brazilian trade) dataset by calculating the sum of columns whose names
+#' start with any of the specified prefixes.
 #'
 #' @param data A data frame or tibble containing Comex data.
-#' @param x A character vector specifying the column names to summarize by summation.
-#'   Defaults to `c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd", "cif_usd")`.
+#' @param x A character vector specifying the column name prefixes to match and sum.
+#'   Defaults to `c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")`, which captures common columns
+#'   related to quantities, weights, and various costs.
 #'
-#' @return A tibble with one row containing the sum of each specified column. The column names in
+#' @return A tibble with one row containing the sum of each matched column. The column names in
 #'   the result are the same as the input column names.
 #'
 #' @details
-#' This function simplifies the process of summing key variables in Comex data, such as:
-#'   * `qt_stat`: Statistical quantity (e.g., number of units)
-#'   * `kg_net`: Net weight (in kilograms)
-#'   * `fob_usd`: Free on Board value (in USD)
-#'   * `freight_usd`: Freight cost (in USD)
-#'   * `insurance_usd`: Insurance cost (in USD)
-#'   * `cif_usd`: Cost, Insurance, and Freight value (in USD)
-#'
-#' You can customize the columns to summarize by providing a different `x` vector.
+#' This function simplifies the process of aggregating multiple related variables in Comex data by allowing
+#' you to specify prefixes instead of listing each column individually. For example, the default prefix `"fob_"`
+#' would match columns like `fob_usd`, `fob_brl`, etc., and sum them all together.
 #'
 #' @examples
-#' # Summarize default columns
-#' summary_data <- comex_sum(comex_data)
+#' # Create a sample Comex dataset
+#' comex_data <- data.frame(
+#'   qt_stat = c(100, 250, 80),
+#'   kg_net = c(5000, 12000, 3500),
+#'   fob_usd = c(15000, 38000, 10000),
+#'   fob_brl = c(75000, 190000, 50000),
+#'   freight_usd = c(2000, 5000, 1500)  # Additional column with 'fob_' prefix
+#' )
 #'
-#' # Summarize only 'qt_stat' and 'fob_usd'
-#' summary_data <- comex_sum(comex_data, x = c("qt_stat", "fob_usd"))
+#' # Aggregate columns starting with default prefixes
+#' summary_data <- comex_sum(comex_data)
+#' summary_data
+#'
+#' # Aggregate only columns starting with 'qt_' and 'fob_'
+#' summary_data <- comex_sum(comex_data, x = c("qt_", "fob_"))
+#' summary_data
 #'
 #' @export
-comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd", "cif_usd")) {
+comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")) {
   data %>%
-    summarise(across(all_of(x), sum, .names = "{.col}"))
+    summarise(across(starts_with(x), sum, .names = "{.col}"))
 }
 
 #' Calculate Rolling Sums for Comex Data
 #'
-#' This function computes rolling sums over a specified window for selected columns in a Comex (Brazilian trade) dataset.
+#' This function computes rolling sums over a specified window for selected columns in a Comex (Brazilian trade) dataset. It operates on columns that start with the specified prefixes.
 #'
 #' @param data A data frame or tibble containing Comex data, with a `date` column.
-#' @param x A character vector specifying the column names for which to calculate rolling sums.
-#'   Defaults to `c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd", "cif_usd")`.
+#' @param x A character vector specifying the prefixes of the column names for which to calculate rolling sums.
+#'   Defaults to `c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")`, which captures common columns
+#'   related to quantities, weights, and various costs.
 #' @param k An integer specifying the window size (in months) for the rolling sum calculation. Defaults to 12.
 #'
-#' @return A modified version of the input `data`, with new columns added for each column in `x`.
+#' @return A modified version of the input `data`, with new columns added for each selected column.
 #'   The new column names are of the format "{original_col_name}_{k}", where `k` is the window size.
-#'   These new columns contain the rolling sums for the corresponding original columns.
+#'   These new columns contain the rolling sums for the corresponding original columns.  Rows with
+#'   incomplete windows (less than `k` months of data) will have NA values in the new columns.
 #'
 #' @details
 #' This function uses the `slider` package's `slide_index_dbl` function to efficiently calculate rolling sums.
-#' It's particularly useful for analyzing trends in Comex data over time.
 #'
 #' The rolling sum for each date is calculated by summing the values from the current date up to `k-1` months prior.
-#' If there are fewer than `k` months of data available before a given date, the available data is used for the sum.
+#' Since the `.complete` argument in `slide_index_dbl` is set to `TRUE`, the function will only calculate rolling sums
+#' for dates where there are at least `k` months of prior data available. Rows with incomplete windows will have `NA` values.
 #'
 #' @examples
-#' library(dplyr)
-#' library(lubridate)
-#'
-#' # Create sample Comex data
-#' set.seed(123)  # For reproducibility
+#' #' # Create sample Comex data
+#' set.seed(123)
 #' comex_data <- tibble(
-#'   date = seq(from = ymd("2023-01-01"), to = ymd("2023-12-01"), by = "month"),
-#'   qt_stat = rpois(12, lambda = 100),
-#'   fob_usd = runif(12, min = 500, max = 2000)
+#'   date = seq(from = ymd("2022-01-01"), to = ymd("2023-12-01"), by = "month"),
+#'   qt_stat = rpois(24, lambda = 100),
+#'   fob_usd = runif(24, min = 500, max = 2000)
 #' )
+#' # Example usage with default prefixes and window size of 12 months:
+#' rolled_data <- comex_roll(comex_data)
 #'
-#' # Calculate 6-month rolling sums for 'qt_stat' and 'fob_usd'
-#' rolled_data <- comex_roll(comex_data, x = c("qt_stat", "fob_usd"), k = 6)
+#' # Calculate 6-month rolling sums for columns starting with 'qt_' and 'fob_':
+#' rolled_data <- comex_roll(comex_data, x = c("qt_", "fob_"), k = 6)
+#' head(rolled_data,10)
 #'
 #' @export
 comex_roll <- function(data, x=c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_"), k=12) {
