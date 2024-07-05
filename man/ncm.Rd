@@ -29,10 +29,10 @@ The optional validation step ensures that the cleaned NCM codes adhere to the ex
 }
 \examples{
 # Clean and validate valid NCM codes
-ncm(c("01012100", "02011000", "invalid code"))  # Raises an error due to "invalid code"
+ncm(c('01012100', '02011000', 'invalid code'))  # Raises an error due to 'invalid code'
 
 # Clean without validation
-ncm(c("01012100", "02011000", "invalid code"), checkncm = FALSE)
-# Returns: c("01012100", "02011000", NA)
+ncm(c('01012100', '02011000', 'invalid code'), checkncm = FALSE)
+# Returns: c('01012100', '02011000', NA)
 
 }

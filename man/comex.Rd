@@ -11,7 +11,7 @@ comex(table, dir = comexstatr:::cdircomex, extension = ".csv", ...)
 
 \item{dir}{The directory containing the Comexstat data file (defaults to \code{comexstatr:::cdircomex}).}
 
-\item{extension}{The file extension of the Comexstat data file (defaults to ".csv").}
+\item{extension}{The file extension of the Comexstat data file (defaults to '.csv').}
 
 \item{...}{Additional arguments passed to \code{readr::read_csv2}, such as \code{col_types}, \code{na}, etc.}
 }
@@ -24,14 +24,14 @@ from a local CSV file, cleans the column names, and applies standardized column 
 }
 \examples{
 \dontrun{
-# Read the "ncm" table from the default directory
-ncm_data <- comex("ncm")
+# Read the 'ncm' table from the default directory
+ncm_data <- comex('ncm')
 
-# Read the "ncm_cgce" table from a specific directory ("my_data")
-ncm_cgce_data <- comex("ncm_cgce", dir = "my_data")
+# Read the 'ncm_cgce' table from a specific directory ('my_data')
+ncm_cgce_data <- comex('ncm_cgce', dir = 'my_data')
 
 # Read a table with a different extension (e.g., .txt)
-other_data <- comex("other_table", extension = ".txt")
+other_data <- comex('other_table', extension = '.txt')
 
 }
 

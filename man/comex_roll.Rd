@@ -14,14 +14,14 @@ comex_roll(
 \item{data}{A data frame or tibble containing Comex data, with a \code{date} column.}
 
 \item{x}{A character vector specifying the prefixes of the column names for which to calculate rolling sums.
-Defaults to \code{c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")}, which captures common columns
+Defaults to \code{c('qt_stat', 'kg_net', 'fob_', 'freight_', 'insurance_', 'cif_')}, which captures common columns
 related to quantities, weights, and various costs.}
 
 \item{k}{An integer specifying the window size (in months) for the rolling sum calculation. Defaults to 12.}
 }
 \value{
 A modified version of the input \code{data}, with new columns added for each selected column.
-The new column names are of the format "{original_col_name}_{k}", where \code{k} is the window size.
+The new column names are of the format '{original_col_name}_{k}', where \code{k} is the window size.
 These new columns contain the rolling sums for the corresponding original columns.  Rows with
 incomplete windows (less than \code{k} months of data) will have NA values in the new columns.
 }
@@ -39,7 +39,7 @@ for dates where there are at least \code{k} months of prior data available. Rows
 #' # Create sample Comex data
 set.seed(123)
 comex_data <- tibble(
-  date = seq(from = ymd("2022-01-01"), to = ymd("2023-12-01"), by = "month"),
+  date = seq(from = ymd('2022-01-01'), to = ymd('2023-12-01'), by = 'month'),
   qt_stat = rpois(24, lambda = 100),
   fob_usd = runif(24, min = 500, max = 2000)
 )
@@ -47,7 +47,7 @@ comex_data <- tibble(
 rolled_data <- comex_roll(comex_data)
 
 # Calculate 6-month rolling sums for columns starting with 'qt_' and 'fob_':
-rolled_data <- comex_roll(comex_data, x = c("qt_", "fob_"), k = 6)
+rolled_data <- comex_roll(comex_data, x = c('qt_', 'fob_'), k = 6)
 head(rolled_data,10)
 
 }

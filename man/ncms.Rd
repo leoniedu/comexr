@@ -8,7 +8,7 @@ ncms(files = c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"))
 }
 \arguments{
 \item{files}{A character vector specifying the names of the NCM datasets to retrieve from \code{comexstat}.
-Defaults to \code{c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade")}.}
+Defaults to \code{c('ncm', 'ncm_cgce', 'ncm_cuci', 'ncm_isic', 'ncm_unidade')}.}
 }
 \value{
 A merged data frame containing all specified NCM datasets, with all columns converted to character format.
@@ -32,8 +32,8 @@ The function suppresses messages and warnings during the retrieval and merging s
 # Merge and format default NCM datasets
 merged_ncms <- ncms()
 
-# Merge specific NCM datasets (e.g., only "ncm" and "ncm_cuci")
-merged_ncms <- ncms(files = c("ncm", "ncm_cuci"))
+# Merge specific NCM datasets (e.g., only 'ncm' and 'ncm_cuci')
+merged_ncms <- ncms(files = c('ncm', 'ncm_cuci'))
 }
 
 }

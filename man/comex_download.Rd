@@ -20,9 +20,9 @@ comex_download(
 \arguments{
 \item{years}{A numeric vector or integer specifying the years for which data should be downloaded. Defaults to the current year (\code{2024}).}
 
-\item{directions}{A character vector specifying the directions of trade: "imp" (imports) and/or "exp" (exports). Defaults to both.}
+\item{directions}{A character vector specifying the directions of trade: 'imp' (imports) and/or 'exp' (exports). Defaults to both.}
 
-\item{types}{A character vector specifying the types of data: "ncm" (Nomenclatura Comum do Mercosul) and/or "hs4" (Harmonized System 4-digit). Defaults to both.}
+\item{types}{A character vector specifying the types of data: 'ncm' (Nomenclatura Comum do Mercosul) and/or 'hs4' (Harmonized System 4-digit). Defaults to both.}
 
 \item{download_aux}{A logical value indicating whether to download auxiliary data tables (e.g., URF, VIA, country codes). Defaults to \code{TRUE}.}
 
@@ -61,7 +61,7 @@ If \code{check} is \code{TRUE}, a basic data validation check is performed using
 comex_download(years = 2023:2024)
 
 # Download only import data (NCM) for 2024
-comex_download(years = 2024, directions = "imp", types = "ncm")
+comex_download(years = 2024, directions = 'imp', types = 'ncm')
 }
 
 }

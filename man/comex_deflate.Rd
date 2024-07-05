@@ -47,7 +47,7 @@ The function performs the following steps:
 deflated_data <- comex_deflate()
 
 # Deflate with a specific base date (e.g., 2023-12-31)
-deflated_data <- comex_deflate(basedate = as.Date("2023-12-31"))
+deflated_data <- comex_deflate(basedate = as.Date('2023-12-31'))
 }
 
 }

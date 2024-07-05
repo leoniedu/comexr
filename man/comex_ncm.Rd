@@ -7,7 +7,7 @@
 comex_ncm(check = FALSE)
 }
 \value{
-An Arrow Dataset containing combined import and export NCM trade data, with an additional \code{direction} column indicating "exp" (export) or "imp" (import). The dataset has the following columns:
+An Arrow Dataset containing combined import and export NCM trade data, with an additional \code{direction} column indicating 'exp' (export) or 'imp' (import). The dataset has the following columns:
 \itemize{
 \item \code{year}: Year (integer)
 \item \code{month}: Month (integer)
@@ -22,7 +22,7 @@ An Arrow Dataset containing combined import and export NCM trade data, with an a
 \item \code{fob_usd}: FOB value in US dollars (integer64)
 \item \code{freight_usd}: Freight value in US dollars (integer64, only for imports)
 \item \code{insurance_usd}: Insurance value in US dollars (integer64, only for imports)
-\item \code{direction}: Trade direction, either "exp" (export) or "imp" (import) (derived)
+\item \code{direction}: Trade direction, either 'exp' (export) or 'imp' (import) (derived)
 }
 }
 \description{
@@ -31,8 +31,8 @@ This function opens the ComexStat NCM (8-digit product code) trade data as an Ar
 \details{
 This function assumes that the NCM data files are named according to the following pattern:
 \itemize{
-\item Imports: "imp_\link{year}.csv" (e.g., "imp_2023.csv")
-\item Exports: "exp_\link{year}.csv" (e.g., "exp_2023.csv")
+\item Imports: 'imp_\link{year}.csv' (e.g., 'imp_2023.csv')
+\item Exports: 'exp_\link{year}.csv' (e.g., 'exp_2023.csv')
 }
 
 It infers the trade direction based on the presence or absence of the \code{freight_usd} column (present only in imports).

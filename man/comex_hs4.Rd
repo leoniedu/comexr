@@ -17,7 +17,7 @@ An Arrow Dataset containing combined import and export HS4 trade data. The datas
 \item \code{mun_code}: Municipality code (integer)
 \item \code{kg_net}: Net weight in kilograms (integer64)
 \item \code{fob_usd}: FOB value in US dollars (integer64)
-\item \code{direction}: Trade direction, either "exp" (export) or "imp" (import)
+\item \code{direction}: Trade direction, either 'exp' (export) or 'imp' (import)
 }
 }
 \description{
@@ -26,8 +26,8 @@ This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data i
 \details{
 This function assumes that the HS4 data files are named according to the following pattern:
 \itemize{
-\item Imports: "imp_\link{year}_mun.csv" (e.g., "imp_2023_mun.csv")
-\item Exports: "exp_\link{year}_mun.csv" (e.g., "exp_2023_mun.csv")
+\item Imports: 'imp_\link{year}_mun.csv' (e.g., 'imp_2023_mun.csv')
+\item Exports: 'exp_\link{year}_mun.csv' (e.g., 'exp_2023_mun.csv')
 }
 }
 \examples{

@@ -13,7 +13,7 @@ comex_sum(
 \item{data}{A data frame or tibble containing Comex data.}
 
 \item{x}{A character vector specifying the column name prefixes to match and sum.
-Defaults to \code{c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")}, which captures common columns
+Defaults to \code{c('qt_stat', 'kg_net', 'fob_', 'freight_', 'insurance_', 'cif_')}, which captures common columns
 related to quantities, weights, and various costs.}
 }
 \value{
@@ -26,7 +26,7 @@ start with any of the specified prefixes.
 }
 \details{
 This function simplifies the process of aggregating multiple related variables in Comex data by allowing
-you to specify prefixes instead of listing each column individually. For example, the default prefix \code{"fob_"}
+you to specify prefixes instead of listing each column individually. For example, the default prefix \code{'fob_'}
 would match columns like \code{fob_usd}, \code{fob_brl}, etc., and sum them all together.
 }
 \examples{
@@ -44,7 +44,7 @@ summary_data <- comex_sum(comex_data)
 summary_data
 
 # Aggregate only columns starting with 'qt_' and 'fob_'
-summary_data <- comex_sum(comex_data, x = c("qt_", "fob_"))
+summary_data <- comex_sum(comex_data, x = c('qt_', 'fob_'))
 summary_data
 
 }

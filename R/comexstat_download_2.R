@@ -56,14 +56,20 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
 
     # Download auxiliary data tables if requested
     if (download_aux) {
-        aux_data <- tibble::tibble(url = c("https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv", "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
-            "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv", "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA. csv",
-            "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS_BLOCO.csv", "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CUCI.csv",
-            "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM.csv", "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_ISIC.csv",
-            "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CGCE.csv", "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS.csv",
-            "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_UNIDADE.csv")) |>
-            dplyr::mutate(path = file.path(comexstatr:::cdircomex, basename(url) |>
-                tolower()))
+        aux_data <- tibble::tibble(url = c(
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
+          "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
+          "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS_BLOCO.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CUCI.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_ISIC.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CGCE.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS.csv",
+          "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_UNIDADE.csv")) |>
+          dplyr::mutate(path = file.path(comexstatr:::cdircomex, basename(url) |>
+                                           tolower()))
         # Delete existing auxiliary files if clean_aux is TRUE
         if (clean_aux)
             unlink(aux_data$path)

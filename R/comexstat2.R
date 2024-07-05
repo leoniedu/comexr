@@ -84,18 +84,18 @@ comex_check <- function() {
         dplyr::bind_rows(comex("exp_totais_conferencia")) |>
         dplyr::mutate(direction = dplyr::if_else(grepl("IMP", file), "imp", "exp"))
     checked <- conf |>
-        dplyr::anti_join(cached, by = join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines,
+        dplyr::anti_join(cached, by = dplyr::join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines,
             direction))
     if (nrow(checked) > 0) {
         toprint <- checked |>
-            dplyr::inner_join(cached, by = join_by(year, direction), suffix = c("_check", "_cached"))
+            dplyr::inner_join(cached, by = dplyr::join_by(year, direction), suffix = c("_check", "_cached"))
         print(toprint |>
             dplyr::select(sort(names(toprint))) |>
             t())
         stop("Conference file mismatch NCM with downloaded data!")
     }
     checked_hs4 <- conf |>
-        dplyr::anti_join(cached_hs4, by = join_by(year, fob_usd, direction))
+        dplyr::anti_join(cached_hs4, by = dplyr::join_by(year, fob_usd, direction))
     if (nrow(checked_hs4) > 0)
         stop("Conference file mismatch HS4 with downloaded data!")
     print("All clear!")

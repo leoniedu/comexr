@@ -28,22 +28,25 @@
     <loc>https://leoniedu.github.io/comexstatr/news/index.html</loc>
   </url>
   <url>
+    <loc>https://leoniedu.github.io/comexstatr/reference/comex.html</loc>
+  </url>
+  <url>
+    <loc>https://leoniedu.github.io/comexstatr/reference/comex_deflate.html</loc>
+  </url>
+  <url>
+    <loc>https://leoniedu.github.io/comexstatr/reference/comex_download.html</loc>
+  </url>
+  <url>
+    <loc>https://leoniedu.github.io/comexstatr/reference/comex_hs4.html</loc>
+  </url>
+  <url>
+    <loc>https://leoniedu.github.io/comexstatr/reference/comex_ncm.html</loc>
+  </url>
+  <url>
     <loc>https://leoniedu.github.io/comexstatr/reference/comex_roll.html</loc>
   </url>
   <url>
-    <loc>https://leoniedu.github.io/comexstatr/reference/comexstat.html</loc>
-  </url>
-  <url>
-    <loc>https://leoniedu.github.io/comexstatr/reference/comexstat_deflated.html</loc>
-  </url>
-  <url>
-    <loc>https://leoniedu.github.io/comexstatr/reference/comexstat_download.html</loc>
-  </url>
-  <url>
-    <loc>https://leoniedu.github.io/comexstatr/reference/comexstat_hs4.html</loc>
-  </url>
-  <url>
-    <loc>https://leoniedu.github.io/comexstatr/reference/comexstat_ncm.html</loc>
+    <loc>https://leoniedu.github.io/comexstatr/reference/comex_sum.html</loc>
   </url>
   <url>
     <loc>https://leoniedu.github.io/comexstatr/reference/get_deflators.html</loc>
