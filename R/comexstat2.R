@@ -1,42 +1,64 @@
-#' Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USE)
+#' Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USD)
 #'
 #' @param updated
 #'
 #' @return A data frame with columns co_ano_mes (date), ipca (monthly inflation from Brazil), ipca_i (monthly inflation from Brazil indexed such as 1997-01-01 is 1), cpi index (monthly inflation from USA).
 #' @export
 #'
-get_deflators <- function(updated=Sys.Date(), na_omit=FALSE) {
-  res <- get_ipca()|>
-    dplyr::full_join(get_brlusd(), by= "date")|>
-    dplyr::full_join(get_cpi(), by= "date")|>
-    dplyr::rename(co_ano_mes=date)|>
+get_deflators <- function(updated = Sys.Date(), na_omit = FALSE) {
+  # Function to get deflators (CPI, IPCA, and exchange rates)
+  # Get IPCA data and join with exchange rate data (brlusd)
+  res <- get_ipca() |>
+    dplyr::full_join(get_brlusd(), by = "date") |>
+    # Join with CPI data
+    dplyr::full_join(get_cpi(), by = "date") |>
+    # Rename 'date' column to 'co_ano_mes'
+    dplyr::rename(co_ano_mes = date) |>
+    # Sort by 'co_ano_mes'
     dplyr::arrange(co_ano_mes)
+  # Remove rows with missing values if na_omit is TRUE
   if (na_omit) res <- na.omit(res)
-  res
+  return(res)
 }
 
 
-#' Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.
+
+#' Read and Standardize Comexstat Data
+#'
+#' @description This function reads a specified Comexstat (Brazilian trade statistics) dataset
+#'   from a local CSV file, cleans the column names, and applies standardized column renaming.
+#'
+#' @param table A character string specifying the name of the Comexstat table to read.
+#' @param dir The directory containing the Comexstat data file (defaults to `cdircomex`).
+#' @param extension The file extension of the Comexstat data file (defaults to ".csv").
+#' @param ... Additional arguments passed to `readr::read_csv2`, such as `col_types`, `na`, etc.
+#'
+#' @return A tibble (data frame) containing the specified Comexstat data with standardized column names.
 #'
 #' @examples
-#' comexstat_download()
-#' comexstat("ncm")|>head()
+#' \dontrun{
+#' # Read the "ncm" table from the default directory
+#' ncm_data <- comexstat("ncm")
+#'
+#' # Read the "ncm_cgce" table from a specific directory ("my_data")
+#' ncm_cgce_data <- comexstat("ncm_cgce", dir = "my_data")
+#'
+#' # Read a table with a different extension (e.g., .txt)
+#' other_data <- comexstat("other_table", extension = ".txt")
+#'
+#' }
+#'
 #' @export
-comexstat <- function(table, ...) {
-  read_comex <- function(name, dir=cdircomex, extension=".csv") {
-    file.path(dir, paste0(name, extension)) |>
-      read1_comex() |>
-      suppressMessages()
-  }
-  read1_comex <- function(fname) {
-    fname |>
-      readr::read_csv2(locale = readr::locale(encoding="latin1")) |>
-      suppressMessages() |>
-      janitor::clean_names()
-  }
-  read_comex(table, ...)|>
+comexstat <- function(table, dir = cdircomex, extension = ".csv", ...) {
+  readr::read_csv2(
+    file.path(dir, paste0(table, extension)),
+    locale = readr::locale(encoding = "latin1"),
+    ...
+  ) |>
+    janitor::clean_names() |>
     comexstat_rename()
 }
+
 
 comexstat_rename <- function(x) {
   lookup <- c(year = "co_ano",
@@ -76,7 +98,11 @@ comexstat_check <- function() {
     dplyr::bind_rows(comexstat("exp_totais_conferencia"))|>
     dplyr::mutate(direction=dplyr::if_else(grepl("IMP", file), "imp", "exp"))
   checked <- conf|>dplyr::anti_join(cached, by = join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines, direction))
-  if (nrow(checked)>0) stop("Conference file mismatch NCM with downloaded data!")
+  if (nrow(checked)>0) {
+    toprint <- checked|>dplyr::inner_join(cached, by = join_by(year, direction), suffix = c("_check", "_cached"))
+    print(toprint|>dplyr::select(sort(names(toprint)))|>t())
+    stop("Conference file mismatch NCM with downloaded data!")
+  }
   checked_hs4 <- conf|>dplyr::anti_join(cached_hs4, by = join_by(year, fob_usd, direction))
   if (nrow(checked_hs4)>0) stop("Conference file mismatch HS4 with downloaded data!")
   print("All clear!")
@@ -174,7 +200,7 @@ comexstat_hs4 <- function() {
 #' }
 #'
 #' @export
-comexstat_ncm <- function() {
+comexstat_ncm <- function(check=FALSE) {
   # Define schemas for export and import NCM data
   schema_exp_ncm <- arrow::schema(
     year = arrow::int32(),
@@ -201,17 +227,34 @@ comexstat_ncm <- function() {
   )
 
   # Open import and export NCM datasets
+  imp_sources <- dir(file.path(comexstatr:::cdircomex, "ncm", "direction=imp"),
+  pattern = "imp_[0-9]+.csv", full.names = TRUE)
+  if (check) {
+    for (i in imp_sources) arrow::open_delim_dataset(
+      sources = i,
+      delim = ";",
+      schema = schema_imp_ncm,
+      skip = 1
+    )|>dplyr::count(year)|>dplyr::collect()
+  }
   imp_ncm <- arrow::open_delim_dataset(
-    sources = dir(file.path(comexstatr:::cdircomex, "ncm", "direction=imp"),
-                  pattern = "imp_[0-9]+.csv", full.names = TRUE),
+    sources = imp_sources,
     delim = ";",
     schema = schema_imp_ncm,
     skip = 1
   )
-
+  exp_sources <- dir(file.path(comexstatr:::cdircomex, "ncm", "direction=exp"),
+                     pattern = "exp_[0-9]+.csv", full.names = TRUE)
+  if (check) {
+    for (i in exp_sources) arrow::open_delim_dataset(
+      sources = i,
+      delim = ";",
+      schema = schema_exp_ncm,
+      skip = 1
+    )|>dplyr::count(year)|>dplyr::collect()
+  }
   exp_ncm <- arrow::open_delim_dataset(
-    sources = dir(file.path(comexstatr:::cdircomex, "ncm", "direction=exp"),
-                  pattern = "exp_[0-9]+.csv", full.names = TRUE),
+    sources = exp_sources,
     delim = ";",
     schema = schema_exp_ncm,
     skip = 1
@@ -228,47 +271,91 @@ comexstat_ncm <- function() {
 
 
 
-#' Deflate comexstat series
+#' Deflate and Convert Comexstat Data
 #'
-#' @param data trade data to deflate
-#' @param deflators data.frame with deflators
-#' @param basedate base date to deflate to.
-#' @return deflated data.
-#' #' @examples
-#' library(dplyr)
-#' total_trade <- comexstat_ncm()%>%group_by(year, date)%>%summarise(fob_usd=sum(fob_usd))%>%comexstat_deflated()%>%group_by(year)%>%summarise(fob_usd=sum(fob_usd),fob_usd_constant=sum(fob_usd_constant))%>%collect()
-#' total_trade%>%select(year, fob_usd, fob_usd_constant)%>%arrange(desc(fob_usd_constant))
+#' This function deflates USD-denominated values in Comexstat data (trade statistics)
+#' using specified deflators (CPI for USD, IPCA for BRL after converting using the exchange rate of the date of the statistics)
+#'
+#' @param data A data frame or tibble containing Comexstat data.
+#' @param basedate An optional date object specifying the base date for deflation.
+#'   If `NULL`, the latest available date in the `deflators` data is used.
+#' @param deflators A data frame containing deflator time series data, including columns
+#'   `cpi` (Consumer Price Index), `ipca_i` (Brazilian IPCA index), and `date`. Defaults
+#'   to the `get_deflators()` function's output with missing values removed.
+#'
+#' @return A modified version of the input `data`, with the following changes:
+#'   * New columns for deflated USD values (e.g., `fob_usd_deflated`, `cif_usd_deflated`).
+#'   * New columns for BRL values based on the exchange rate and USD values (e.g., `fob_brl`, `cif_brl`).
+#'   * New columns for deflated BRL values using the IPCA deflator (e.g., `fob_brl_deflated`).
+#'
+#' @details
+#' The function performs the following steps:
+#' 1. Handles missing values in `deflators`, issuing a warning if present.
+#' 2. Determines the base date for deflation, either from `basedate` input or the latest date in `deflators`.
+#' 3. Calculates deflation ratios (`cpi_r`, `ipca_r`) for each date relative to the base date.
+#' 4. Joins the `deflators` data with the input `data` based on `date`.
+#' 5. Deflates the USD-denominated columns (`fob_usd`, `cif_usd`, etc.) using `cpi_r`.
+#' 6. Converts USD values to BRL based on the exchange rate in the `brlusd` column.
+#' 7. Deflates the BRL values using `ipca_r`.
+#' 8. Arranges the resulting data by `date`.
+#'
+#' @examples
+#' \dontrun{
+#' # Deflate using default data and latest base date
+#' deflated_data <- comexstat_deflated()
+#'
+#' # Deflate with a specific base date (e.g., 2023-12-31)
+#' deflated_data <- comexstat_deflated(basedate = as.Date("2023-12-31"))
+#' }
+#'
 #' @export
-#'
-comexstat_deflated <- function(data=comexstat_ncm(), basedate=NULL, deflators=get_deflators(na_omit = TRUE)) {
-  deflators_complete <- deflators|>na.omit()
-  if (nrow(deflators_complete)!=nrow(deflators)) warning("Missing data in deflators.")
-  get_base <- function(x, date, basedate=NULL) {
+comexstat_deflated <- function(data, basedate = NULL, deflators = get_deflators(na_omit = TRUE)) {
+  # Remove any rows with missing values from the deflators dataset
+  deflators_complete <- deflators |> na.omit()
+
+  # Issue a warning if there were missing values in the original deflators dataset
+  if (nrow(deflators_complete) != nrow(deflators)) warning("Missing data in deflators.")
+
+  # Helper function to extract the base value and date for a given deflator
+  get_base <- function(x, date, basedate = NULL) {
+    # If no basedate is provided, use the latest available date with a non-missing value for the deflator
     if (is.null(basedate)) {
       basedate <- max(date[!is.na(x)])
     }
-    r <- date==basedate
-    if (sum(r)!=1) stop("Incomplete deflators.")
-    dplyr::tibble(x=x[r], basedate=as.Date(basedate))
+    # Check if there's exactly one matching basedate
+    r <- date == basedate
+    if (sum(r) != 1) stop("Incomplete deflators.")
+    # Return a tibble with the base value and basedate
+    dplyr::tibble(x = x[r], basedate = as.Date(basedate))
   }
-  deflators_0 <- deflators|>
-    dplyr::arrange(date)
-  base_cpi <- get_base(x=deflators_0$cpi, date=deflators_0$date, basedate=basedate)
-  base_ipca <- with(deflators_0, get_base(x=ipca_i, date=date, basedate=basedate))
-  deflators_1 <- deflators_0|>
+  # Sort the deflators by date
+  deflators_0 <- deflators |> dplyr::arrange(date)
+  # Get base CPI and IPCA values
+  base_cpi <- get_base(x = deflators_0$cpi, date = deflators_0$date, basedate = basedate)
+  base_ipca <- with(deflators_0, get_base(x = ipca_i, date = date, basedate = basedate))
+  # Calculate deflation ratios and add basedate columns
+  deflators_1 <- deflators_0 |>
     dplyr::mutate(
-      cpi_r=base_cpi$x/cpi,
-      cpi_basedate=base_cpi$basedate,
-      ipca_r=base_ipca$x/ipca_i,
-      ipca_basedate=base_ipca$basedate
+      cpi_r = base_cpi$x / cpi,         # CPI deflation ratio
+      cpi_basedate = base_cpi$basedate, # CPI basedate
+      ipca_r = base_ipca$x / ipca_i,     # IPCA deflation ratio
+      ipca_basedate = base_ipca$basedate # IPCA basedate
     )
-  data|>
-    dplyr::left_join(deflators_1, by=c("date"), copy = TRUE)|>
-    dplyr::mutate(
-      fob_usd_constant=fob_usd*(cpi_r),
-      fob_brl_constant=fob_usd*brlusd*ipca_r
-      #, cif_usd_constant=cif_usd*(cpi_r),
-      #cif_brl_constant=cif_usd*brlusd*ipca_r
-    )|>
-    arrange(date)
+  # Join the deflated data with the original dataset and perform calculations
+  data |>
+    dplyr::left_join(deflators_1, by = c("date"), copy = TRUE) |>
+    collect() |>
+    # Deflate USD values by CPI
+    dplyr::mutate(across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")),
+                         function(x) x * cpi_r, .names = "{col}_deflated")) |>
+    # Convert USD values to BRL using the exchange rate on the statistic date
+    dplyr::mutate(across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")),
+                         function(x) x * brlusd, .names = "{col}_brl")) |>
+    # Clean up column names
+    dplyr::rename_with(function(x) gsub("_usd_brl$", "_brl", x)) |>
+    # Deflate BRL values by IPCA
+    dplyr::mutate(across(any_of(c("fob_brl", "cif_brl", "freight_brl", "insurance_brl")),
+                         function(x) x * ipca_r, .names = "{col}_deflated")) |>
+    # Sort by date
+    dplyr::arrange(date)
 }

@@ -2,28 +2,56 @@
 % Please edit documentation in R/comexstat2.R
 \name{comexstat_deflated}
 \alias{comexstat_deflated}
-\title{Deflate comexstat series}
+\title{Deflate and Convert Comexstat Data}
 \usage{
 comexstat_deflated(
-  data = comexstat_ncm(),
+  data,
   basedate = NULL,
   deflators = get_deflators(na_omit = TRUE)
 )
 }
 \arguments{
-\item{data}{trade data to deflate}
+\item{data}{A data frame or tibble containing Comexstat data.}
 
-\item{basedate}{base date to deflate to.}
+\item{basedate}{An optional date object specifying the base date for deflation.
+If \code{NULL}, the latest available date in the \code{deflators} data is used.}
 
-\item{deflators}{data.frame with deflators}
+\item{deflators}{A data frame containing deflator time series data, including columns
+\code{cpi} (Consumer Price Index), \code{ipca_i} (Brazilian IPCA index), and \code{date}. Defaults
+to the \code{get_deflators()} function's output with missing values removed.}
 }
 \value{
-deflated data.
-#' @examples
-library(dplyr)
-total_trade <- comexstat_ncm()\%>\%group_by(year, date)\%>\%summarise(fob_usd=sum(fob_usd))\%>\%comexstat_deflated()\%>\%group_by(year)\%>\%summarise(fob_usd=sum(fob_usd),fob_usd_constant=sum(fob_usd_constant))\%>\%collect()
-total_trade\%>\%select(year, fob_usd, fob_usd_constant)\%>\%arrange(desc(fob_usd_constant))
+A modified version of the input \code{data}, with the following changes:
+\itemize{
+\item New columns for deflated USD values (e.g., \code{fob_usd_deflated}, \code{cif_usd_deflated}).
+\item New columns for BRL values based on the exchange rate and USD values (e.g., \code{fob_brl}, \code{cif_brl}).
+\item New columns for deflated BRL values using the IPCA deflator (e.g., \code{fob_brl_deflated}).
+}
 }
 \description{
-Deflate comexstat series
+This function deflates USD-denominated values in Comexstat data (trade statistics)
+using specified deflators (CPI for USD, IPCA for BRL after converting using the exchange rate of the date of the statistics)
+}
+\details{
+The function performs the following steps:
+\enumerate{
+\item Handles missing values in \code{deflators}, issuing a warning if present.
+\item Determines the base date for deflation, either from \code{basedate} input or the latest date in \code{deflators}.
+\item Calculates deflation ratios (\code{cpi_r}, \code{ipca_r}) for each date relative to the base date.
+\item Joins the \code{deflators} data with the input \code{data} based on \code{date}.
+\item Deflates the USD-denominated columns (\code{fob_usd}, \code{cif_usd}, etc.) using \code{cpi_r}.
+\item Converts USD values to BRL based on the exchange rate in the \code{brlusd} column.
+\item Deflates the BRL values using \code{ipca_r}.
+\item Arranges the resulting data by \code{date}.
+}
+}
+\examples{
+\dontrun{
+# Deflate using default data and latest base date
+deflated_data <- comexstat_deflated()
+
+# Deflate with a specific base date (e.g., 2023-12-31)
+deflated_data <- comexstat_deflated(basedate = as.Date("2023-12-31"))
+}
+
 }

@@ -2,54 +2,66 @@
 % Please edit documentation in R/comexstat_download_2.R
 \name{comexstat_download}
 \alias{comexstat_download}
-\title{This function downloads Brazilian international trade data (ComexStat) from the Ministry of Development, Commerce and Services' (MDIC)  website. It supports various data types, years, and trade directions.}
+\title{Download Comexstat Data from MDIC (Brazilian Ministry of Development, Industry, Commerce, and Services)}
 \usage{
 comexstat_download(
-  years = 2023:2024,
+  years = 2024,
   directions = c("imp", "exp"),
-  types = c("ncm", "hs4"),
+  types = c("hs4", "ncm"),
   download_aux = TRUE,
+  clean_aux = TRUE,
   cache = TRUE,
   .progress = TRUE,
   n_tries = 30,
+  check = FALSE,
   ...
 )
 }
 \arguments{
-\item{years}{Numeric vector of years for which to download data (default: 1997:1998).}
+\item{years}{A numeric vector or integer specifying the years for which data should be downloaded. Defaults to the current year (\code{2024}).}
 
-\item{directions}{Character vector indicating trade directions: "imp" for imports, "exp" for exports (default: c("imp", "exp")).}
+\item{directions}{A character vector specifying the directions of trade: "imp" (imports) and/or "exp" (exports). Defaults to both.}
 
-\item{types}{Character vector specifying data types: "ncm" for 8-digit product codes, "hs4" for 4-digit product codes (default: c("ncm", "hs4")).}
+\item{types}{A character vector specifying the types of data: "ncm" (Nomenclatura Comum do Mercosul) and/or "hs4" (Harmonized System 4-digit). Defaults to both.}
 
-\item{download_aux}{Logical indicating whether to download auxiliary data files (default: TRUE).}
+\item{download_aux}{A logical value indicating whether to download auxiliary data tables (e.g., URF, VIA, country codes). Defaults to \code{TRUE}.}
 
-\item{cache}{Logical indicating whether to resume incomplete downloads from previous attempts (default: TRUE).}
+\item{clean_aux}{A logical value indicating whether to delete existing auxiliary data files before downloading new ones. Defaults to \code{TRUE}.}
 
-\item{.progress}{Logical indicating whether to display a progress bar during downloads (default: TRUE).}
+\item{cache}{A logical value indicating whether to use cached files if they exist. Defaults to \code{TRUE}.}
 
-\item{n_tries}{Integer specifying the maximum number of download attempts}
+\item{.progress}{A logical value indicating whether to display a progress bar during downloads. Defaults to \code{TRUE}.}
+
+\item{n_tries}{The maximum number of download attempts before giving up. Defaults to 30.}
+
+\item{check}{A logical value indicating whether to perform data validation checks after downloading. Defaults to \code{FALSE}.}
+
+\item{...}{Additional arguments to be passed to \code{curl::multi_download}, such as \code{headers}, \code{handle}, etc.}
 }
 \value{
-Downloads data files to the ComexStat data directory. Returns invisibly a logical vector indicating the success of each download.
+No direct return value. The function downloads the requested files to the specified directories.
 }
 \description{
-This function downloads Brazilian international trade data (ComexStat) from the Ministry of Development, Commerce and Services' (MDIC)  website. It supports various data types, years, and trade directions.
+This function downloads Comexstat (Brazilian trade statistics) data from the
+MDIC website for specified years, directions (imports/exports), and
+types (NCM/HS4). It can also optionally download and manage auxiliary data tables.
 }
 \details{
-The downloaded data files will be saved in CSV format. The file names will be structured as follows:
-\itemize{
-\item For HS4 data: "\if{html}{\out{<direction>}}_\if{html}{\out{<year>}}_mun.csv" (e.g., "imp_1997_mun.csv")
-\item For NCM data: "\if{html}{\out{<direction>}}_\if{html}{\out{<year>}}.csv" (e.g., "exp_1998.csv")
-}
+This function constructs the URLs for the specified Comexstat data files based on the \code{years}, \code{directions}, and \code{types} arguments.
+It then creates the necessary directories to store the data.
+
+Downloads are performed using \code{curl::multi_download}, with retry logic if there are initial failures. If \code{download_aux} is \code{TRUE},
+additional auxiliary data tables are downloaded as well.
+
+If \code{check} is \code{TRUE}, a basic data validation check is performed using the internal \code{comexstat_check} function.
 }
 \examples{
 \dontrun{
-# Download import and export data for 1997-1998 in both NCM and HS4 formats:
-comexstat_download()
+# Download all data for 2023 and 2024
+comexstat_download(years = 2023:2024)
 
-# Download only import data for 2020-2022 in NCM format:
-comexstat_download(years = 2020:2022, directions = "imp", types = "ncm")
+# Download only import data (NCM) for 2024
+comexstat_download(years = 2024, directions = "imp", types = "ncm")
 }
 
 }

@@ -29,8 +29,8 @@ try({comexstat_download(years = 2009:2024, types = "ncm"
 
 
 ```{r extract_data}
-cars <- comexstat_ncm() |>
-  filter(year>=2009)%>%
+comextat_ncm_f <- comexstat_ncm() |> filter(year>=2009)
+cars <- comextat_ncm_f |>
   left_join(ncms()%>%select(ncm=co_ncm, co_cgce_n3
   ))|>
   filter(co_cgce_n3==312 ## passenger vehicles
@@ -38,7 +38,7 @@ cars <- comexstat_ncm() |>
   group_by(direction, date
            , china=country_code==160
   )|>
-  summarise(fob_usd=sum(fob_usd), qt_stat=sum(qt_stat))|>
+  comex_sum()|>
   collect()
 
 ```
@@ -49,14 +49,9 @@ cars <- comexstat_ncm() |>
 
 ```{r aggregate}
 library(lubridate) ## needs to import for slide_index_dbl to work
-cars_sum <- cars|>
-  group_by(direction, china
-  )|>
-  arrange(date)|>
-  mutate(qt_stat_12=slide_index_dbl(.x=qt_stat,
-                                            .before = months(11),
-                                            .complete = TRUE,
-                                            .f = function(z) sum(z, na.rm=TRUE), .i = date))
+cars_roll <- cars|>
+  group_by(direction, china)|>
+  comex_roll()
 
 ```
 
@@ -65,7 +60,7 @@ cars_sum <- cars|>
 ggplot(aes(x=date,y=qt_stat_12,
            , fill = china
 ), data=
-  cars_sum%>%
+  cars_roll%>%
   mutate(china=if_else(china, "China", "Other countries"))%>%
   filter(date>="2010-01-01",
          direction=="imp",
@@ -73,8 +68,37 @@ ggplot(aes(x=date,y=qt_stat_12,
   scale_y_continuous(labels=scales::label_number_auto(), limits=c(0,NA), expand = c(0,0))+
   geom_area() +
   scale_fill_manual(values = c("red", "lightblue"))+
-  labs(x="", y="Imports by Brazil*", caption="* Units. 12 month totals.", fill="", title="Automóveis para passageiros", linetype="") +
+  labs(x="", y="Imports by Brazil*", caption=glue::glue("* Units. 12 month totals. Last month {max(substr(cars_roll$date,1,7))}"), fill="", title="Passenger automobiles", linetype="") +
   theme_bw()+theme(legend.position="bottom")
 
 ```
 
+
+
+```{r}
+cars_deflated <- cars|>
+  comexstat_deflated()|>
+  group_by(direction, china
+  )|>
+  comex_roll()|>
+  filter(date>="2010-01-01",
+         direction=="imp",
+         !is.na(fob_usd_deflated_12))
+```
+
+
+```{r plot_auto_china_brazil_usd, fig.width=8,fig.height=7}
+ggplot(aes(x=date,y=fob_usd_deflated_12/1e9,
+           , fill = china
+), data=
+  cars_deflated%>%
+  mutate(china=if_else(china, "China", "Other countries"))
+  ) +
+  scale_y_continuous(labels=scales::label_number_auto(), limits=c(0,NA), expand = c(0,0))+
+  geom_area() +
+  scale_fill_manual(values = c("red", "lightblue"))+
+  labs(x="", y="US$ billions*", 
+       caption=glue::glue("* Deflated by US-CPI. Rolling 12 month totals. Last month {max(substr(cars_deflated$date,1,7))}"), fill="", title="Passenger automobiles", linetype="") +
+  theme_bw()+theme(legend.position="bottom")
+
+```

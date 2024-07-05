@@ -2,14 +2,37 @@
 % Please edit documentation in R/comexstat2.R
 \name{comexstat}
 \alias{comexstat}
-\title{Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.}
+\title{Read and Standardize Comexstat Data}
 \usage{
-comexstat(table, ...)
+comexstat(table, dir = cdircomex, extension = ".csv", ...)
+}
+\arguments{
+\item{table}{A character string specifying the name of the Comexstat table to read.}
+
+\item{dir}{The directory containing the Comexstat data file (defaults to \code{cdircomex}).}
+
+\item{extension}{The file extension of the Comexstat data file (defaults to ".csv").}
+
+\item{...}{Additional arguments passed to \code{readr::read_csv2}, such as \code{col_types}, \code{na}, etc.}
+}
+\value{
+A tibble (data frame) containing the specified Comexstat data with standardized column names.
 }
 \description{
-Note that arrow only accepts a subset of the dplyr functions. The remaining tables are read from the original csv files.
+This function reads a specified Comexstat (Brazilian trade statistics) dataset
+from a local CSV file, cleans the column names, and applies standardized column renaming.
 }
 \examples{
-comexstat_download()
-comexstat("ncm")|>head()
+\dontrun{
+# Read the "ncm" table from the default directory
+ncm_data <- comexstat("ncm")
+
+# Read the "ncm_cgce" table from a specific directory ("my_data")
+ncm_cgce_data <- comexstat("ncm_cgce", dir = "my_data")
+
+# Read a table with a different extension (e.g., .txt)
+other_data <- comexstat("other_table", extension = ".txt")
+
+}
+
 }

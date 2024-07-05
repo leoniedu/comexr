@@ -2,19 +2,38 @@
 % Please edit documentation in R/process.R
 \name{ncms}
 \alias{ncms}
-\title{Reads and merges all comexstat files with information about  NCM}
+\title{Merge and Format NCM Datasets from Comexstat}
 \usage{
-ncms()
+ncms(files = c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade"))
+}
+\arguments{
+\item{files}{A character vector specifying the names of the NCM datasets to retrieve from \code{comexstat}.
+Defaults to \code{c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unidade")}.}
 }
 \value{
-data.frame/tibble
+A merged data frame containing all specified NCM datasets, with all columns converted to character format.
 }
 \description{
-Reads and merges all comexstat files with information about  NCM
+This function retrieves multiple NCM (Nomenclatura Comum do Mercosul) datasets from the \code{comexstat} package,
+merges them into a single data frame, and converts all columns to character format.
 }
 \details{
-reads the following files:  ncm, ncm_cgce, ncm_cuci, ncm_isic, ncm_unidade then joins them into a single tibble
+This function streamlines the process of working with multiple NCM datasets from the \code{comexstat} package. It performs the following steps:
+\enumerate{
+\item \strong{Retrieval:} Retrieves the specified NCM datasets using the \code{comexstat} function.
+\item \strong{Merging:} Combines all retrieved datasets into a single data frame using left joins.
+\item \strong{Format Conversion:} Converts all columns in the merged data frame to character format for consistent data manipulation.
+}
+
+The function suppresses messages and warnings during the retrieval and merging steps to provide a cleaner output.
 }
 \examples{
-ncms()
+\dontrun{
+# Merge and format default NCM datasets
+merged_ncms <- ncms()
+
+# Merge specific NCM datasets (e.g., only "ncm" and "ncm_cuci")
+merged_ncms <- ncms(files = c("ncm", "ncm_cuci"))
+}
+
 }

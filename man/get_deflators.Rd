@@ -2,7 +2,7 @@
 % Please edit documentation in R/comexstat2.R, R/download.R
 \name{get_deflators}
 \alias{get_deflators}
-\title{Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USE)}
+\title{Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USD)}
 \usage{
 get_deflators(updated = Sys.Date(), na_omit = FALSE)
 
@@ -17,7 +17,7 @@ A data frame with columns co_ano_mes (date), ipca (monthly inflation from Brazil
 A data frame with columns co_ano_mes (date), ipca (monthly inflation from Brazil), ipca_i (monthly inflation from Brazil indexed such as 1997-01-01 is 1), cpi index (monthly inflation from USA).
 }
 \description{
-Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USE)
+Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USD)
 
 Download and processes deflators (CPI/USA, IPCA/Brazil, Exchange rate BRL/USE)
 }

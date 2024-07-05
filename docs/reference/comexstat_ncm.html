@@ -60,7 +60,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">comexstat_ncm</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">comexstat_ncm</span><span class="op">(</span>check <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -84,8 +84,8 @@
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function assumes that the NCM data files are named according to the following pattern:</p><ul><li><p>Imports: "imp_year.csv" (e.g., "imp_2023.csv")</p></li>
-<li><p>Exports: "exp_year.csv" (e.g., "exp_2023.csv")</p></li>
+    <p>This function assumes that the NCM data files are named according to the following pattern:</p><ul><li><p>Imports: "imp_<a href="https://lubridate.tidyverse.org/reference/year.html" class="external-link">year</a>.csv" (e.g., "imp_2023.csv")</p></li>
+<li><p>Exports: "exp_<a href="https://lubridate.tidyverse.org/reference/year.html" class="external-link">year</a>.csv" (e.g., "exp_2023.csv")</p></li>
 </ul><p>It infers the trade direction based on the presence or absence of the <code>freight_usd</code> column (present only in imports).</p>
     </div>
 

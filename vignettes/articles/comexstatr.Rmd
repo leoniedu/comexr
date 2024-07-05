@@ -33,10 +33,11 @@ library(dplyr)
 
 ##downloading
 #comexstat_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
-try(comexstat_download(years = 2022:2024, types = "ncm"
+try(comexstat_download(years = 2014:2024, types = "ncm"
                        , ssl_verifypeer=FALSE
                        ))
 
+comexstat_ncm_f <- comexstat_ncm()|>filter(year>=2014, year<=2023)
 
 ```
 
@@ -63,7 +64,7 @@ pb <- comexstat("pais")|>
                         TRUE ~ country_name)
               )
 
-cstat_top_0 <- comexstat_ncm()|>
+cstat_top_0 <- comexstat_ncm_f|>
   left_join(pb) |> 
   #filter(co_ano>=2017)|>
   group_by(partner)|>
@@ -73,9 +74,8 @@ cstat_top_0 <- comexstat_ncm()|>
   collect()|>
   slice(1:5)
 
-cstat_top <- comexstat_ncm() |>
+cstat_top <- comexstat_ncm_f |>
   left_join(pb) |> 
-  #filter(co_ano>=2017)|>
   semi_join(cstat_top_0, by=c("partner"))|>
   group_by(year, partner, direction)|>
   summarise(fob_usd=sum(fob_usd))|>
@@ -85,7 +85,6 @@ library(ggplot2)
 ggplot(aes(x=year, 
            y=fob_usd_bi), 
        data=cstat_top|>
-         filter(year<=2023)|>
          mutate(fob_usd_bi=fob_usd/1e9)) +
   geom_line(aes(color=partner)) +
   facet_wrap(~direction) +
@@ -103,8 +102,7 @@ You will have access to information not available via the web interface <http://
 
 ```{r bystate}
 
-bystate <- comexstat_ncm() |> 
-  filter(year<=2023) |>
+bystate <- comexstat_ncm_f |> 
   group_by(state_abb, year, direction)|>
   summarise(fob_usd=sum(fob_usd))|>
   collect()
@@ -132,10 +130,10 @@ ggplot(aes(x=year, y=fob_usd_bi, color=state_abb),
 
 
 ```{r deflated}
-selected_deflated <- comexstat_ncm()%>%
+selected_deflated <- comexstat_ncm_f%>%
   filter(country_code%in%c(249, 160, 63))%>%
   group_by(direction, date, country_code)%>%
-  summarise(fob_usd=sum(fob_usd), cif_usd=sum(cif_usd, na.rm=TRUE))%>%
+  comex_sum()|>
   comexstat_deflated()%>%
   collect()
 
@@ -144,13 +142,9 @@ selected_deflated_r <- selected_deflated%>%
   group_by(direction, country_name)%>%
   arrange(date)%>%
   filter(!is.na(fob_usd))%>%
-  mutate(fob_usd_constant_bi=
-           slider::slide_index_dbl(.x=fob_usd_constant, 
-                                   .before = months(11),
-                                   .complete = TRUE,
-                                   .f = function(z) sum(z, na.rm=TRUE), .i = date)/1e9)
-
-ggplot(aes(x=date, y=fob_usd_constant_bi, color=country_name), 
+  comex_roll(x = c("fob_usd_deflated"))
+  
+ggplot(aes(x=date, y=fob_usd_deflated_12/1e9, color=country_name), 
        data=selected_deflated_r)+
   facet_wrap(~direction)+
   geom_line() +
@@ -164,48 +158,19 @@ ggplot(aes(x=date, y=fob_usd_constant_bi, color=country_name),
 ## Trade balance
 
 ```{r deflated2}
-balance_deflated <- comexstat_ncm()%>%
+balance_deflated <- comexstat_ncm_f%>%
   group_by(direction, date)%>%
-  summarise(fob_usd=sum(fob_usd), cif_usd=sum(cif_usd, na.rm=TRUE), qt_stat=sum(qt_stat, na.rm=TRUE))%>%
+  comex_sum()%>%
   comexstat_deflated()%>%
+  comex_roll(x = c("fob_brl", "fob_usd", "fob_usd_deflated", "fob_brl_deflated", "cif_usd_deflated", "cif_brl_deflated"))%>%
   collect()
 
+# volume_deflated_r <- balance_deflated%>%
+#   group_by(date)%>%
+#   summarise(across(matches("^(fob|cif|qt)"), sum))
 
-nperiods <- 11
-balance_deflated_r <- balance_deflated%>%
-  group_by(direction)%>%
-  arrange(date)%>%
-  filter(!is.na(fob_usd_constant))%>%
-  mutate(
-    fob_usd_bi=
-      slider::slide_index_dbl(.x=fob_usd, 
-                              .before = months(nperiods),
-                              .complete = TRUE,
-                              .f = function(z) sum(z, na.rm=TRUE), .i = date)/1e9,
-    fob_brl_bi=
-      slider::slide_index_dbl(.x=fob_usd*brlusd, 
-                              .before = months(nperiods),
-                              .complete = TRUE,
-                              .f = function(z) sum(z, na.rm=TRUE), .i = date)/1e9,
-    fob_usd_constant_bi=
-      slider::slide_index_dbl(.x=fob_usd_constant, 
-                              .before = months(nperiods),
-                              .complete = TRUE,
-                              .f = function(z) sum(z, na.rm=TRUE), .i = date)/1e9,
-    fob_brl_constant_bi=
-      slider::slide_index_dbl(.x=fob_brl_constant, 
-                              .before = months(nperiods),
-                              .complete = TRUE,
-                              .f = function(z) sum(z, na.rm=TRUE), .i = date)/1e9
-  )%>%
-  mutate(fob_usd_constant_bi_i=fob_usd_constant_bi/fob_usd_constant_bi[date==as.Date("2022-01-01")])
-
-volume_deflated_r <- balance_deflated_r%>%
-  group_by(date)%>%
-  summarise(across(matches("^(fob|cif|qt)"), sum))
-
-ggplot(aes(x=date, y=fob_usd_constant_bi, color=direction), 
-       data=balance_deflated_r) +
+ggplot(aes(x=date, y=fob_usd_deflated_12/1e9, color=direction), 
+       data=balance_deflated) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
   labs(color="", x="", y="US$ Bi (FOB) Deflated by CPI "%>%paste0(format(max(selected_deflated_r$date), "%m/%Y")), caption = "* 12 month rolling sums") +
@@ -216,14 +181,14 @@ ggplot(aes(x=date, y=fob_usd_constant_bi, color=direction),
 ```
 
 ```{r}
-usdmax <- balance_deflated_r%>%
+usdmax <- balance_deflated%>%
   group_by(direction)%>%
-  arrange(desc(fob_usd_constant_bi))%>%
+  arrange(desc(fob_usd_deflated/1e9))%>%
   slice(1)
 
-ggplot(aes(x=date, y=fob_usd_constant_bi, color=direction), 
-       data=balance_deflated_r) +
-  geom_line(aes(y=fob_usd_bi), linetype=2) +
+ggplot(aes(x=date, y=fob_usd_deflated_12/1e9, color=direction), 
+       data=balance_deflated) +
+  geom_line(aes(y=fob_usd_12/1e9), linetype=2) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
   #geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
@@ -236,13 +201,13 @@ ggplot(aes(x=date, y=fob_usd_constant_bi, color=direction),
 ```
 
 ```{r}
-brlmax <- balance_deflated_r%>%
+brlmax <- balance_deflated%>%
   group_by(direction)%>%
-  arrange(desc(fob_brl_constant_bi))%>%
+  arrange(desc(fob_brl_deflated/1e9))%>%
   slice(1)
 
-ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction), 
-       data=balance_deflated_r) +
+ggplot(aes(x=date, y=fob_brl_deflated_12/1e9, color=direction), 
+       data=balance_deflated) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
   #geom_line(aes(y=vl_fob_usd_bi), linetype='dashed')+
@@ -258,12 +223,12 @@ ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction),
 
 
 ```{r}
-ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction), 
-       data=balance_deflated_r%>%filter(lubridate::month(date)==lubridate::month(max(balance_deflated_r$date)))
+ggplot(aes(x=date, y=fob_brl_deflated_12/1e9, color=direction), 
+       data=balance_deflated%>%filter(lubridate::month(date)==lubridate::month(max(balance_deflated$date)))
        ) +
   scale_color_manual(values=c("blue", "red")) +
   geom_line() +
-  geom_line(aes(y=fob_brl_bi), linetype='dashed') +
+  geom_line(aes(y=fob_brl_12/1e9), linetype='dashed') +
   #geom_point(aes(y=fob_brl_bi), linetype='dashed') +
   labs(color="", x="", y="R$ Bi (FOB) Deflated by IPCA "%>%paste0(format(max(selected_deflated_r$date), "%m/%Y")), caption = "* 12 month rolling sums") +
   theme_linedraw() + 
@@ -273,14 +238,12 @@ ggplot(aes(x=date, y=fob_brl_constant_bi, color=direction),
 
 
 ```{r}
-ggplot(aes(x=date, y=balance_usd_constant), 
+ggplot(aes(x=date, y=balance_usd_deflated_12), 
        data=
-         balance_deflated_r%>%
+         balance_deflated%>%
          group_by(date)%>%
          arrange(desc(direction))%>%
-         summarise(balance_usd_constant=fob_usd_constant_bi[2]-fob_usd_constant_bi[1])%>%
-         na.omit()
-                   )+
+         summarise(balance_usd_deflated_12=fob_usd_deflated_12[2]/1e9-fob_usd_deflated_12[1]/1e9))+
   #scale_color_manual(values=c("blue", "red")) +
   geom_line()  +
   labs(color="", x="", y="USD$ Bi (FOB) Deflated by CPI "%>%paste0(format(max(selected_deflated_r$date), "%m/%Y")), caption = "* 12 month rolling sums") +
@@ -293,12 +256,12 @@ ggplot(aes(x=date, y=balance_usd_constant),
 ### BRL
 
 ```{r}
-ggplot(aes(x=date, y=balance_brl_constant), 
+ggplot(aes(x=date, y=balance_brl_deflated_12), 
        data=
-         balance_deflated_r%>%
+         balance_deflated%>%
          group_by(date)%>%
          arrange(desc(direction))%>%
-         summarise(balance_brl_constant=fob_brl_constant_bi[2]-fob_brl_constant_bi[1])%>%
+         summarise(balance_brl_deflated_12=fob_brl_deflated_12[2]/1e9-fob_brl_deflated_12[1]/1e9)%>%
          na.omit()
                    )+
   #scale_color_manual(values=c("blue", "red")) +
@@ -313,29 +276,54 @@ ggplot(aes(x=date, y=balance_brl_constant),
 ## By CGCE
 
 ```{r}
-by_cat <- comexstat_ncm() |> 
-  filter(year>=2022
-         ## usa
-         #, country_code==249
+by_cat_0 <- comexstat_ncm() |> 
+  filter(date>="2022-01-01")%>%
+  filter(## usa
+         #country_code==249
          ## china
-         , country_code==160
+         #country_code==160
          ) |>
   left_join(ncms()%>%select(ncm=co_ncm, 
                             name=no_cgce_n3_ing, code=co_cgce_n3
                             #name=no_ncm_ing, code=co_ncm
                             ))|>
-  group_by(name,code, direction, year)|>
-  summarise(fob_usd=sum(fob_usd))|>
-  collect()|>
-  tidyr::pivot_wider(names_from=c("direction", "year"), values_from = fob_usd)%>%
-  mutate(ep=exp_2023-exp_2022-1, ip=imp_2023-imp_2022-1, si=imp_2022+imp_2023)%>%
-  arrange(desc(si))%>%
-  head(10)
+  group_by(name,code, direction, date)|>
+  comex_sum()|>
+  comexstat_deflated()%>%
+  filter(!is.na(fob_brl_deflated))
+
+by_cat_1 <- by_cat_0%>%
+  group_by(name,code, direction)|>
+  comex_roll()%>%
+  ungroup%>%
+  filter(lubridate::month(date)==lubridate::month(max(date)))%>%
+  mutate(year=lubridate::year(date))%>%
+  filter(year>=(max(year)-1))%>%
+  mutate(year=factor(year,labels = c("last", "current")))
+
+by_cat_2 <- by_cat_1%>%
+  select(name,code, direction, fob_usd_deflated_12, year)%>%
+  tidyr::pivot_wider(names_from=c("year"), values_from = fob_usd_deflated_12)%>%
+  mutate(current=tidyr::replace_na(current, 0),
+         last=tidyr::replace_na(last, 0),
+    d=current-last, s=last+current, p=current/last)
+
+by_cat <- by_cat_2%>%
+  group_by(code)%>%
+  summarise(total=sum(abs(current-last)))%>%
+  arrange(desc(total))%>%
+  head(10)%>%
+  inner_join(by_cat_2)%>%
+  arrange(total)
+
 ```
 
 
 ```{r}
-ggplot(aes(y=paste0(code, ": ", substr(name,1,40)), x=as.numeric(ip)/1e9), data=by_cat%>%mutate(code=forcats::fct_inseq(code))) + geom_col() + labs(x="", y="")
+ggplot(aes(y=label, x=d/1e9, fill=direction), data=by_cat%>%mutate(label=forcats::fct_inorder(paste0(code, ": ", stringr::str_wrap(name,30))))) + geom_col(position="dodge")+ labs(x="", y="") +
+  scale_fill_manual(values=c("blue", "red")) +
+  theme_linedraw()
+  
 ```
 
 
