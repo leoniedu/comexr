@@ -21,7 +21,7 @@ library(slider)
 
 
 ```{r download_data}
-try({comexstat_download(years = 2009:2024, types = "ncm"
+try({comex_download(years = 2009:2024, types = "ncm"
                    , ssl_verifypeer=FALSE ## might need this for Brazilian gov websites
                    )})
 ```
@@ -29,8 +29,8 @@ try({comexstat_download(years = 2009:2024, types = "ncm"
 
 
 ```{r extract_data}
-comextat_ncm_f <- comexstat_ncm() |> filter(year>=2009)
-cars <- comextat_ncm_f |>
+comex_ncm_f <- comex_ncm() |> filter(year>=2009)
+cars <- comex_ncm_f |>
   left_join(ncms()%>%select(ncm=co_ncm, co_cgce_n3
   ))|>
   filter(co_cgce_n3==312 ## passenger vehicles
@@ -77,7 +77,7 @@ ggplot(aes(x=date,y=qt_stat_12,
 
 ```{r}
 cars_deflated <- cars|>
-  comexstat_deflated()|>
+  comex_deflate()|>
   group_by(direction, china
   )|>
   comex_roll()|>

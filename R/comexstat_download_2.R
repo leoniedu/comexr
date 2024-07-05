@@ -22,27 +22,25 @@
 #' Downloads are performed using `curl::multi_download`, with retry logic if there are initial failures. If `download_aux` is `TRUE`,
 #' additional auxiliary data tables are downloaded as well.
 #'
-#' If `check` is `TRUE`, a basic data validation check is performed using the internal `comexstat_check` function.
+#' If `check` is `TRUE`, a basic data validation check is performed using the internal `comex_check` function.
 #'
 #' @return No direct return value. The function downloads the requested files to the specified directories.
 #'
 #' @examples
 #' \dontrun{
 #' # Download all data for 2023 and 2024
-#' comexstat_download(years = 2023:2024)
+#' comex_download(years = 2023:2024)
 #'
 #' # Download only import data (NCM) for 2024
-#' comexstat_download(years = 2024, directions = "imp", types = "ncm")
+#' comex_download(years = 2024, directions = "imp", types = "ncm")
 #' }
 #'
 #' @export
-comexstat_download <- function(years = 2024, directions = c("imp", "exp"), types = c("hs4", "ncm"), download_aux = TRUE, clean_aux = TRUE, cache = TRUE, .progress = TRUE, n_tries = 30, check = FALSE, ...) {
+comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c("hs4", "ncm"), download_aux = TRUE, clean_aux = TRUE, cache = TRUE, .progress = TRUE, n_tries = 30, check = FALSE, ...) {
   # Create necessary directories for storing the data (if they don't exist)
   sapply(file.path(comexstatr:::cdircomex, directions), dir.create, showWarnings = FALSE, recursive = TRUE)
-
   # Ensure types are valid (only "hs4" or "ncm")
   stopifnot(all(types %in% c("hs4", "ncm")))
-
   # Generate a table of all combinations of year, direction, and type to download
   todownload <- tidyr::crossing(
     tibble::tibble(year = years),
@@ -67,15 +65,21 @@ comexstat_download <- function(years = 2024, directions = c("imp", "exp"), types
 
   # Download auxiliary data tables if requested
   if (download_aux) {
-    aux_data <- tibble::tibble(url = c(
-      # ... list of URLs for auxiliary tables
-    )) |>
-      # Define the local path for each auxiliary table
+    aux_data <- tibble::tibble(url=c(
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
+      "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
+      "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA. csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS_BLOCO.csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CUCI.csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM.csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_ISIC.csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CGCE.csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS.csv",
+      "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_UNIDADE.csv"))|>
       dplyr::mutate(path = file.path(comexstatr:::cdircomex, basename(url) |> tolower()))
-
     # Delete existing auxiliary files if clean_aux is TRUE
     if (clean_aux) unlink(aux_data$path)
-
     # Combine the main download table with the auxiliary table
     todownload <- todownload |> dplyr::bind_rows(aux_data)
   }
@@ -85,7 +89,7 @@ comexstat_download <- function(years = 2024, directions = c("imp", "exp"), types
 
   # Download files with retry mechanism
   j <- 1
-  while ((j <= n_tries) & any(!todownload$ok)) {
+  while ((j <= n_tries) && any(!todownload$ok)) {
     if (j > 1) print(glue::glue("Try #{j}!"))
     res <- curl::multi_download(todownload$url,
                                 destfiles = todownload$path, progress = .progress,
@@ -105,5 +109,5 @@ comexstat_download <- function(years = 2024, directions = c("imp", "exp"), types
   if (any(!todownload$ok)) stop("Error downloading data.")
 
   # Run optional data validation check
-  if (check) comexstatr:::comexstat_check()
+  if (check) comex_check()
 }

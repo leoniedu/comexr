@@ -20,7 +20,7 @@ merges them into a single data frame, and converts all columns to character form
 \details{
 This function streamlines the process of working with multiple NCM datasets from the \code{comexstat} package. It performs the following steps:
 \enumerate{
-\item \strong{Retrieval:} Retrieves the specified NCM datasets using the \code{comexstat} function.
+\item \strong{Retrieval:} Retrieves the specified NCM datasets using the \code{comex} function.
 \item \strong{Merging:} Combines all retrieved datasets into a single data frame using left joins.
 \item \strong{Format Conversion:} Converts all columns in the merged data frame to character format for consistent data manipulation.
 }

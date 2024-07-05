@@ -29,7 +29,7 @@ get_deflators <- function(updated = Sys.Date(), na_omit = FALSE) {
 #'   from a local CSV file, cleans the column names, and applies standardized column renaming.
 #'
 #' @param table A character string specifying the name of the Comexstat table to read.
-#' @param dir The directory containing the Comexstat data file (defaults to `cdircomex`).
+#' @param dir The directory containing the Comexstat data file (defaults to `comexstatr:::cdircomex`).
 #' @param extension The file extension of the Comexstat data file (defaults to ".csv").
 #' @param ... Additional arguments passed to `readr::read_csv2`, such as `col_types`, `na`, etc.
 #'
@@ -38,29 +38,29 @@ get_deflators <- function(updated = Sys.Date(), na_omit = FALSE) {
 #' @examples
 #' \dontrun{
 #' # Read the "ncm" table from the default directory
-#' ncm_data <- comexstat("ncm")
+#' ncm_data <- comex("ncm")
 #'
 #' # Read the "ncm_cgce" table from a specific directory ("my_data")
-#' ncm_cgce_data <- comexstat("ncm_cgce", dir = "my_data")
+#' ncm_cgce_data <- comex("ncm_cgce", dir = "my_data")
 #'
 #' # Read a table with a different extension (e.g., .txt)
-#' other_data <- comexstat("other_table", extension = ".txt")
+#' other_data <- comex("other_table", extension = ".txt")
 #'
 #' }
 #'
 #' @export
-comexstat <- function(table, dir = cdircomex, extension = ".csv", ...) {
+comex <- function(table, dir = comexstatr:::cdircomex, extension = ".csv", ...) {
   readr::read_csv2(
     file.path(dir, paste0(table, extension)),
     locale = readr::locale(encoding = "latin1"),
     ...
   ) |>
     janitor::clean_names() |>
-    comexstat_rename()
+    comex_rename()
 }
 
 
-comexstat_rename <- function(x) {
+comex_rename <- function(x) {
   lookup <- c(year = "co_ano",
               month = "co_mes",
               country_code = "co_pais",
@@ -83,19 +83,19 @@ comexstat_rename <- function(x) {
     dplyr::mutate(across(dplyr::any_of(c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd")), bit64::as.integer64))
 }
 
-comexstat_check <- function() {
-  cached <- comexstat_ncm()|>
+comex_check <- function() {
+  cached <- comex_ncm()|>
     dplyr::group_by(year, direction)|>
     dplyr::mutate(number_of_lines=1)|>
     dplyr::summarise(across(c(qt_stat, kg_net, fob_usd, freight_usd, insurance_usd,number_of_lines), sum))|>
     dplyr::collect()
-  cached_hs4 <- comexstat_hs4()|>
+  cached_hs4 <- comex_hs4()|>
     dplyr::group_by(year, direction)|>
     dplyr::mutate(number_of_lines=1)|>
     dplyr::summarise(across(c(fob_usd, number_of_lines), sum))|>
     dplyr::collect()
-  conf <- comexstat("imp_totais_conferencia")|>
-    dplyr::bind_rows(comexstat("exp_totais_conferencia"))|>
+  conf <- comex("imp_totais_conferencia")|>
+    dplyr::bind_rows(comex("exp_totais_conferencia"))|>
     dplyr::mutate(direction=dplyr::if_else(grepl("IMP", file), "imp", "exp"))
   checked <- conf|>dplyr::anti_join(cached, by = join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines, direction))
   if (nrow(checked)>0) {
@@ -110,7 +110,7 @@ comexstat_check <- function() {
 
 #' Open ComexStat HS4 Trade Dataset
 #'
-#' This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data is assumed to be located in the ComexStat data directory and to have been downloaded using the `comexstat_download()` function.
+#' This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data is assumed to be located in the ComexStat data directory and to have been downloaded using the `comex_download()` function.
 #'
 #' @return An Arrow Dataset containing combined import and export HS4 trade data. The dataset has the following columns:
 #'   - `year`: Year (integer)
@@ -137,7 +137,7 @@ comexstat_check <- function() {
 #' }
 #'
 #' @export
-comexstat_hs4 <- function() {
+comex_hs4 <- function() {
   # Define schema for HS4 data
   # FIX: how to set schema including hive data
   # schema_hs4 <- arrow::schema(
@@ -157,13 +157,13 @@ comexstat_hs4 <- function() {
     delim = ";",
     #partitioning = arrow::schema(direction = arrow::string()),
     #schema = schema_hs4,
-    skip = 0)|>comexstat_rename()
+    skip = 0)|>comex_rename()
   hs4
 }
 
 #' Open ComexStat NCM Trade Dataset
 #'
-#' This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the `comexstat_download()` function.
+#' This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the `comex_download()` function.
 #'
 #' @return An Arrow Dataset containing combined import and export NCM trade data, with an additional `direction` column indicating "exp" (export) or "imp" (import). The dataset has the following columns:
 #'   - `year`: Year (integer)
@@ -191,16 +191,16 @@ comexstat_hs4 <- function() {
 #' \dontrun{
 #' library(dplyr)
 #' # Open the ComexStat NCM dataset:
-#' ncm_dataset <- comexstat_ncm()
+#' ncm_dataset <- comex_ncm()
 #'
 #' # Explore the dataset:
 #' print(ncm_dataset)
 #' ncm_dataset|>group_by(year, direction)|>summarise(fob_usd=sum(fob_usd), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)|>collect()
-#' comexstat_ncm()|>group_by(country_code)|>summarise(fob_usd=sum(fob_usd, na.rm=TRUE), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)|>arrange(desc(p))|>collect()
+#' comex_ncm()|>group_by(country_code)|>summarise(fob_usd=sum(fob_usd, na.rm=TRUE), freight_usd=sum(freight_usd))|>mutate(p=freight_usd/fob_usd)|>arrange(desc(p))|>collect()
 #' }
 #'
 #' @export
-comexstat_ncm <- function(check=FALSE) {
+comex_ncm <- function(check=FALSE) {
   # Define schemas for export and import NCM data
   schema_exp_ncm <- arrow::schema(
     year = arrow::int32(),
@@ -302,14 +302,14 @@ comexstat_ncm <- function(check=FALSE) {
 #' @examples
 #' \dontrun{
 #' # Deflate using default data and latest base date
-#' deflated_data <- comexstat_deflated()
+#' deflated_data <- comex_deflate()
 #'
 #' # Deflate with a specific base date (e.g., 2023-12-31)
-#' deflated_data <- comexstat_deflated(basedate = as.Date("2023-12-31"))
+#' deflated_data <- comex_deflate(basedate = as.Date("2023-12-31"))
 #' }
 #'
 #' @export
-comexstat_deflated <- function(data, basedate = NULL, deflators = get_deflators(na_omit = TRUE)) {
+comex_deflate <- function(data, basedate = NULL, deflators = get_deflators(na_omit = TRUE)) {
   # Remove any rows with missing values from the deflators dataset
   deflators_complete <- deflators |> na.omit()
 
@@ -346,15 +346,15 @@ comexstat_deflated <- function(data, basedate = NULL, deflators = get_deflators(
     dplyr::left_join(deflators_1, by = c("date"), copy = TRUE) |>
     collect() |>
     # Deflate USD values by CPI
-    dplyr::mutate(across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")),
+    dplyr::mutate(dplyr::across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")),
                          function(x) x * cpi_r, .names = "{col}_deflated")) |>
     # Convert USD values to BRL using the exchange rate on the statistic date
-    dplyr::mutate(across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")),
+    dplyr::mutate(dplyr::across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")),
                          function(x) x * brlusd, .names = "{col}_brl")) |>
     # Clean up column names
     dplyr::rename_with(function(x) gsub("_usd_brl$", "_brl", x)) |>
     # Deflate BRL values by IPCA
-    dplyr::mutate(across(any_of(c("fob_brl", "cif_brl", "freight_brl", "insurance_brl")),
+    dplyr::mutate(dplyr::across(any_of(c("fob_brl", "cif_brl", "freight_brl", "insurance_brl")),
                          function(x) x * ipca_r, .names = "{col}_deflated")) |>
     # Sort by date
     dplyr::arrange(date)

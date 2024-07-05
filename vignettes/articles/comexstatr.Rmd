@@ -32,12 +32,12 @@ library(comexstatr)
 library(dplyr)
 
 ##downloading
-#comexstat_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
-try(comexstat_download(years = 2014:2024, types = "ncm"
+#comex_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
+try(comex_download(years = 2014:2024, types = "ncm"
                        , ssl_verifypeer=FALSE
                        ))
 
-comexstat_ncm_f <- comexstat_ncm()|>filter(year>=2014, year<=2023)
+comex_ncm_f <- comex_ncm()|>filter(year>=2014, year<=2023)
 
 ```
 
@@ -49,14 +49,14 @@ Automatic downloading can be tricky, due to timeout, (lack of) valid security ce
 Using a programming language like R makes it easy to generate statistics and reports at the intended level of analysis. 
 
 ```{r topblocks}
-msul <- comexstat("pais_bloco")|>
+msul <- comex("pais_bloco")|>
   filter(block_code==111)|>
   pull(country_code)
-eu <- comexstat("pais_bloco")|>
+eu <- comex("pais_bloco")|>
   filter(block_code==22)|>
   pull(country_code)
 
-pb <- comexstat("pais")|>
+pb <- comex("pais")|>
   transmute(country_code, 
             partner=
               case_when(country_code%in%msul ~ "Mercosul",
@@ -64,7 +64,7 @@ pb <- comexstat("pais")|>
                         TRUE ~ country_name)
               )
 
-cstat_top_0 <- comexstat_ncm_f|>
+cstat_top_0 <- comex_ncm_f|>
   left_join(pb) |> 
   #filter(co_ano>=2017)|>
   group_by(partner)|>
@@ -74,7 +74,7 @@ cstat_top_0 <- comexstat_ncm_f|>
   collect()|>
   slice(1:5)
 
-cstat_top <- comexstat_ncm_f |>
+cstat_top <- comex_ncm_f |>
   left_join(pb) |> 
   semi_join(cstat_top_0, by=c("partner"))|>
   group_by(year, partner, direction)|>
@@ -102,7 +102,7 @@ You will have access to information not available via the web interface <http://
 
 ```{r bystate}
 
-bystate <- comexstat_ncm_f |> 
+bystate <- comex_ncm_f |> 
   group_by(state_abb, year, direction)|>
   summarise(fob_usd=sum(fob_usd))|>
   collect()
@@ -130,15 +130,15 @@ ggplot(aes(x=year, y=fob_usd_bi, color=state_abb),
 
 
 ```{r deflated}
-selected_deflated <- comexstat_ncm_f%>%
+selected_deflated <- comex_ncm_f%>%
   filter(country_code%in%c(249, 160, 63))%>%
   group_by(direction, date, country_code)%>%
   comex_sum()|>
-  comexstat_deflated()%>%
+  comex_deflate()%>%
   collect()
 
 selected_deflated_r <- selected_deflated%>%
-  left_join(comexstat("pais"))%>%
+  left_join(comex("pais"))%>%
   group_by(direction, country_name)%>%
   arrange(date)%>%
   filter(!is.na(fob_usd))%>%
@@ -158,10 +158,10 @@ ggplot(aes(x=date, y=fob_usd_deflated_12/1e9, color=country_name),
 ## Trade balance
 
 ```{r deflated2}
-balance_deflated <- comexstat_ncm_f%>%
+balance_deflated <- comex_ncm_f%>%
   group_by(direction, date)%>%
   comex_sum()%>%
-  comexstat_deflated()%>%
+  comex_deflate()%>%
   comex_roll(x = c("fob_brl", "fob_usd", "fob_usd_deflated", "fob_brl_deflated", "cif_usd_deflated", "cif_brl_deflated"))%>%
   collect()
 
@@ -276,7 +276,7 @@ ggplot(aes(x=date, y=balance_brl_deflated_12),
 ## By CGCE
 
 ```{r}
-by_cat_0 <- comexstat_ncm() |> 
+by_cat_0 <- comex_ncm() |> 
   filter(date>="2022-01-01")%>%
   filter(## usa
          #country_code==249
@@ -289,7 +289,7 @@ by_cat_0 <- comexstat_ncm() |>
                             ))|>
   group_by(name,code, direction, date)|>
   comex_sum()|>
-  comexstat_deflated()%>%
+  comex_deflate()%>%
   filter(!is.na(fob_brl_deflated))
 
 by_cat_1 <- by_cat_0%>%
