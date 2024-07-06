@@ -1,7 +1,11 @@
 ---
-title: "comexstatr"
+title: "Comexstatr"
+subtitle: "Easy acess to Brazilian foreign trade statistics using Apache Arrow."
+author: "Eduardo Leoni"
+date: "`r Sys.Date()`"
+params:
+  download: FALSE  # Parameter to control whether to download data
 ---
-
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -33,9 +37,11 @@ library(dplyr)
 
 ##downloading
 #comex_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
-try(comex_download(years = 2014:2024, types = "ncm"
-                       , ssl_verifypeer=FALSE
-                       ))
+if (params$download) {
+  try(comex_download(years = 2014:2024, types = "ncm"
+                     , ssl_verifypeer=FALSE
+  ))
+}
 
 comex_ncm_f <- comex_ncm()|>filter(year>=2014, year<=2023)
 

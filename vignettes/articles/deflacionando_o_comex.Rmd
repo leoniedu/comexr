@@ -1,6 +1,6 @@
 ---
 title: "Deflacionando o Comex"
-subtitle: "Análise de Dados de Comércio Exterior Brasileiro com Desinflação Usando o Pacote comexstatr"
+subtitle: "Análise de Dados de Comércio Exterior Brasileiro Deflacionados Utilizando o Pacote comexstatr"
 author: "Eduardo Leoni"
 date: "`r Sys.Date()`"
 output:
@@ -11,7 +11,7 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache=TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, cache=FALSE, warning = FALSE, message = FALSE)
 ```
 
 

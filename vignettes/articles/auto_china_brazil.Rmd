@@ -1,7 +1,11 @@
 ---
-title: "auto_china_brazil"
-output: pdf_document
+title: "Dados de imporações de carros (veículos de passageiros) usando o Comexstatr"
+author: "Eduardo Leoni"
+date: "`r Sys.Date()`"
+params:
+  download: FALSE  # Parameter to control whether to download data
 ---
+
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -21,9 +25,11 @@ library(slider)
 
 
 ```{r download_data}
-try({comex_download(years = 2009:2024, types = "ncm"
-                   , ssl_verifypeer=FALSE ## might need this for Brazilian gov websites
+if (params$download) {
+  try({comex_download(years = 2009:2024, types = "ncm"
+                      , ssl_verifypeer=FALSE ## might need this for Brazilian gov websites
                    )})
+}
 ```
 
 
