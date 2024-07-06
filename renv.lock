@@ -270,16 +270,31 @@
       ],
       "Hash": "6b9602c7ebbe87101a9c8edb6e8b6d21"
     },
+    "diffobj": {
+      "Package": "diffobj",
+      "Version": "0.3.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "crayon",
+        "methods",
+        "stats",
+        "tools",
+        "utils"
+      ],
+      "Hash": "bcaa8b95f8d7d01a5dedfd959ce88ab8"
+    },
     "digest": {
       "Package": "digest",
-      "Version": "0.6.31",
+      "Version": "0.6.36",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R",
         "utils"
       ],
-      "Hash": "8b708f296afd9ae69f450f9640be8990"
+      "Hash": "fd6824ad91ede64151e93af67df6376b"
     },
     "downlit": {
       "Package": "downlit",
@@ -563,13 +578,13 @@
     },
     "jsonlite": {
       "Package": "jsonlite",
-      "Version": "1.8.5",
+      "Version": "1.8.8",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "methods"
       ],
-      "Hash": "3ee4d9899e4db3e976fc82b98d24a31a"
+      "Hash": "e1b9c55281c5adc4dd113652d9e26768"
     },
     "knitr": {
       "Package": "knitr",
@@ -739,6 +754,21 @@
       ],
       "Hash": "15da5a8412f317beeee6175fbc76f4bb"
     },
+    "pkgbuild": {
+      "Package": "pkgbuild",
+      "Version": "1.4.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "R6",
+        "callr",
+        "cli",
+        "desc",
+        "processx"
+      ],
+      "Hash": "c0143443203205e6a2760ce553dafc24"
+    },
     "pkgconfig": {
       "Package": "pkgconfig",
       "Version": "2.0.3",
@@ -778,6 +808,34 @@
         "yaml"
       ],
       "Hash": "8bf1151ed1a48328d71b937e651117a6"
+    },
+    "pkgload": {
+      "Package": "pkgload",
+      "Version": "1.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "cli",
+        "crayon",
+        "desc",
+        "fs",
+        "glue",
+        "methods",
+        "pkgbuild",
+        "rlang",
+        "rprojroot",
+        "utils",
+        "withr"
+      ],
+      "Hash": "903d68319ae9923fb2e2ee7fa8230b91"
+    },
+    "praise": {
+      "Package": "praise",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a555924add98c99d2f411e37e7d25e9f"
     },
     "prettyunits": {
       "Package": "prettyunits",
@@ -903,6 +961,16 @@
         "vroom"
       ],
       "Hash": "b5047343b3825f37ad9d3b5d89aa1078"
+    },
+    "rematch2": {
+      "Package": "rematch2",
+      "Version": "2.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "tibble"
+      ],
+      "Hash": "76c9e04c712a05848ae7a23d2f170a40"
     },
     "renv": {
       "Package": "renv",
@@ -1063,6 +1131,35 @@
         "cpp11"
       ],
       "Hash": "15b594369e70b975ba9f064295983499"
+    },
+    "testthat": {
+      "Package": "testthat",
+      "Version": "3.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "R6",
+        "brio",
+        "callr",
+        "cli",
+        "desc",
+        "digest",
+        "evaluate",
+        "jsonlite",
+        "lifecycle",
+        "magrittr",
+        "methods",
+        "pkgload",
+        "praise",
+        "processx",
+        "ps",
+        "rlang",
+        "utils",
+        "waldo",
+        "withr"
+      ],
+      "Hash": "4767a686ebe986e6cb01d075b3f09729"
     },
     "textshaping": {
       "Package": "textshaping",
@@ -1225,6 +1322,24 @@
         "withr"
       ],
       "Hash": "8318e64ffb3a70e652494017ec455561"
+    },
+    "waldo": {
+      "Package": "waldo",
+      "Version": "0.5.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "cli",
+        "diffobj",
+        "fansi",
+        "glue",
+        "methods",
+        "rematch2",
+        "rlang",
+        "tibble"
+      ],
+      "Hash": "c7d3fd6d29ab077cbac8f0e2751449e6"
     },
     "warp": {
       "Package": "warp",
