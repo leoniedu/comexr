@@ -1,5 +1,5 @@
 library(testthat)
-#library(comexstatr)
+#library(comexr)
 library(lubridate)
 library(dplyr)
 

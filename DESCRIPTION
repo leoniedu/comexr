@@ -1,4 +1,4 @@
-Package: comexstatr
+Package: comexr
 Title: Access to brazilian foreign trade data- Comexstat.
 Version: 0.0.1
 Authors@R: c(
@@ -9,8 +9,8 @@ Authors@R: c(
                comment = c(ORCID = "0000-0003-0955-5232"))
         )
 Description: Easy acess to Brazilian foreign trade statistics using Apache Arrow.
-URL: https://github.com/leoniedu/comexstatr, https://leoniedu.github.io/comexstatr/
-BugReports: https://github.com/leoniedu/comexstatr/issues
+URL: https://github.com/leoniedu/comexr, https://leoniedu.github.io/comexr/
+BugReports: https://github.com/leoniedu/comexr/issues
 License: CC0
 Encoding: UTF-8
 LazyData: false

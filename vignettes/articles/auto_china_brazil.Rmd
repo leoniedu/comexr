@@ -1,5 +1,5 @@
 ---
-title: "Dados de imporações de carros (veículos de passageiros) usando o Comexstatr"
+title: "Dados de imporações de carros (veículos de passageiros) usando o comexr"
 author: "Eduardo Leoni"
 date: "`r Sys.Date()`"
 params:
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 
 ```{r setup}
-library(comexstatr)
+library(comexr)
 library(dplyr)
 library(ggplot2)
 library(slider)

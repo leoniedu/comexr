@@ -4,12 +4,12 @@
 \alias{comex}
 \title{Read and Standardize Comexstat Data}
 \usage{
-comex(table, dir = comexstatr:::cdircomex, extension = ".csv", ...)
+comex(table, dir = comexr:::cdircomex, extension = ".csv", ...)
 }
 \arguments{
 \item{table}{A character string specifying the name of the Comexstat table to read.}
 
-\item{dir}{The directory containing the Comexstat data file (defaults to \code{comexstatr:::cdircomex}).}
+\item{dir}{The directory containing the Comexstat data file (defaults to \code{comexr:::cdircomex}).}
 
 \item{extension}{The file extension of the Comexstat data file (defaults to '.csv').}
 

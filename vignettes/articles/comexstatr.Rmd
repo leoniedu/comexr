@@ -1,5 +1,5 @@
 ---
-title: "Comexstatr"
+title: "comexr"
 subtitle: "Easy acess to Brazilian foreign trade statistics using Apache Arrow."
 author: "Eduardo Leoni"
 date: "`r Sys.Date()`"
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-The goal of comexstatr is to make it easy to download, process, and
+The goal of comexr is to make it easy to download, process, and
 analyze Brazilian foreign trade statistics, available through the web
 app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 <https://www.gov.br/produtividade-e-comercio-exterior/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta>.
@@ -21,7 +21,7 @@ app <http://comexstat.mdic.gov.br/>, using the underlying bulk data
 ## Installation
 
 ```{r options}
-##devtools::install_github("leoniedu/comexstatr")
+##devtools::install_github("leoniedu/comexr")
 ```
 
 If you have problems installing arrow, see:
@@ -32,7 +32,7 @@ If you have problems installing arrow, see:
 ## Examples
 
 ``` {r setup}
-library(comexstatr)
+library(comexr)
 library(dplyr)
 
 ##downloading
@@ -299,8 +299,10 @@ by_cat_0 <- comex_ncm() |>
   filter(!is.na(fob_brl_deflated))
 
 by_cat_1 <- by_cat_0%>%
+  filter(direction=="imp")%>%
   group_by(name,code, direction)|>
-  comex_roll()%>%
+  comex_roll(k=1)%>%
+  rename_with(function(x) gsub("_1$", "_k", x))%>%
   ungroup%>%
   filter(lubridate::month(date)==lubridate::month(max(date)))%>%
   mutate(year=lubridate::year(date))%>%
@@ -308,8 +310,8 @@ by_cat_1 <- by_cat_0%>%
   mutate(year=factor(year,labels = c("last", "current")))
 
 by_cat_2 <- by_cat_1%>%
-  select(name,code, direction, fob_usd_deflated_12, year)%>%
-  tidyr::pivot_wider(names_from=c("year"), values_from = fob_usd_deflated_12)%>%
+  select(name,code, direction, fob_usd_deflated_k, year)%>%
+  tidyr::pivot_wider(names_from=c("year"), values_from = fob_usd_deflated_k)%>%
   mutate(current=tidyr::replace_na(current, 0),
          last=tidyr::replace_na(last, 0),
     d=current-last, s=last+current, p=current/last)

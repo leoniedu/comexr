@@ -30,7 +30,7 @@ get_deflators <- function(updated = Sys.Date(), na_omit = FALSE) {
 #'   from a local CSV file, cleans the column names, and applies standardized column renaming.
 #'
 #' @param table A character string specifying the name of the Comexstat table to read.
-#' @param dir The directory containing the Comexstat data file (defaults to `comexstatr:::cdircomex`).
+#' @param dir The directory containing the Comexstat data file (defaults to `comexr:::cdircomex`).
 #' @param extension The file extension of the Comexstat data file (defaults to '.csv').
 #' @param ... Additional arguments passed to `readr::read_csv2`, such as `col_types`, `na`, etc.
 #'
@@ -50,10 +50,34 @@ get_deflators <- function(updated = Sys.Date(), na_omit = FALSE) {
 #' }
 #'
 #' @export
-comex <- function(table, dir = comexstatr:::cdircomex, extension = ".csv", ...) {
-    readr::read_csv2(file.path(dir, paste0(table, extension)), locale = readr::locale(encoding = "latin1"), ...) |>
-        janitor::clean_names() |>
-        comex_rename()
+comex <- function(table, dir = comexr:::cdircomex, extension = ".csv", ...) {
+  ## fix get col_types from ...
+  cols_spec <-  NULL
+  if(table%in%"imp_totais_conferencia") {
+    cols_spec <- readr::cols(
+      ARQUIVO = readr::col_character(),
+      CO_ANO = readr::col_double(),
+      QT_ESTAT = readr::col_double(),
+      KG_LIQUIDO = readr::col_double(),
+      VL_FOB = readr::col_double(),
+      VL_FRETE = readr::col_double(),
+      VL_SEGURO = readr::col_double(),
+      NUMERO_LINHAS = readr::col_double()
+    )
+  }
+  if(table%in%"exp_totais_conferencia") {
+    cols_spec <- readr::cols(
+      ARQUIVO = readr::col_character(),
+      CO_ANO = readr::col_double(),
+      QT_ESTAT = readr::col_double(),
+      KG_LIQUIDO = readr::col_double(),
+      VL_FOB = readr::col_double(),
+      NUMERO_LINHAS = readr::col_double()
+    )
+  }
+  readr::read_csv2(file.path(dir, paste0(table, extension)), locale = readr::locale(encoding = "latin1", decimal_mark = ","), col_types=cols_spec,...) |>
+    janitor::clean_names() |>
+    comex_rename()
 }
 
 
@@ -135,7 +159,7 @@ comex_hs4 <- function() {
     # #direction = arrow::string(), year = arrow::int32(), month = arrow::int32(), hs4 = arrow::string(),
     # country_code = arrow::int32(), state_abb = arrow::string(), mun_code = arrow::int32(), kg_net =
     # arrow::int64(), fob_usd = arrow::int64() ) Open import and export HS4 datasets
-    hs4 <- arrow::open_delim_dataset(sources = file.path(comexstatr:::cdircomex, "hs4"), delim = ";", skip = 0) |>
+    hs4 <- arrow::open_delim_dataset(sources = file.path(comexr:::cdircomex, "hs4"), delim = ";", skip = 0) |>
         comex_rename()
     hs4
 }
@@ -192,14 +216,14 @@ comex_ncm <- function(check = FALSE) {
         length() + 1, field = arrow::field("insurance_usd", arrow::int64()))
 
     # Open import and export NCM datasets
-    imp_sources <- dir(file.path(comexstatr:::cdircomex, "ncm", "direction=imp"), pattern = "imp_[0-9]+.csv", full.names = TRUE)
+    imp_sources <- dir(file.path(comexr:::cdircomex, "ncm", "direction=imp"), pattern = "imp_[0-9]+.csv", full.names = TRUE)
     if (check) {
         for (i in imp_sources) arrow::open_delim_dataset(sources = i, delim = ";", schema = schema_imp_ncm, skip = 1) |>
             dplyr::count(year) |>
             dplyr::collect()
     }
     imp_ncm <- arrow::open_delim_dataset(sources = imp_sources, delim = ";", schema = schema_imp_ncm, skip = 1)
-    exp_sources <- dir(file.path(comexstatr:::cdircomex, "ncm", "direction=exp"), pattern = "exp_[0-9]+.csv", full.names = TRUE)
+    exp_sources <- dir(file.path(comexr:::cdircomex, "ncm", "direction=exp"), pattern = "exp_[0-9]+.csv", full.names = TRUE)
     if (check) {
         for (i in exp_sources) arrow::open_delim_dataset(sources = i, delim = ";", schema = schema_exp_ncm, skip = 1) |>
             dplyr::count(year) |>

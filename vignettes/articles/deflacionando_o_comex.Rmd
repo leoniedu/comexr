@@ -1,6 +1,6 @@
 ---
 title: "Deflacionando o Comex"
-subtitle: "Análise de Dados de Comércio Exterior Brasileiro Deflacionados Utilizando o Pacote comexstatr"
+subtitle: "Análise de Dados de Comércio Exterior Brasileiro Deflacionados Utilizando o Pacote comexr"
 author: "Eduardo Leoni"
 date: "`r Sys.Date()`"
 output:
@@ -18,11 +18,11 @@ knitr::opts_chunk$set(echo = TRUE, cache=FALSE, warning = FALSE, message = FALSE
 
 ## Introdução
 
-Esta análise utiliza o pacote comexstatr do R para baixar, limpar e analisar dados de comércio exterior brasileiro, com foco na importância da desinflação. A inflação distorce o valor real do comércio ao longo do tempo, e a desinflação é o processo de ajustar esses valores a um ano base comum para remover essa distorção.
+Esta análise utiliza o pacote comexr do R para baixar, limpar e analisar dados de comércio exterior brasileiro, com foco na importância da desinflação. A inflação distorce o valor real do comércio ao longo do tempo, e a desinflação é o processo de ajustar esses valores a um ano base comum para remover essa distorção.
 Examinaremos a diferença entre os valores comerciais nominais e deflacionados, tanto mensalmente quanto anualmente. Além disso, visualizaremos as mudanças anuais nesses valores e exploraremos somas móveis para entender as tendências em um período mais longo.
 
 ```{r config}
-library(comexstatr)      # Pacote principal para análise de dados da Comex
+library(comexr)      # Pacote principal para análise de dados da Comex
 library(ggplot2)         # Para visualização de dados
 library(dplyr)           # Para manipulação de dados
 library(lubridate)       # Para trabalhar com datas
@@ -140,4 +140,4 @@ Este gráfico de barras ilustra as variações percentuais anuais nos valores FO
 
 ## Conclusão
 
-Ao incorporar a desinflação em nossa análise dos dados de comércio brasileiro, obtemos uma compreensão mais precisa das tendências econômicas subjacentes. O pacote comexstatr simplifica esse processo, permitindo que nos concentremos em gerar insights em vez de lidar com as complexidades da manipulação de dados.
+Ao incorporar a desinflação em nossa análise dos dados de comércio brasileiro, obtemos uma compreensão mais precisa das tendências econômicas subjacentes. O pacote comexr simplifica esse processo, permitindo que nos concentremos em gerar insights em vez de lidar com as complexidades da manipulação de dados.

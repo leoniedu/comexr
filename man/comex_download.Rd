@@ -8,8 +8,6 @@ comex_download(
   years = 2024,
   directions = c("imp", "exp"),
   types = c("hs4", "ncm"),
-  download_aux = TRUE,
-  clean_aux = TRUE,
   cache = TRUE,
   .progress = TRUE,
   n_tries = 30,
@@ -24,10 +22,6 @@ comex_download(
 
 \item{types}{A character vector specifying the types of data: 'ncm' (Nomenclatura Comum do Mercosul) and/or 'hs4' (Harmonized System 4-digit). Defaults to both.}
 
-\item{download_aux}{A logical value indicating whether to download auxiliary data tables (e.g., URF, VIA, country codes). Defaults to \code{TRUE}.}
-
-\item{clean_aux}{A logical value indicating whether to delete existing auxiliary data files before downloading new ones. Defaults to \code{TRUE}.}
-
 \item{cache}{A logical value indicating whether to use cached files if they exist. Defaults to \code{TRUE}.}
 
 \item{.progress}{A logical value indicating whether to display a progress bar during downloads. Defaults to \code{TRUE}.}
@@ -37,6 +31,10 @@ comex_download(
 \item{check}{A logical value indicating whether to perform data validation checks after downloading. Defaults to \code{FALSE}.}
 
 \item{...}{Additional arguments to be passed to \code{curl::multi_download}, such as \code{headers}, \code{handle}, etc.}
+
+\item{download_aux}{A logical value indicating whether to download auxiliary data tables (e.g., URF, VIA, country codes). Defaults to \code{TRUE}.}
+
+\item{clean_aux}{A logical value indicating whether to delete existing auxiliary data files before downloading new ones. Defaults to \code{TRUE}.}
 }
 \value{
 No direct return value. The function downloads the requested files to the specified directories.

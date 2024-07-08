@@ -4,7 +4,7 @@
 .httr-oauth
 .DS_Store
 .parquet
-comexstatr.Rcheck/
-comexstatr*.tar.gz
-comexstatr*.tgz
+comexr.Rcheck/
+comexr*.tar.gz
+comexr*.tgz
 inst/doc
