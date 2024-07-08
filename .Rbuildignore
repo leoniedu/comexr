@@ -1,6 +1,6 @@
 ^renv$
 ^renv\.lock$
-^comexstatr\.Rproj$
+^comexr\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^README\.Rmd$
@@ -8,9 +8,9 @@
 ^data-raw$
 ^data$
 ^\.github$
-^comexstatr\.Rcheck$
-^comexstatr.*\.tar\.gz$
-^comexstatr.*\.tgz$
+^comexr\.Rcheck$
+^comexr.*\.tar\.gz$
+^comexr.*\.tgz$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
