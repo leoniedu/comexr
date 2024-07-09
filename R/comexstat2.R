@@ -2,7 +2,7 @@
 #'
 #' @param updated
 #'
-#' @return A data frame with columns co_ano_mes (date), ipca (monthly inflation from Brazil), ipca_i (monthly inflation from Brazil indexed such as 1997-01-01 is 1), cpi index (monthly inflation from USA).
+#' @return A data frame with columns date, ipca (monthly inflation from Brazil), ipca_i (monthly inflation from Brazil indexed such as 1997-01-01 is 1), cpi index (monthly inflation from USA).
 #' @export
 #'
 get_deflators <- function(updated = Sys.Date(), na_omit = FALSE) {
@@ -12,10 +12,8 @@ get_deflators <- function(updated = Sys.Date(), na_omit = FALSE) {
         dplyr::full_join(get_brlusd(), by = "date") |>
         # Join with CPI data
     dplyr::full_join(get_cpi(), by = "date") |>
-        # Rename 'date' column to 'co_ano_mes'
-    dplyr::rename(co_ano_mes = date) |>
-        # Sort by 'co_ano_mes'
-    dplyr::arrange(co_ano_mes)
+        # Sort by 'date'
+    dplyr::arrange(date)
     # Remove rows with missing values if na_omit is TRUE
     if (na_omit)
         res <- na.omit(res)

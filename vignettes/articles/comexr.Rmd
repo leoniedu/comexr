@@ -72,7 +72,6 @@ pb <- comex("pais")|>
 
 cstat_top_0 <- comex_ncm_f|>
   left_join(pb) |> 
-  #filter(co_ano>=2017)|>
   group_by(partner)|>
   summarise(fob_usd=sum(fob_usd))|>
   ungroup() |> 

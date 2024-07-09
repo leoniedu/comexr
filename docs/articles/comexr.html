@@ -64,7 +64,7 @@ foreign trade statistics using Apache Arrow.</h3>
                         <h4 data-toc-skip class="author">Eduardo
 Leoni</h4>
             
-            <h4 data-toc-skip class="date">2024-07-08</h4>
+            <h4 data-toc-skip class="date">2024-07-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/leoniedu/comexr/blob/HEAD/vignettes/articles/comexr.Rmd" class="external-link"><code>vignettes/articles/comexr.Rmd</code></a></small>
       <div class="d-none name"><code>comexr.Rmd</code></div>
@@ -160,7 +160,6 @@ statistics and reports at the intended level of analysis.</p>
 <span></span>
 <span><span class="va">cstat_top_0</span> <span class="op">&lt;-</span> <span class="va">comex_ncm_f</span><span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">pb</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="co">#filter(co_ano&gt;=2017)|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">partner</span><span class="op">)</span><span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>fob_usd<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">fob_usd</span><span class="op">)</span><span class="op">)</span><span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
