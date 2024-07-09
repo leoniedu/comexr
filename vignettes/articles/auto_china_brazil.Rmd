@@ -1,5 +1,5 @@
 ---
-title: "Dados de imporações de carros (veículos de passageiros) usando o comexr"
+title: "Dados de importações de carros (veículos de passageiros) usando o comexr"
 author: "Eduardo Leoni"
 date: "`r Sys.Date()`"
 params:
