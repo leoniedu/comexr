@@ -4,7 +4,7 @@
 \alias{ncm}
 \title{Standardize and Validate NCM Codes}
 \usage{
-ncm(x, checkncm = TRUE)
+ncm(x, nchar = 8, checkncm = TRUE)
 }
 \arguments{
 \item{x}{A character vector containing NCM codes.}

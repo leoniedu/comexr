@@ -7,8 +7,7 @@
 #' @param years A numeric vector or integer specifying the years for which data should be downloaded. Defaults to the current year (`2024`).
 #' @param directions A character vector specifying the directions of trade: 'imp' (imports) and/or 'exp' (exports). Defaults to both.
 #' @param types A character vector specifying the types of data: 'ncm' (Nomenclatura Comum do Mercosul) and/or 'hs4' (Harmonized System 4-digit). Defaults to both.
-#' @param download_aux A logical value indicating whether to download auxiliary data tables (e.g., URF, VIA, country codes). Defaults to `TRUE`.
-#' @param clean_aux A logical value indicating whether to delete existing auxiliary data files before downloading new ones. Defaults to `TRUE`.
+#' @param force_download_aux A logical value indicating whether to force download of the auxiliary data tables (e.g., URF, VIA, country codes). Defaults to `FALSE`. Aux data is regularly downloaded when a new trade data file is downloaded.
 #' @param cache A logical value indicating whether to use cached files if they exist. Defaults to `TRUE`.
 #' @param .progress A logical value indicating whether to display a progress bar during downloads. Defaults to `TRUE`.
 #' @param n_tries The maximum number of download attempts before giving up. Defaults to 30.
@@ -19,10 +18,8 @@
 #' This function constructs the URLs for the specified Comexstat data files based on the `years`, `directions`, and `types` arguments.
 #' It then creates the necessary directories to store the data.
 #'
-#' Downloads are performed using `curl::multi_download`, with retry logic if there are initial failures. If `download_aux` is `TRUE`,
-#' additional auxiliary data tables are downloaded as well.
-#'
-#' If `check` is `TRUE`, a basic data validation check is performed using the internal `comex_check` function.
+#' Downloads are performed using `curl::multi_download`, with retry logic if there are initial failures. If there is new data, auxiliary data tables are downloaded. If `force_download_aux` is `TRUE`,
+#' additional auxiliary data tables are downloaded even if they already exist in the cache.
 #'
 #' @return No direct return value. The function downloads the requested files to the specified directories.
 #'
@@ -37,9 +34,7 @@
 #'
 #' @export
 comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c("hs4", "ncm"),
-    cache = TRUE, .progress = TRUE, n_tries = 30, check = FALSE, ...) {
-    # Create necessary directories for storing the data (if they don't exist)
-    sapply(file.path(comexr:::cdircomex, directions), dir.create, showWarnings = FALSE, recursive = TRUE)
+    cache = TRUE, .progress = TRUE, n_tries = 30, force_download_aux = FALSE, timeout = 600, ...) {
     # Ensure types are valid (only 'hs4' or 'ncm')
     stopifnot(all(types %in% c("hs4", "ncm")))
     # Generate a table of all combinations of year, direction, and type to download
@@ -54,8 +49,6 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
     purrr::walk(todownload$dir |>
         unique(), dir.create, showWarnings = FALSE, recursive = TRUE)
 
-
-
     # Add a column to track download status
     todownload |>
         dplyr::mutate(ok = FALSE) -> todownload
@@ -66,27 +59,33 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
         if (j > 1)
             print(glue::glue("Try #{j}!"))
         res <- curl::multi_download(todownload$url, destfiles = todownload$path, progress = .progress, resume = cache,
-            timeout = 100, multiplex = TRUE, ...)
+            timeout = timeout, multiplex = TRUE, ...)
         todownload$ok <- (res$success %in% TRUE)
         j <- j + 1
     }
-
     # Delete files with URLs that weren't found
-    todelete <- res |>
-        dplyr::filter(!grepl("balanca.economia.gov.br", url)) |>
-        dplyr::pull(destfile)
-    unlink(todelete)
-    if (length(todelete) > 0)
-        warning(glue::glue("{length(todelete)} urls not found."))
-    ## update res to remove not download
-    res <- res|>
+    todelete_0 <- res |>
         dplyr::filter(!grepl("balanca.economia.gov.br", url))
+    todelete <- todownload|>dplyr::semi_join(todelete_0, by=c("path"="destfile"))
+    unlink(todelete$path)
+    if (nrow(todelete) > 0)
+        warning(glue::glue("URLs: \n{paste(todelete$url, collapse='\n')}\nnot found."))
+    ## update todownload to remove not downloaded
+    todownload <- todownload|>
+        dplyr::anti_join(todelete, by = dplyr::join_by(year, direction, type, dir, path, url, ok))
+    if (any(!todownload$ok)) stop("Failed to download all files.")
 
-
+    ## check downloads
+    problem_down <- sapply(todownload$path, function(z)
+        "try-error"%in%try(arrow::open_delim_dataset(sources = z, delim=";")|>
+            count(CO_ANO)%>%collect()))
+    if (any(problem_down)) {
+        unlink(names(problem_down[problem_down]))
+        stop("Problem downloading data. Partial data deleted. You can try again.")
+    }
     any_downloaded <- any(res$status_code%in%c(200,206))
-
     # Download auxiliary data tables if any new file downloaded
-    if (any_downloaded) {
+    if (any_downloaded|force_download_aux) {
         aux_data <- tibble::tibble(url = c(
             "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
             "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
@@ -108,18 +107,12 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
             if (j > 1)
                 print(glue::glue("Try #{j}!"))
             res <- curl::multi_download(aux_data$url, destfiles = aux_data$path, progress = .progress, resume = cache,
-                                        timeout = 100, multiplex = TRUE, ...)
+                                        timeout = timeout, multiplex = TRUE, ...)
             aux_data$ok <- (res$success %in% TRUE)
             j <- j + 1
         }
-
-
         # Stop if there are any failed downloads after all retries
         if (any(!todownload$ok))
             stop("Error downloading aux data.")
     }
-
-    # Run optional data validation check
-    if (check)
-        comex_check()
 }

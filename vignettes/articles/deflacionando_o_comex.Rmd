@@ -7,7 +7,7 @@ output:
   html_document:
     lang: pt-BR # Set language to Brazilian Portuguese
 params:
-  download: FALSE  # Parameter to control whether to download data
+  download: TRUE  # Parameter to control whether to download data
 ---
 
 ```{r setup, include=FALSE}
@@ -34,7 +34,7 @@ library(lubridate)       # Para trabalhar com datas
 ```{r}
 # Download
 if (params$download) {
-  comex_download(year=2010:lubridate::year(Sys.Date()), types = "ncm", check = FALSE)
+  comex_download(year=2010:lubridate::year(Sys.Date()), types = "ncm")
 }
 
 ## limpeza e renomeação, e agregação de dados

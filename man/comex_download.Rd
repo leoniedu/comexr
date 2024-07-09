@@ -11,7 +11,8 @@ comex_download(
   cache = TRUE,
   .progress = TRUE,
   n_tries = 30,
-  check = FALSE,
+  force_download_aux = FALSE,
+  timeout = 600,
   ...
 )
 }
@@ -28,13 +29,11 @@ comex_download(
 
 \item{n_tries}{The maximum number of download attempts before giving up. Defaults to 30.}
 
-\item{check}{A logical value indicating whether to perform data validation checks after downloading. Defaults to \code{FALSE}.}
+\item{force_download_aux}{A logical value indicating whether to force download of the auxiliary data tables (e.g., URF, VIA, country codes). Defaults to \code{FALSE}. Aux data is regularly downloaded when a new trade data file is downloaded.}
 
 \item{...}{Additional arguments to be passed to \code{curl::multi_download}, such as \code{headers}, \code{handle}, etc.}
 
-\item{download_aux}{A logical value indicating whether to download auxiliary data tables (e.g., URF, VIA, country codes). Defaults to \code{TRUE}.}
-
-\item{clean_aux}{A logical value indicating whether to delete existing auxiliary data files before downloading new ones. Defaults to \code{TRUE}.}
+\item{check}{A logical value indicating whether to perform data validation checks after downloading. Defaults to \code{FALSE}.}
 }
 \value{
 No direct return value. The function downloads the requested files to the specified directories.
@@ -48,10 +47,8 @@ types (NCM/HS4). It can also optionally download and manage auxiliary data table
 This function constructs the URLs for the specified Comexstat data files based on the \code{years}, \code{directions}, and \code{types} arguments.
 It then creates the necessary directories to store the data.
 
-Downloads are performed using \code{curl::multi_download}, with retry logic if there are initial failures. If \code{download_aux} is \code{TRUE},
-additional auxiliary data tables are downloaded as well.
-
-If \code{check} is \code{TRUE}, a basic data validation check is performed using the internal \code{comex_check} function.
+Downloads are performed using \code{curl::multi_download}, with retry logic if there are initial failures. If there is new data, auxiliary data tables are downloaded. If \code{force_download_aux} is \code{TRUE},
+additional auxiliary data tables are downloaded even if they already exist in the cache.
 }
 \examples{
 \dontrun{
