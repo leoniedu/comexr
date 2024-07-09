@@ -7,7 +7,7 @@ output:
   html_document:
     lang: pt-BR # Set language to Brazilian Portuguese
 params:
-  download: TRUE  # Parameter to control whether to download data
+  download: FALSE  # Parameter to control whether to download data
 ---
 
 ```{r setup, include=FALSE}
