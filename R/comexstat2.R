@@ -91,46 +91,86 @@ comex_rename <- function(x) {
         dplyr::mutate(across(dplyr::any_of(c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd")), bit64::as.integer64))
 }
 
+#' Check Consistency Between Comex Data and Conference Files
+#'
+#' This function verifies the consistency between downloaded Comex data and the corresponding conference files provided by the official source (MDIC). It checks if the aggregated totals for specific columns match between the two sources.
+#'
+#' @param years A numeric vector specifying the years to check. If `NULL` (default), all available years are checked.
+#' @param directions A character vector specifying the directions of trade to check: "imp" (imports) and/or "exp" (exports). If `NULL` (default), both directions are checked.
+#' @param type A character string indicating the type of Comex data: "ncm" (Nomenclatura Comum do Mercosul) or "hs4" (Harmonized System 4-digit). Defaults to "ncm".
+#'
+#' @return No direct return value. The function prints a message indicating whether the check passed ("All clear!") or if there are mismatches between the data and conference files. If mismatches are found, a table displaying the discrepancies is printed and an error is raised.
+#'
+#' @details
+#' This function performs the following checks:
+#'
+#' 1. **Input Validation:** Ensures that the `type` argument is valid ("ncm" or "hs4") and has a length of 1.
+#' 2. **Data Retrieval:** Reads the relevant Comex data (based on the `type`) and the corresponding conference files.
+#' 3. **Filtering:** Filters the data and conference files based on the specified `years` and `directions` if provided.
+#' 4. **Aggregation:** Aggregates the Comex data by `year` and `direction` and calculates sums for relevant columns.
+#' 5. **Comparison:** Compares the aggregated sums from the Comex data with the totals in the conference files.
+#' 6. **Mismatch Reporting:** If any mismatches are found, a table highlighting the differences is printed to the console.
+#' 7. **Error Handling:** If mismatches exist, the function raises an error to stop further analysis.
+#'
+#' @examples
+#' \dontrun{
+#' # Check consistency for all NCM data from 2020 onwards
+#' comex_check(years = 2020:2023)
+#'
+#' # Check consistency for only import data (NCM)
+#' comex_check(directions = "imp")
+#'
+#' # Check consistency for HS4 data in 2022
+#' comex_check(years = 2022, type = "hs4")
+#' }
+#'
+#' @export
 comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
-  stopifnot(type%in%c("ncm","hs4"))
-  stopifnot(length(type)==1)
-  if (type=="ncm") {
-    cached <- comex_ncm()
-    conf <- comex("imp_totais_conferencia") |>
-      dplyr::bind_rows(comex("exp_totais_conferencia"))
-  } else {
-    cached <- comex_hs4()
-    conf <- comex("imp_totais_conferencia_mun") |>
-      dplyr::bind_rows(comex("exp_totais_conferencia_mun"))
-  }
+  # Input validation
+  stopifnot(type %in% c("ncm", "hs4"), length(type) == 1)  # Ensure valid type and single value
+
+  # Determine file names based on type
+  files <- c("imp_totais_conferencia", "exp_totais_conferencia")
+  if (type == "hs4") files <- paste0(files, "_mun")
+
+  # Read and combine conference data
+  conf_data <- bind_rows(lapply(files, comex)) |>
+    mutate(direction = if_else(grepl("IMP", file), "imp", "exp"))
+
+  # Get cached data and filter based on years and directions
+  cached_data <- get(paste0("comex_", type))()
   if (!is.null(years)) {
-    cached <- cached|>dplyr::filter(year%in%years)
-    conf <- conf|>dplyr::filter(year%in%years)
+    cached_data <- cached_data |> filter(year %in% years)
+    conf_data <- conf_data |> filter(year %in% years)
   }
   if (!is.null(directions)) {
-    cached <- cached|>dplyr::filter(direction%in%directions)
-    conf <- conf|>dplyr::filter(direction%in%directions)
+    cached_data <- cached_data |> filter(direction %in% directions)
+    conf_data <- conf_data |> filter(direction %in% directions)
   }
-  conf <- conf|>
-    dplyr::mutate(direction = dplyr::if_else(grepl("IMP", file), "imp", "exp"))
-  cached <- cached|>
-    dplyr::group_by(year, direction) |>
-    dplyr::mutate(number_of_lines = 1) |>
-    comex_sum(x=c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd",  "number_of_lines"))|>
-    dplyr::collect()
-  jb <- intersect(c("year", 'qt_stat', "kg_net", "fob_usd", "freight_usd", "insurance_usd", "number_of_lines", "direction"), names(conf))
-  checked <- conf |>
-    dplyr::anti_join(cached, by = jb)
+
+  # Calculate summaries for comparison
+  cached_summary <- cached_data |>
+    group_by(year, direction) |>
+    mutate(number_of_lines = 1) |>
+    comex_sum(x = c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd", "number_of_lines")) |>
+    collect()
+
+  # Find differences between conference and cached data
+  join_cols <- intersect(names(conf_data), names(cached_summary))
+  checked <- conf_data |> anti_join(cached_summary, by = join_cols)
+
   if (nrow(checked) > 0) {
     toprint <- checked |>
-      dplyr::inner_join(cached, by = dplyr::join_by(year, direction), suffix = c("_check", "_cached"))
-    print(toprint |>
-            dplyr::select(sort(names(toprint))) |>
-            t())
-    stop("Conference file mismatch NCM with downloaded data!")
+      inner_join(cached_summary, by = c("year", "direction"), suffix = c("_check", "_cached"))
+
+    print(t(toprint |> select(sort(names(toprint)))))
+    stop("Conference file mismatch with downloaded data!")
   }
+
+  # Success message if no mismatches
   print("All clear!")
 }
+
 
 #' Open ComexStat HS4 Trade Dataset
 #'

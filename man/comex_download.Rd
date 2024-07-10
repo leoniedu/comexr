@@ -17,38 +17,46 @@ comex_download(
 )
 }
 \arguments{
-\item{years}{A numeric vector or integer specifying the years for which data should be downloaded. Defaults to the current year (\code{2024}).}
+\item{years}{A numeric vector or integer specifying the years for which data should be downloaded.
+Defaults to the current year.}
 
-\item{directions}{A character vector specifying the directions of trade: 'imp' (imports) and/or 'exp' (exports). Defaults to both.}
+\item{directions}{A character vector specifying the directions of trade: 'imp' (imports) and/or 'exp' (exports).
+Defaults to both.}
 
-\item{types}{A character vector specifying the types of data: 'ncm' (Nomenclatura Comum do Mercosul) and/or 'hs4' (Harmonized System 4-digit). Defaults to both.}
+\item{types}{A character vector specifying the types of data: 'ncm' (Nomenclatura Comum do Mercosul)
+and/or 'hs4' (Harmonized System 4-digit). Defaults to both.}
 
 \item{cache}{A logical value indicating whether to use cached files if they exist. Defaults to \code{TRUE}.}
 
-\item{.progress}{A logical value indicating whether to display a progress bar during downloads. Defaults to \code{TRUE}.}
+\item{.progress}{A logical value indicating whether to display a progress bar during downloads.
+Defaults to \code{TRUE}.}
 
 \item{n_tries}{The maximum number of download attempts before giving up. Defaults to 30.}
 
-\item{force_download_aux}{A logical value indicating whether to force download of the auxiliary data tables (e.g., URF, VIA, country codes). Defaults to \code{FALSE}. Aux data is regularly downloaded when a new trade data file is downloaded.}
+\item{force_download_aux}{A logical value indicating whether to force the download of auxiliary data tables
+(e.g., URF, VIA, country codes), even if they already exist in the cache. Defaults to \code{FALSE}.
+Auxiliary data is typically downloaded when a new trade data file is downloaded.}
+
+\item{timeout}{The maximum time (in seconds) to wait for a download response. Defaults to 600 seconds (10 minutes).}
 
 \item{...}{Additional arguments to be passed to \code{curl::multi_download}, such as \code{headers}, \code{handle}, etc.}
-
-\item{check}{A logical value indicating whether to perform data validation checks after downloading. Defaults to \code{FALSE}.}
 }
 \value{
-No direct return value. The function downloads the requested files to the specified directories.
+\code{invisible(NULL)} if successful. The function primarily downloads data to the specified directories.
 }
 \description{
-This function downloads Comexstat (Brazilian trade statistics) data from the
-MDIC website for specified years, directions (imports/exports), and
-types (NCM/HS4). It can also optionally download and manage auxiliary data tables.
+This function downloads Comexstat (Brazilian trade statistics) data from the MDIC website for specified years,
+directions (imports/exports), and types (NCM/HS4). It can also optionally download and manage auxiliary data tables.
 }
 \details{
-This function constructs the URLs for the specified Comexstat data files based on the \code{years}, \code{directions}, and \code{types} arguments.
-It then creates the necessary directories to store the data.
-
-Downloads are performed using \code{curl::multi_download}, with retry logic if there are initial failures. If there is new data, auxiliary data tables are downloaded. If \code{force_download_aux} is \code{TRUE},
-additional auxiliary data tables are downloaded even if they already exist in the cache.
+This function performs the following steps:
+\enumerate{
+\item \strong{File Structure:} Ensures the necessary directories exist to store downloaded files.
+\item \strong{URL Generation:} Constructs URLs for Comexstat data files based on the specified years, directions, and types.
+\item \strong{Download (with Retry):} Downloads files using \code{curl::multi_download} with retry logic in case of failures.
+\item \strong{Auxiliary Data:} If there is new trade data or \code{force_download_aux} is \code{TRUE}, it downloads and manages auxiliary data tables.
+\item \strong{Error Handling:} Checks if any downloads failed or if the downloaded files are valid.
+}
 }
 \examples{
 \dontrun{
@@ -56,7 +64,7 @@ additional auxiliary data tables are downloaded even if they already exist in th
 comex_download(years = 2023:2024)
 
 # Download only import data (NCM) for 2024
-comex_download(years = 2024, directions = 'imp', types = 'ncm')
+comex_download(years = 2024, directions = "imp", types = "ncm")
 }
 
 }

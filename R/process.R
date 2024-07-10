@@ -108,7 +108,7 @@ comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insu
 #' @examples
 #' #' # Create sample Comex data
 #' set.seed(123)
-#' comex_data <- tibble(
+#' comex_data <- tibble::tibble(
 #'   date = seq(from = ymd('2022-01-01'), to = ymd('2023-12-01'), by = 'month'),
 #'   qt_stat = rpois(24, lambda = 100),
 #'   fob_usd = runif(24, min = 500, max = 2000)
