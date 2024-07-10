@@ -91,36 +91,45 @@ comex_rename <- function(x) {
         dplyr::mutate(across(dplyr::any_of(c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd")), bit64::as.integer64))
 }
 
-comex_check <- function() {
-    cached <- comex_ncm() |>
-        dplyr::group_by(year, direction) |>
-        dplyr::mutate(number_of_lines = 1) |>
-        dplyr::summarise(across(c(qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines), sum)) |>
-        dplyr::collect()
-    cached_hs4 <- comex_hs4() |>
-        dplyr::group_by(year, direction) |>
-        dplyr::mutate(number_of_lines = 1) |>
-        dplyr::summarise(across(c(fob_usd, number_of_lines), sum)) |>
-        dplyr::collect()
+comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
+  stopifnot(type%in%c("ncm","hs4"))
+  stopifnot(length(type)==1)
+  if (type=="ncm") {
+    cached <- comex_ncm()
     conf <- comex("imp_totais_conferencia") |>
-        dplyr::bind_rows(comex("exp_totais_conferencia")) |>
-        dplyr::mutate(direction = dplyr::if_else(grepl("IMP", file), "imp", "exp"))
-    checked <- conf |>
-        dplyr::anti_join(cached, by = dplyr::join_by(year, qt_stat, kg_net, fob_usd, freight_usd, insurance_usd, number_of_lines,
-            direction))
-    if (nrow(checked) > 0) {
-        toprint <- checked |>
-            dplyr::inner_join(cached, by = dplyr::join_by(year, direction), suffix = c("_check", "_cached"))
-        print(toprint |>
+      dplyr::bind_rows(comex("exp_totais_conferencia"))
+  } else {
+    cached <- comex_hs4()
+    conf <- comex("imp_totais_conferencia_mun") |>
+      dplyr::bind_rows(comex("exp_totais_conferencia_mun"))
+  }
+  if (!is.null(years)) {
+    cached <- cached|>dplyr::filter(year%in%years)
+    conf <- conf|>dplyr::filter(year%in%years)
+  }
+  if (!is.null(directions)) {
+    cached <- cached|>dplyr::filter(direction%in%directions)
+    conf <- conf|>dplyr::filter(direction%in%directions)
+  }
+  conf <- conf|>
+    dplyr::mutate(direction = dplyr::if_else(grepl("IMP", file), "imp", "exp"))
+  cached <- cached|>
+    dplyr::group_by(year, direction) |>
+    dplyr::mutate(number_of_lines = 1) |>
+    comex_sum(x=c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd",  "number_of_lines"))|>
+    dplyr::collect()
+  jb <- intersect(c("year", 'qt_stat', "kg_net", "fob_usd", "freight_usd", "insurance_usd", "number_of_lines", "direction"), names(conf))
+  checked <- conf |>
+    dplyr::anti_join(cached, by = jb)
+  if (nrow(checked) > 0) {
+    toprint <- checked |>
+      dplyr::inner_join(cached, by = dplyr::join_by(year, direction), suffix = c("_check", "_cached"))
+    print(toprint |>
             dplyr::select(sort(names(toprint))) |>
             t())
-        stop("Conference file mismatch NCM with downloaded data!")
-    }
-    checked_hs4 <- conf |>
-        dplyr::anti_join(cached_hs4, by = dplyr::join_by(year, fob_usd, direction))
-    if (nrow(checked_hs4) > 0)
-        stop("Conference file mismatch HS4 with downloaded data!")
-    print("All clear!")
+    stop("Conference file mismatch NCM with downloaded data!")
+  }
+  print("All clear!")
 }
 
 #' Open ComexStat HS4 Trade Dataset

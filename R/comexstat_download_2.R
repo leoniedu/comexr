@@ -59,7 +59,9 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
         if (j > 1)
             print(glue::glue("Try #{j}!"))
         res <- curl::multi_download(todownload$url, destfiles = todownload$path, progress = .progress, resume = cache,
-            timeout = timeout, multiplex = TRUE, ...)
+            timeout = timeout, multiplex = TRUE,
+            accept_encoding=c("gzip,deflate"),
+            ...)
         todownload$ok <- (res$success %in% TRUE)
         j <- j + 1
     }
@@ -91,6 +93,8 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
             "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
             "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/IMP_TOTAIS_CONFERENCIA.csv",
             "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/EXP_TOTAIS_CONFERENCIA.csv",
+            "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/mun/EXP_TOTAIS_CONFERENCIA_MUN.csv",
+            "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/mun/IMP_TOTAIS_CONFERENCIA_MUN.csv",
             "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS_BLOCO.csv",
             "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_CUCI.csv",
             "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM.csv",
