@@ -78,7 +78,6 @@ comex <- function(table, dir = comexr:::cdircomex, extension = ".csv", ...) {
     comex_rename()
 }
 
-
 comex_rename <- function(x) {
     lookup <- c(year = "co_ano", month = "co_mes", country_code = "co_pais", country_name = "no_pais_ing", block_code = "co_bloco",
         block_name = "no_bloco_ing", qt_stat = "qt_estat", kg_net = "kg_liquido", fob_usd = "vl_fob", freight_usd = "vl_frete",

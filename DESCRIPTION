@@ -1,6 +1,6 @@
 Package: comexr
 Title: Access to brazilian foreign trade data- Comexstat.
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: c(
         person(given = "Eduardo",
                family = "Leoni",
