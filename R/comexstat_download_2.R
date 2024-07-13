@@ -87,7 +87,7 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
     ## check downloads
     problem_down <- sapply(todownload$path, function(z)
         "try-error"%in%try(arrow::open_delim_dataset(sources = z, delim=";")|>
-            count(CO_ANO)|>collect()))
+            dplyr::count(CO_ANO)|>collect()))
     if (any(problem_down)) {
         unlink(names(problem_down[problem_down]))
         stop("Problem downloading data. Partial data deleted. You can try again.")

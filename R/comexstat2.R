@@ -133,36 +133,36 @@ comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
   if (type == "hs4") files <- paste0(files, "_mun")
 
   # Read and combine conference data
-  conf_data <- bind_rows(lapply(files, comex)) |>
-    mutate(direction = if_else(grepl("IMP", file), "imp", "exp"))
+  conf_data <- dplyr::bind_rows(lapply(files, comex)) |>
+    dplyr::mutate(direction = if_else(grepl("IMP", file), "imp", "exp"))
 
   # Get cached data and filter based on years and directions
   cached_data <- get(paste0("comex_", type))()
   if (!is.null(years)) {
-    cached_data <- cached_data |> filter(year %in% years)
-    conf_data <- conf_data |> filter(year %in% years)
+    cached_data <- cached_data |> dplyr::filter(year %in% years)
+    conf_data <- conf_data |> dplyr::filter(year %in% years)
   }
   if (!is.null(directions)) {
-    cached_data <- cached_data |> filter(direction %in% directions)
-    conf_data <- conf_data |> filter(direction %in% directions)
+    cached_data <- cached_data |> dplyr::filter(direction %in% directions)
+    conf_data <- conf_data |> dplyr::filter(direction %in% directions)
   }
 
   # Calculate summaries for comparison
   cached_summary <- cached_data |>
-    group_by(year, direction) |>
-    mutate(number_of_lines = 1) |>
+    dplyr::group_by(year, direction) |>
+    dplyr::mutate(number_of_lines = 1) |>
     comex_sum(x = c("qt_stat", "kg_net", "fob_usd", "freight_usd", "insurance_usd", "number_of_lines")) |>
-    collect()
+    dplyr::collect()
 
   # Find differences between conference and cached data
   join_cols <- intersect(names(conf_data), names(cached_summary))
-  checked <- conf_data |> anti_join(cached_summary, by = join_cols)
+  checked <- conf_data |> dplyr::anti_join(cached_summary, by = join_cols)
 
   if (nrow(checked) > 0) {
     toprint <- checked |>
-      inner_join(cached_summary, by = c("year", "direction"), suffix = c("_check", "_cached"))
+      dplyr::inner_join(cached_summary, by = c("year", "direction"), suffix = c("_check", "_cached"))
 
-    print(t(toprint |> select(sort(names(toprint)))))
+    print(t(toprint |> dplyr::select(sort(names(toprint)))))
     stop("Conference file mismatch with downloaded data!")
   }
 
@@ -360,7 +360,7 @@ comex_deflate <- function(data, basedate = NULL, deflators = get_deflators(na_om
     # Join the deflated data with the original dataset and perform calculations
     data |>
         dplyr::left_join(deflators_1, by = c("date"), copy = TRUE) |>
-        collect() |>
+        dplyr::collect() |>
         # Deflate USD values by CPI
     dplyr::mutate(dplyr::across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")), function(x) x *
         cpi_r, .names = "{col}_deflated")) |>
