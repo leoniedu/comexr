@@ -28,7 +28,8 @@ Imports:
     readr,
     dplyr,
     assertthat,
-    xts
+    xts,
+    rbcb
 Suggests:
     ggplot2,
     knitr,
