@@ -36,12 +36,12 @@
 #' comex_download(years = 2023:2024)
 #'
 #' # Download only import data (NCM) for 2024
-#' comex_download(years = 2024, directions = "imp", types = "ncm")
+#' comex_download(years = 2024, directions = 'imp', types = 'ncm')
 #' }
 #'
 #' @export
-comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c("hs4", "ncm"),
-    cache = TRUE, .progress = TRUE, n_tries = 30, force_download_aux = FALSE, timeout = 600, ...) {
+comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c("hs4", "ncm"), cache = TRUE, .progress = TRUE,
+    n_tries = 30, force_download_aux = FALSE, timeout = 600, ...) {
     # Ensure types are valid (only 'hs4' or 'ncm')
     stopifnot(all(types %in% c("hs4", "ncm")))
     # Generate a table of all combinations of year, direction, and type to download
@@ -66,35 +66,36 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
         if (j > 1)
             print(glue::glue("Try #{j}!"))
         res <- curl::multi_download(todownload$url, destfiles = todownload$path, progress = .progress, resume = cache,
-            timeout = timeout, multiplex = TRUE,
-            accept_encoding=c("gzip,deflate"),
-            ...)
+            timeout = timeout, multiplex = TRUE, accept_encoding = c("gzip,deflate"), ...)
         todownload$ok <- (res$success %in% TRUE)
         j <- j + 1
     }
     # Delete files with URLs that weren't found
     todelete_0 <- res |>
         dplyr::filter(!grepl("balanca.economia.gov.br", url))
-    todelete <- todownload|>dplyr::semi_join(todelete_0, by=c("path"="destfile"))
+    todelete <- todownload |>
+        dplyr::semi_join(todelete_0, by = c(path = "destfile"))
     unlink(todelete$path)
     if (nrow(todelete) > 0)
         warning(glue::glue("URLs: \n{paste(todelete$url, collapse='\n')}\nnot found."))
     ## update todownload to remove not downloaded
-    todownload <- todownload|>
+    todownload <- todownload |>
         dplyr::anti_join(todelete, by = dplyr::join_by(year, direction, type, dir, path, url, ok))
-    if (any(!todownload$ok)) stop("Failed to download all files.")
+    if (any(!todownload$ok))
+        stop("Failed to download all files.")
 
     ## check downloads
-    problem_down <- sapply(todownload$path, function(z)
-        "try-error"%in%try(arrow::open_delim_dataset(sources = z, delim=";")|>
-            dplyr::count(CO_ANO)|>dplyr::collect()))
+    problem_down <- sapply(todownload$path, function(z) "try-error" %in% try(arrow::open_delim_dataset(sources = z,
+        delim = ";") |>
+        dplyr::count(CO_ANO) |>
+        dplyr::collect()))
     if (any(problem_down)) {
         unlink(names(problem_down[problem_down]))
         stop("Problem downloading data. Partial data deleted. You can try again.")
     }
-    any_downloaded <- any(res$status_code%in%c(200,206))
+    any_downloaded <- any(res$status_code %in% c(200, 206))
     # Download auxiliary data tables if any new file downloaded
-    if (any_downloaded|force_download_aux) {
+    if (any_downloaded | force_download_aux) {
         aux_data <- tibble::tibble(url = c(
             "https://balanca.economia.gov.br/balanca/bd/tabelas/URF.csv",
             "https://balanca.economia.gov.br/balanca/bd/tabelas/VIA.csv",
@@ -110,7 +111,7 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
             "https://balanca.economia.gov.br/balanca/bd/tabelas/PAIS.csv",
             "https://balanca.economia.gov.br/balanca/bd/tabelas/NCM_UNIDADE.csv")) |>
             dplyr::mutate(path = file.path(comexr:::cdircomex, basename(url) |>
-                                               tolower()), ok=FALSE)
+                tolower()), ok = FALSE)
         # Delete existing auxiliary files
         unlink(aux_data$path)
         j <- 1
@@ -118,7 +119,7 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
             if (j > 1)
                 print(glue::glue("Try #{j}!"))
             res <- curl::multi_download(aux_data$url, destfiles = aux_data$path, progress = .progress, resume = cache,
-                                        timeout = timeout, multiplex = TRUE, ...)
+                timeout = timeout, multiplex = TRUE, ...)
             aux_data$ok <- (res$success %in% TRUE)
             j <- j + 1
         }
