@@ -79,7 +79,7 @@ ncms <- function(files = c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unida
 #'
 #' @export
 comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")) {
-    data %>%
+    data |>
         summarise(across(starts_with(x), sum, .names = "{.col}"))
 }
 
@@ -160,7 +160,7 @@ ncm <- function(x, nchar=8, checkncm = TRUE) {
     x <- gsub("[^0-9]", "", x)
     x[nchar(x) == 0] <- NA_character_
     if (checkncm) {
-        if (!all(nchar(x %>%
+        if (!all(nchar(x |>
             na.omit()) == nchar)) {
             stop("Not all NCMs valid or NA!")
         }
