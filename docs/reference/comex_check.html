@@ -19,7 +19,8 @@
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/auto_china_brazil.html">Dados de importações de carros (veículos de passageiros) usando o comexr</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/arrecadacao_ii_ipi_vinculado_e_comex.html">Análise da Arrecadação de Imposto de Importação (II) e IPI Vinculado sobre as Importações Brasileiras</a></li>
+    <li><a class="dropdown-item" href="../articles/auto_china_brazil.html">Dados de importações de carros (veículos de passageiros) usando o comexr</a></li>
     <li><a class="dropdown-item" href="../articles/deflacionando_o_comex.html">Deflacionando o Comex</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -57,20 +58,20 @@
 
 
 <dt id="arg-directions">directions<a class="anchor" aria-label="anchor" href="#arg-directions"></a></dt>
-<dd><p>A character vector specifying the directions of trade to check: "imp" (imports) and/or "exp" (exports). If <code>NULL</code> (default), both directions are checked.</p></dd>
+<dd><p>A character vector specifying the directions of trade to check: 'imp' (imports) and/or 'exp' (exports). If <code>NULL</code> (default), both directions are checked.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>A character string indicating the type of Comex data: "ncm" (Nomenclatura Comum do Mercosul) or "hs4" (Harmonized System 4-digit). Defaults to "ncm".</p></dd>
+<dd><p>A character string indicating the type of Comex data: 'ncm' (Nomenclatura Comum do Mercosul) or 'hs4' (Harmonized System 4-digit). Defaults to 'ncm'.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>No direct return value. The function prints a message indicating whether the check passed ("All clear!") or if there are mismatches between the data and conference files. If mismatches are found, a table displaying the discrepancies is printed and an error is raised.</p>
+    <p>No direct return value. The function prints a message indicating whether the check passed ('All clear!') or if there are mismatches between the data and conference files. If mismatches are found, a table displaying the discrepancies is printed and an error is raised.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function performs the following checks:</p><ol><li><p><strong>Input Validation:</strong> Ensures that the <code>type</code> argument is valid ("ncm" or "hs4") and has a length of 1.</p></li>
+    <p>This function performs the following checks:</p><ol><li><p><strong>Input Validation:</strong> Ensures that the <code>type</code> argument is valid ('ncm' or 'hs4') and has a length of 1.</p></li>
 <li><p><strong>Data Retrieval:</strong> Reads the relevant Comex data (based on the <code>type</code>) and the corresponding conference files.</p></li>
 <li><p><strong>Filtering:</strong> Filters the data and conference files based on the specified <code>years</code> and <code>directions</code> if provided.</p></li>
 <li><p><strong>Aggregation:</strong> Aggregates the Comex data by <code>year</code> and <code>direction</code> and calculates sums for relevant columns.</p></li>
@@ -86,10 +87,10 @@
 <span class="r-in"><span><span class="fu">comex_check</span><span class="op">(</span>years <span class="op">=</span> <span class="fl">2020</span><span class="op">:</span><span class="fl">2023</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check consistency for only import data (NCM)</span></span></span>
-<span class="r-in"><span><span class="fu">comex_check</span><span class="op">(</span>directions <span class="op">=</span> <span class="st">"imp"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">comex_check</span><span class="op">(</span>directions <span class="op">=</span> <span class="st">'imp'</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check consistency for HS4 data in 2022</span></span></span>
-<span class="r-in"><span><span class="fu">comex_check</span><span class="op">(</span>years <span class="op">=</span> <span class="fl">2022</span>, type <span class="op">=</span> <span class="st">"hs4"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">comex_check</span><span class="op">(</span>years <span class="op">=</span> <span class="fl">2022</span>, type <span class="op">=</span> <span class="st">'hs4'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
