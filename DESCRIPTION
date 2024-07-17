@@ -29,7 +29,8 @@ Imports:
     dplyr,
     assertthat,
     xts,
-    rbcb
+    rbcb,
+    slider
 Suggests:
     ggplot2,
     knitr,

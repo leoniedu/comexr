@@ -7,7 +7,7 @@
 comex_deflate(data, basedate = NULL, deflators = get_deflators(na_omit = TRUE))
 }
 \arguments{
-\item{data}{A data frame or tibble containing Comexstat data.}
+\item{data}{A data frame or tibble containing data to be deflated.}
 
 \item{basedate}{An optional date object specifying the base date for deflation.
 If \code{NULL}, the latest available date in the \code{deflators} data is used.}
@@ -25,7 +25,7 @@ A modified version of the input \code{data}, with the following changes:
 }
 }
 \description{
-This function deflates USD-denominated values in Comexstat data (trade statistics)
+This function deflates USD-denominated values
 using specified deflators (CPI for USD, IPCA for BRL after converting using the exchange rate of the date of the statistics)
 }
 \details{
@@ -35,19 +35,14 @@ The function performs the following steps:
 \item Determines the base date for deflation, either from \code{basedate} input or the latest date in \code{deflators}.
 \item Calculates deflation ratios (\code{cpi_r}, \code{ipca_r}) for each date relative to the base date.
 \item Joins the \code{deflators} data with the input \code{data} based on \code{date}.
-\item Deflates the USD-denominated columns (\code{fob_usd}, \code{cif_usd}, etc.) using \code{cpi_r}.
+\item Deflates the USD-denominated columns (those ending with _usd, such as \code{fob_usd}, \code{cif_usd}, etc.) using \code{cpi_r}.
 \item Converts USD values to BRL based on the exchange rate in the \code{brlusd} column.
-\item Deflates the BRL values using \code{ipca_r}.
+\item Deflates columns with BRL values (those ending with _brl)  using \code{ipca_r}.
 \item Arranges the resulting data by \code{date}.
 }
 }
 \examples{
 \dontrun{
-# Deflate using default data and latest base date
-deflated_data <- comex_deflate()
-
-# Deflate with a specific base date (e.g., 2023-12-31)
-deflated_data <- comex_deflate(basedate = as.Date('2023-12-31'))
 }
 
 }

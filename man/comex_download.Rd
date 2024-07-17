@@ -64,7 +64,7 @@ This function performs the following steps:
 comex_download(years = 2023:2024)
 
 # Download only import data (NCM) for 2024
-comex_download(years = 2024, directions = "imp", types = "ncm")
+comex_download(years = 2024, directions = 'imp', types = 'ncm')
 }
 
 }

@@ -297,10 +297,10 @@ comex_ncm <- function(check = FALSE) {
 
 #' Deflate and Convert Comexstat Data
 #'
-#' This function deflates USD-denominated values in Comexstat data (trade statistics)
+#' This function deflates USD-denominated values
 #' using specified deflators (CPI for USD, IPCA for BRL after converting using the exchange rate of the date of the statistics)
 #'
-#' @param data A data frame or tibble containing Comexstat data.
+#' @param data A data frame or tibble containing data to be deflated.
 #' @param basedate An optional date object specifying the base date for deflation.
 #'   If `NULL`, the latest available date in the `deflators` data is used.
 #' @param deflators A data frame containing deflator time series data, including columns
@@ -318,18 +318,13 @@ comex_ncm <- function(check = FALSE) {
 #' 2. Determines the base date for deflation, either from `basedate` input or the latest date in `deflators`.
 #' 3. Calculates deflation ratios (`cpi_r`, `ipca_r`) for each date relative to the base date.
 #' 4. Joins the `deflators` data with the input `data` based on `date`.
-#' 5. Deflates the USD-denominated columns (`fob_usd`, `cif_usd`, etc.) using `cpi_r`.
+#' 5. Deflates the USD-denominated columns (those ending with _usd, such as `fob_usd`, `cif_usd`, etc.) using `cpi_r`.
 #' 6. Converts USD values to BRL based on the exchange rate in the `brlusd` column.
-#' 7. Deflates the BRL values using `ipca_r`.
+#' 7. Deflates columns with BRL values (those ending with _brl)  using `ipca_r`.
 #' 8. Arranges the resulting data by `date`.
 #'
 #' @examples
 #' \dontrun{
-#' # Deflate using default data and latest base date
-#' deflated_data <- comex_deflate()
-#'
-#' # Deflate with a specific base date (e.g., 2023-12-31)
-#' deflated_data <- comex_deflate(basedate = as.Date('2023-12-31'))
 #' }
 #'
 #' @export
@@ -370,15 +365,15 @@ comex_deflate <- function(data, basedate = NULL, deflators = get_deflators(na_om
         dplyr::left_join(deflators_1, by = c("date"), copy = TRUE) |>
         dplyr::collect() |>
         # Deflate USD values by CPI
-    dplyr::mutate(dplyr::across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")), function(x) x *
+    dplyr::mutate(dplyr::across(dplyr::ends_with(c("_usd")), function(x) x *
         cpi_r, .names = "{col}_deflated")) |>
         # Convert USD values to BRL using the exchange rate on the statistic date
-    dplyr::mutate(dplyr::across(any_of(c("fob_usd", "cif_usd", "freight_usd", "insurance_usd")), function(x) x *
+    dplyr::mutate(dplyr::across(ends_with(c("_usd")), function(x) x *
         brlusd, .names = "{col}_brl")) |>
         # Clean up column names
     dplyr::rename_with(function(x) gsub("_usd_brl$", "_brl", x)) |>
         # Deflate BRL values by IPCA
-    dplyr::mutate(dplyr::across(any_of(c("fob_brl", "cif_brl", "freight_brl", "insurance_brl")), function(x) x *
+    dplyr::mutate(dplyr::across(ends_with(c("_brl")), function(x) x *
         ipca_r, .names = "{col}_deflated")) |>
         # Sort by date
     dplyr::arrange(date)
