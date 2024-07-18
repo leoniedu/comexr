@@ -94,15 +94,15 @@ would match columns like <code>fob_usd</code>, <code>fob_brl</code>, etc., and s
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Aggregate columns starting with default prefixes</span></span></span>
 <span class="r-in"><span><span class="va">summary_data</span> <span class="op">&lt;-</span> <span class="fu">comex_sum</span><span class="op">(</span><span class="va">comex_data</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in summarise(data, across(starts_with(x), sum, .names = "{.col}")):</span> could not find function "summarise"</span>
 <span class="r-in"><span><span class="va">summary_data</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'summary_data' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   qt_stat kg_net fob_usd fob_brl freight_usd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     430  20500   63000  315000        8500</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Aggregate only columns starting with 'qt_' and 'fob_'</span></span></span>
 <span class="r-in"><span><span class="va">summary_data</span> <span class="op">&lt;-</span> <span class="fu">comex_sum</span><span class="op">(</span><span class="va">comex_data</span>, x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'qt_'</span>, <span class="st">'fob_'</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in summarise(data, across(starts_with(x), sum, .names = "{.col}")):</span> could not find function "summarise"</span>
 <span class="r-in"><span><span class="va">summary_data</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'summary_data' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   qt_stat fob_usd fob_brl</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     430   63000  315000</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
