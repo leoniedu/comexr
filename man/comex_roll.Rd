@@ -38,6 +38,7 @@ for dates where there are at least \code{k} months of prior data available. Rows
 \examples{
 #' # Create sample Comex data
 set.seed(123)
+library(lubridate)
 comex_data <- tibble::tibble(
   date = seq(from = ymd('2022-01-01'), to = ymd('2023-12-01'), by = 'month'),
   qt_stat = rpois(24, lambda = 100),

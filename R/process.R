@@ -84,7 +84,7 @@ ncms <- function(files = c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unida
 #' @export
 comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")) {
     data |>
-        summarise(across(starts_with(x), sum, .names = "{.col}"))
+        dplyr::summarise(dplyr::across(dplyr::starts_with(x), sum, .names = "{.col}"))
 }
 
 #' Calculate Rolling Sums for Comex Data
@@ -112,6 +112,7 @@ comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insu
 #' @examples
 #' #' # Create sample Comex data
 #' set.seed(123)
+#' library(lubridate)
 #' comex_data <- tibble::tibble(
 #'   date = seq(from = ymd('2022-01-01'), to = ymd('2023-12-01'), by = 'month'),
 #'   qt_stat = rpois(24, lambda = 100),

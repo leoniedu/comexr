@@ -24,19 +24,13 @@ An Arrow Dataset containing combined import and export HS4 trade data. The datas
 This function opens the ComexStat HS4 trade data as an Arrow Dataset. The data is assumed to be located in the ComexStat data directory and to have been downloaded using the \code{comex_download()} function.
 }
 \details{
-This function assumes that the HS4 data files are named according to the following pattern:
-\itemize{
-\item Imports: 'imp_\link{year}_mun.csv' (e.g., 'imp_2023_mun.csv')
-\item Exports: 'exp_\link{year}_mun.csv' (e.g., 'exp_2023_mun.csv')
-}
+This function reads HS4 parquet files in the user data directory.
 }
 \examples{
 \dontrun{
 # Open the ComexStat HS4 dataset:
 hs4_dataset <- comexstat_hs4()
 
-# Explore the dataset:
-print(hs4_dataset)
 }
 
 }

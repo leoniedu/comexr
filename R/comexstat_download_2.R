@@ -23,7 +23,8 @@ comex_rewrite <- function(data, ...) {
 #'
 #' This function downloads Comexstat (Brazilian trade statistics) data from the MDIC website for specified years,
 #' directions (imports/exports), and types (NCM/HS4). It can also optionally download and manage auxiliary data tables.
-#'
+#' After download and checking the csv files, the data is stores as parquet files under
+#' a data directory, in order to increase speed.
 #' @param years A numeric vector or integer specifying the years for which data should be downloaded.
 #'   Defaults to the current year.
 #' @param directions A character vector specifying the directions of trade: 'imp' (imports) and/or 'exp' (exports).
@@ -48,6 +49,8 @@ comex_rewrite <- function(data, ...) {
 #' 3. **Download (with Retry):** Downloads files using `curl::multi_download` with retry logic in case of failures.
 #' 4. **Auxiliary Data:** If there is new trade data or `force_download_aux` is `TRUE`, it downloads and manages auxiliary data tables.
 #' 5. **Error Handling:** Checks if any downloads failed or if the downloaded files are valid.
+#' 6. **Write parquet files:** Stores data as parquet files in order to speed up analyses.
+
 #'
 #' @return `invisible(NULL)` if successful. The function primarily downloads data to the specified directories.
 #'

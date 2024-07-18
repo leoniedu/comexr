@@ -47,6 +47,8 @@ Auxiliary data is typically downloaded when a new trade data file is downloaded.
 \description{
 This function downloads Comexstat (Brazilian trade statistics) data from the MDIC website for specified years,
 directions (imports/exports), and types (NCM/HS4). It can also optionally download and manage auxiliary data tables.
+After download and checking the csv files, the data is stores as parquet files under
+a data directory, in order to increase speed.
 }
 \details{
 This function performs the following steps:
@@ -56,6 +58,7 @@ This function performs the following steps:
 \item \strong{Download (with Retry):} Downloads files using \code{curl::multi_download} with retry logic in case of failures.
 \item \strong{Auxiliary Data:} If there is new trade data or \code{force_download_aux} is \code{TRUE}, it downloads and manages auxiliary data tables.
 \item \strong{Error Handling:} Checks if any downloads failed or if the downloaded files are valid.
+\item \strong{Write parquet files:} Stores data as parquet files in order to speed up analyses.
 }
 }
 \examples{

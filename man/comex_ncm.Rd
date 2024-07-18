@@ -26,16 +26,7 @@ An Arrow Dataset containing combined import and export NCM trade data, with an a
 }
 }
 \description{
-This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the \code{comex_download()} function.
-}
-\details{
-This function assumes that the NCM data files are named according to the following pattern:
-\itemize{
-\item Imports: 'imp_\link{year}.csv' (e.g., 'imp_2023.csv')
-\item Exports: 'exp_\link{year}.csv' (e.g., 'exp_2023.csv')
-}
-
-It infers the trade direction based on the presence or absence of the \code{freight_usd} column (present only in imports).
+This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded and processed using the \code{comex_download()} function.
 }
 \examples{
 \dontrun{

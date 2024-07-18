@@ -89,7 +89,7 @@ comex <- function(table, dir = comexr:::cdircomex, extension = ".csv", ...) {
 }
 
 comex_rename <- function(x) {
-    lookup <- c(year = "co_ano", month = "co_mes", country_code = "co_pais", country_name = "no_pais_ing", block_code = "co_bloco", hs4="sh4", "mun_code"="co_mun", "state_abbr"="sg_uf_mun",
+    lookup <- c(year = "co_ano", month = "co_mes", country_code = "co_pais", country_name = "no_pais_ing", block_code = "co_bloco", hs4="sh4", "mun_code"="co_mun", "state_abb"="sg_uf_mun",
         block_name = "no_bloco_ing", qt_stat = "qt_estat", kg_net = "kg_liquido", fob_usd = "vl_fob", freight_usd = "vl_frete",
         insurance_usd = "vl_seguro", number_of_lines = "numero_linhas", file = "arquivo")
     x |>
@@ -204,17 +204,13 @@ comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
 #'   - `fob_usd`: FOB value in US dollars (integer64)
 #'   - `direction`: Trade direction, either 'exp' (export) or 'imp' (import)
 #'
-#' @details This function assumes that the HS4 data files are named according to the following pattern:
-#'   - Imports: 'imp_[year]_mun.csv' (e.g., 'imp_2023_mun.csv')
-#'   - Exports: 'exp_[year]_mun.csv' (e.g., 'exp_2023_mun.csv')
+#' @details This function reads HS4 parquet files in the user data directory.
 #'
 #' @examples
 #' \dontrun{
 #' # Open the ComexStat HS4 dataset:
 #' hs4_dataset <- comexstat_hs4()
 #'
-#' # Explore the dataset:
-#' print(hs4_dataset)
 #' }
 #'
 #' @export
@@ -236,7 +232,7 @@ comex_hs4_raw <- function() {
 
 #' Open ComexStat NCM Trade Dataset
 #'
-#' This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded using the `comex_download()` function.
+#' This function opens the ComexStat NCM (8-digit product code) trade data as an Arrow Dataset. The data is assumed to be located in the  ComexStat data directory and to have been downloaded and processed using the `comex_download()` function.
 #'
 #' @return An Arrow Dataset containing combined import and export NCM trade data, with an additional `direction` column indicating 'exp' (export) or 'imp' (import). The dataset has the following columns:
 #'   - `year`: Year (integer)
@@ -253,12 +249,6 @@ comex_hs4_raw <- function() {
 #'   - `freight_usd`: Freight value in US dollars (integer64, only for imports)
 #'   - `insurance_usd`: Insurance value in US dollars (integer64, only for imports)
 #'   - `direction`: Trade direction, either 'exp' (export) or 'imp' (import) (derived)
-#'
-#' @details This function assumes that the NCM data files are named according to the following pattern:
-#'   - Imports: 'imp_[year].csv' (e.g., 'imp_2023.csv')
-#'   - Exports: 'exp_[year].csv' (e.g., 'exp_2023.csv')
-#'
-#'   It infers the trade direction based on the presence or absence of the `freight_usd` column (present only in imports).
 #'
 #' @examples
 #' \dontrun{
