@@ -1,4 +1,8 @@
 cdircomex <- path.expand(rappdirs::user_cache_dir("comexr"))
+ddircomex <- path.expand(rappdirs::user_data_dir("comexr"))
+
+
+
 
 #' Merge and Format NCM Datasets from Comexstat
 #'

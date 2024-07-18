@@ -1,3 +1,24 @@
+comex_rewrite <- function(data, ...) {
+    if("ncm"%in%names(data)) type_ <- "ncm" else type_ <- 'hs4'
+    dpath <- file.path(ddircomex,type)
+    dir.create(dpath, recursive = TRUE, showWarnings = FALSE)
+    if (type_=="ncm") {
+        data
+            dplyr::group_by(year, direction)|>
+            dplyr::arrange(ncm,month,country_code)|>
+            arrow::write_dataset(path = dpath, ...)
+    } else if (type_=="hs4") {
+        data|>
+            dplyr::group_by(year, direction)|>
+            dplyr::arrange(hs4,month,country_code)|>
+            arrow::write_dataset(path = dpath, ...)
+    }
+    years_ <- data|>dplyr::ungroup()|>dplyr::distinct(year)|>dplyr::collect()|>dplyr::pull(year)
+    directions_ <- data|>dplyr::ungroup()|>dplyr::distinct(direction)|>dplyr::collect()|>dplyr::pull(direction)
+    comex_check(years=years_, directions = directions_, type = )
+}
+
+
 #' Download Comexstat Data from MDIC (Brazilian Ministry of Development, Industry, Commerce, and Services)
 #'
 #' This function downloads Comexstat (Brazilian trade statistics) data from the MDIC website for specified years,
@@ -93,7 +114,16 @@ comex_download <- function(years = 2024, directions = c("imp", "exp"), types = c
         unlink(names(problem_down[problem_down]))
         stop("Problem downloading data. Partial data deleted. You can try again.")
     }
+    ## write as parquet
+    ncm <- todownload|>dplyr::filter(type=="ncm")
+    hs4 <- todownload|>dplyr::filter(type=="hs4")
     any_downloaded <- any(res$status_code %in% c(200, 206))
+    if (any_downloaded && (nrow(ncm)>0)) {
+        comex_rewrite(comex_ncm_raw()|>filter(year%in%years, direction%in%directions), existing_data_behavior='delete_matching')
+    }
+    if (any_downloaded && (nrow(hs4)>0)) {
+        comex_rewrite(comex_hs4_raw()|>filter(year%in%years, direction%in%directions), existing_data_behavior='delete_matching')
+    }
     # Download auxiliary data tables if any new file downloaded
     if (any_downloaded | force_download_aux) {
         aux_data <- tibble::tibble(url = c(

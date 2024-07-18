@@ -73,6 +73,15 @@ comex <- function(table, dir = comexr:::cdircomex, extension = ".csv", ...) {
       NUMERO_LINHAS = readr::col_double()
     )
     }
+    if (table %in% c("imp_totais_conferencia_mun", "exp_totais_conferencia_mun")) {
+      cols_spec <- readr::cols(
+        ARQUIVO = readr::col_character(),
+        CO_ANO = readr::col_double(),
+        KG_LIQUIDO = readr::col_double(),
+        VL_FOB = readr::col_double(),
+        NUMERO_LINHAS = readr::col_double()
+      )
+    }
     readr::read_csv2(file.path(dir, paste0(table, extension)), locale = readr::locale(encoding = "latin1", decimal_mark = ","),
         col_types = cols_spec, ...) |>
         janitor::clean_names() |>
@@ -80,7 +89,7 @@ comex <- function(table, dir = comexr:::cdircomex, extension = ".csv", ...) {
 }
 
 comex_rename <- function(x) {
-    lookup <- c(year = "co_ano", month = "co_mes", country_code = "co_pais", country_name = "no_pais_ing", block_code = "co_bloco",
+    lookup <- c(year = "co_ano", month = "co_mes", country_code = "co_pais", country_name = "no_pais_ing", block_code = "co_bloco", hs4="sh4", "mun_code"="co_mun", "state_abbr"="sg_uf_mun",
         block_name = "no_bloco_ing", qt_stat = "qt_estat", kg_net = "kg_liquido", fob_usd = "vl_fob", freight_usd = "vl_frete",
         insurance_usd = "vl_seguro", number_of_lines = "numero_linhas", file = "arquivo")
     x |>
@@ -140,12 +149,13 @@ comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
 
     # Get cached data and filter based on years and directions
     cached_data <- get(paste0("comex_", type))()
-    if (!is.null(years)) {
-        cached_data <- cached_data |>
-            dplyr::filter(year %in% years)
-        conf_data <- conf_data |>
-            dplyr::filter(year %in% years)
+    if (is.null(years)) {
+     years <-  cached_data|>dplyr::distinct(year)|>dplyr::collect()|>dplyr::pull(year)
     }
+    cached_data <- cached_data |>
+      dplyr::filter(year %in% years)
+    conf_data <- conf_data |>
+      dplyr::filter(year %in% years)
     if (!is.null(directions)) {
         cached_data <- cached_data |>
             dplyr::filter(direction %in% directions)
@@ -167,7 +177,7 @@ comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
 
     if (nrow(checked) > 0) {
         toprint <- checked |>
-            dplyr::inner_join(cached_summary, by = c("year", "direction"), suffix = c("_check", "_cached"))
+            dplyr::left_join(cached_summary, by = c("year", "direction"), suffix = c("_check", "_cached"))
 
         print(t(toprint |>
             dplyr::select(sort(names(toprint)))))
@@ -209,11 +219,17 @@ comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
 #'
 #' @export
 comex_hs4 <- function() {
+  arrow::open_dataset(sources = file.path(comexr:::ddircomex, "hs4"))
+}
+
+
+
+comex_hs4_raw <- function() {
     # Define schema for HS4 data FIX: how to set schema including hive data schema_hs4 <- arrow::schema(
     # #direction = arrow::string(), year = arrow::int32(), month = arrow::int32(), hs4 = arrow::string(),
     # country_code = arrow::int32(), state_abb = arrow::string(), mun_code = arrow::int32(), kg_net =
     # arrow::int64(), fob_usd = arrow::int64() ) Open import and export HS4 datasets
-    hs4 <- arrow::open_delim_dataset(sources = file.path(comexr:::cdircomex, "hs4"), delim = ";", skip = 0) |>
+    hs4 <- arrow::open_delim_dataset(sources = file.path(comexr:::cdircomex, "hs4"), delim = ";", skip = 0)  |>
         comex_rename()
     hs4
 }
@@ -257,7 +273,11 @@ comex_hs4 <- function() {
 #' }
 #'
 #' @export
-comex_ncm <- function(check = FALSE) {
+comex_ncm <- function() {
+  arrow::open_dataset(sources = file.path(comexr:::ddircomex, "ncm"))
+}
+
+comex_ncm_raw <- function(check = FALSE) {
     # Define schemas for export and import NCM data
     schema_exp_ncm <- arrow::schema(year = arrow::int32(), month = arrow::int32(), ncm = arrow::string(), unit_code = arrow::int32(),
         country_code = arrow::int32(), state_abb = arrow::string(), transp_mode_code = arrow::int32(), urf_code = arrow::int32(),
@@ -271,18 +291,8 @@ comex_ncm <- function(check = FALSE) {
 
     # Open import and export NCM datasets
     imp_sources <- dir(file.path(comexr:::cdircomex, "ncm", "direction=imp"), pattern = "imp_[0-9]+.csv", full.names = TRUE)
-    if (check) {
-        for (i in imp_sources) arrow::open_delim_dataset(sources = i, delim = ";", schema = schema_imp_ncm, skip = 1) |>
-            dplyr::count(year) |>
-            dplyr::collect()
-    }
     imp_ncm <- arrow::open_delim_dataset(sources = imp_sources, delim = ";", schema = schema_imp_ncm, skip = 1)
     exp_sources <- dir(file.path(comexr:::cdircomex, "ncm", "direction=exp"), pattern = "exp_[0-9]+.csv", full.names = TRUE)
-    if (check) {
-        for (i in exp_sources) arrow::open_delim_dataset(sources = i, delim = ";", schema = schema_exp_ncm, skip = 1) |>
-            dplyr::count(year) |>
-            dplyr::collect()
-    }
     exp_ncm <- arrow::open_delim_dataset(sources = exp_sources, delim = ";", schema = schema_exp_ncm, skip = 1)
     # Combine imports and exports, adding direction column
     df <- arrow::open_dataset(list(imp_ncm, exp_ncm)) |>

@@ -4,7 +4,7 @@
 \alias{comex_ncm}
 \title{Open ComexStat NCM Trade Dataset}
 \usage{
-comex_ncm(check = FALSE)
+comex_ncm()
 }
 \value{
 An Arrow Dataset containing combined import and export NCM trade data, with an additional \code{direction} column indicating 'exp' (export) or 'imp' (import). The dataset has the following columns:
