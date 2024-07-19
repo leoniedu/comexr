@@ -3,7 +3,7 @@ comex_rewrite <- function(data, ...) {
     dpath <- file.path(ddircomex,type_)
     dir.create(dpath, recursive = TRUE, showWarnings = FALSE)
     if (type_=="ncm") {
-        data
+        data|>
             dplyr::group_by(year, direction)|>
             dplyr::arrange(ncm,month,country_code)|>
             arrow::write_dataset(path = dpath, ...)

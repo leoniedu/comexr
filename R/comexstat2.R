@@ -145,7 +145,7 @@ comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
 
     # Read and combine conference data
     conf_data <- dplyr::bind_rows(lapply(files, comex)) |>
-        dplyr::mutate(direction = if_else(grepl("IMP", file), "imp", "exp"))
+        dplyr::mutate(direction = dplyr::if_else(grepl("IMP", file), "imp", "exp"))
 
     # Get cached data and filter based on years and directions
     cached_data <- get(paste0("comex_", type))()
@@ -286,7 +286,7 @@ comex_ncm_raw <- function(check = FALSE) {
     exp_ncm <- arrow::open_delim_dataset(sources = exp_sources, delim = ";", schema = schema_exp_ncm, skip = 1)
     # Combine imports and exports, adding direction column
     df <- arrow::open_dataset(list(imp_ncm, exp_ncm)) |>
-        dplyr::mutate(direction = if_else(is.na(freight_usd), "exp", "imp"), date = lubridate::make_date(year, month),
+        dplyr::mutate(direction = dplyr::if_else(is.na(freight_usd), "exp", "imp"), date = lubridate::make_date(year, month),
             cif_usd = fob_usd + freight_usd + insurance_usd)
     df
 }
