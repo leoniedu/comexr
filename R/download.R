@@ -26,8 +26,3 @@ get_brlusd <- function(from = "1997-01-01", to = NULL) {
         dplyr::summarise(brlusd = (mean(bid) + mean(ask))/2)
     brlusd
 }
-
-
-
-
-

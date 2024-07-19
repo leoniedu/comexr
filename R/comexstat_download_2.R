@@ -1,6 +1,6 @@
 comex_rewrite <- function(data, ...) {
     if("ncm"%in%names(data)) type_ <- "ncm" else type_ <- 'hs4'
-    dpath <- file.path(ddircomex,type)
+    dpath <- file.path(ddircomex,type_)
     dir.create(dpath, recursive = TRUE, showWarnings = FALSE)
     if (type_=="ncm") {
         data
@@ -15,7 +15,7 @@ comex_rewrite <- function(data, ...) {
     }
     years_ <- data|>dplyr::ungroup()|>dplyr::distinct(year)|>dplyr::collect()|>dplyr::pull(year)
     directions_ <- data|>dplyr::ungroup()|>dplyr::distinct(direction)|>dplyr::collect()|>dplyr::pull(direction)
-    comex_check(years=years_, directions = directions_, type = )
+    comex_check(years=years_, directions = directions_, type = type_)
 }
 
 
