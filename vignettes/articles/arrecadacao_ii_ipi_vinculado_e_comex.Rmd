@@ -100,7 +100,7 @@ ggplot(data=ii_ipi_comex, aes(x=date, y=ii_prop)) +
 ```
 
 
-O gráfico acima mostra a evolução da proporção do Imposto de Importação (II) e IPI vinculado em relação ao valor CIF das importações ao longo do tempo. A linha vermelha sólida representa a proporção mensal, enquanto a linha tracejada vermelha representa a média móvel de 12 meses. A linha vertical indica o início do Governo Lula III, em 2023.
+O gráfico acima mostra a evolução da proporção do Imposto de Importação (II) e IPI vinculado em relação ao valor CIF das importações ao longo do tempo. A linha vermelha sólida representa a proporção mensal, enquanto a linha tracejada vermelha representa a média móvel de 12 meses. A linha vertical indica o início do Governo Lula 3, em 2023.
 
 
 
