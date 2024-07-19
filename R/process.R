@@ -113,17 +113,19 @@ comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insu
 #' #' # Create sample Comex data
 #' set.seed(123)
 #' library(lubridate)
+#' library(dplyr)
 #' comex_data <- tibble::tibble(
-#'   date = seq(from = ymd('2022-01-01'), to = ymd('2023-12-01'), by = 'month'),
+#'   date = rep(seq(from = ymd('2023-01-01'), to = ymd('2023-12-01'), by = 'month'), each=2),
+#'   direction=rep(c("imp", "exp"), 12),
 #'   qt_stat = rpois(24, lambda = 100),
 #'   fob_usd = runif(24, min = 500, max = 2000)
 #' )
-#' # Example usage with default prefixes and window size of 12 months:
-#' rolled_data <- comex_roll(comex_data)
+#' # Example usage with default prefixes and window size of 12 months, grouped by direction:
+#' rolled_data <- comex_data%>%group_by(direction)%>%comex_roll()
 #'
-#' # Calculate 6-month rolling sums for columns starting with 'qt_' and 'fob_':
-#' rolled_data <- comex_roll(comex_data, x = c('qt_', 'fob_'), k = 6)
-#' head(rolled_data,10)
+#' # Calculate 2-month rolling sums for columns starting with 'qt_' and 'fob_', grouped by direction:
+#' rolled_data <- comex_roll(comex_data%>%group_by(direction), x = c('qt_', 'fob_'), k = 2)
+#' rolled_data%>%arrange(direction, date)%>%filter(date<="2023-03-01")
 #'
 #' @export
 comex_roll <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_"), k = 12) {
