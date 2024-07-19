@@ -1,6 +1,6 @@
-comex_rewrite <- function(data, ...) {
+comex_rewrite <- function(data, path=NULL, ...) {
     if("ncm"%in%names(data)) type_ <- "ncm" else type_ <- 'hs4'
-    dpath <- file.path(ddircomex,type_)
+    dpath <- path %||% file.path(ddircomex,type_)
     dir.create(dpath, recursive = TRUE, showWarnings = FALSE)
     if (type_=="ncm") {
         data|>
