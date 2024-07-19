@@ -185,7 +185,7 @@ comex_check <- function(years = NULL, directions = NULL, type = "ncm") {
     }
 
     # Success message if no mismatches
-    print("All clear!")
+    print(glue::glue("{type} ok!"))
 }
 
 
