@@ -225,9 +225,9 @@ comex_hs4_raw <- function() {
     # #direction = arrow::string(), year = arrow::int32(), month = arrow::int32(), hs4 = arrow::string(),
     # country_code = arrow::int32(), state_abb = arrow::string(), mun_code = arrow::int32(), kg_net =
     # arrow::int64(), fob_usd = arrow::int64() ) Open import and export HS4 datasets
-    hs4 <- arrow::open_delim_dataset(sources = file.path(comexr:::cdircomex, "hs4"), delim = ";", skip = 0)  |>
-        comex_rename()
-    hs4
+  arrow::open_delim_dataset(sources = file.path(comexr:::cdircomex, "hs4"), delim = ";", skip = 0)|>
+    comex_rename() |>
+    dplyr::mutate(date = lubridate::make_date(year, month))
 }
 
 #' Open ComexStat NCM Trade Dataset

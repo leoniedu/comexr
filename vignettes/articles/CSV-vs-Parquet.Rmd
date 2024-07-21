@@ -1,0 +1,46 @@
+---
+title: "CSV vs Parquet"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(microbenchmark)
+library(dplyr)
+library(comexr)
+```
+
+```{r}
+
+res <- microbenchmark(parquet_ncm=comexr:::comex_ncm()%>%
+                        filter(year%in%2010:2013)%>%
+                        group_by(direction, year)%>%
+                        comexr::comex_sum(x = "fob_usd")%>%
+                        collect()%>%
+                        ungroup,
+                      csv_ncm=comexr:::comex_ncm_raw()%>%
+                        filter(year%in%2010:2013)%>%
+                        group_by(direction, year)%>%
+                        comexr::comex_sum(x = "fob_usd")%>%
+                        collect()%>%
+                        ungroup , 
+                      parquet_hs4=comexr:::comex_hs4()%>%
+                        group_by(direction, year, country_code)%>%
+                        comexr::comex_sum(x = "fob_usd")%>%
+                        collect()%>%
+                        ungroup,
+                      csv_hs4=comexr:::comex_hs4_raw()%>%
+                        group_by(direction, year, country_code)%>%
+                        comexr::comex_sum(x = "fob_usd")%>%
+                        collect()%>%
+                        ungroup,
+                      times=5L)
+print(res)
+boxplot(res)
+```
+
