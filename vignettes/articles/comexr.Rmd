@@ -300,8 +300,7 @@ by_cat_0 <- comex_ncm() |>
 by_cat_1 <- by_cat_0%>%
   filter(direction=="imp")%>%
   group_by(name,code, direction)|>
-  comex_roll(k=1)%>%
-  rename_with(function(x) gsub("_1$", "_k", x))%>%
+  comex_roll(k=12)%>%
   ungroup%>%
   filter(lubridate::month(date)==lubridate::month(max(date)))%>%
   mutate(year=lubridate::year(date))%>%
@@ -309,8 +308,8 @@ by_cat_1 <- by_cat_0%>%
   mutate(year=factor(year,labels = c("last", "current")))
 
 by_cat_2 <- by_cat_1%>%
-  select(name,code, direction, fob_usd_deflated_k, year)%>%
-  tidyr::pivot_wider(names_from=c("year"), values_from = fob_usd_deflated_k)%>%
+  select(name,code, direction, fob_usd_deflated_12, year)%>%
+  tidyr::pivot_wider(names_from=c("year"), values_from = fob_usd_deflated_12)%>%
   mutate(current=tidyr::replace_na(current, 0),
          last=tidyr::replace_na(last, 0),
     d=current-last, s=last+current, p=current/last)
