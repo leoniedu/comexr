@@ -5,17 +5,15 @@ comex_rewrite <- function(data, path=NULL, ...) {
     if (type_=="ncm") {
         data|>
             dplyr::group_by(year, direction)|>
-            dplyr::arrange(ncm,month,country_code)|>
+            #dplyr::arrange(ncm,month,country_code)|>
             arrow::write_dataset(path = dpath, ...)
     } else if (type_=="hs4") {
         data|>
             dplyr::group_by(year, direction)|>
-            dplyr::arrange(hs4,month,country_code)|>
+            #dplyr::arrange(hs4,month,country_code)|>
             arrow::write_dataset(path = dpath, ...)
     }
-    years_ <- data|>dplyr::ungroup()|>dplyr::distinct(year)|>dplyr::collect()|>dplyr::pull(year)
-    directions_ <- data|>dplyr::ungroup()|>dplyr::distinct(direction)|>dplyr::collect()|>dplyr::pull(direction)
-    comex_check(years=years_, directions = directions_, type = type_)
+    comex_check(data)
 }
 
 
