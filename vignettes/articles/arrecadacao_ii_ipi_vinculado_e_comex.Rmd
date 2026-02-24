@@ -23,7 +23,7 @@ library(readxl)
 library(tidyr)
 ```
 
-Este relatório visa analisar a arrecadação de Imposto de Importação (II) e IPI vinculado sobre as importações brasileiras, comparando-a com o valor total das importações. Utilizaremos dados do Comex (Comércio Exterior Brasileiro) disponíveis através do pacote R comexr, e da Receita Federal.
+O Brasil arrecadou R$ 123 bilhões em Imposto de Importação (II) e IPI vinculado nos 12 meses encerrados em junho de 2025 — um recorde em termos nominais e o maior nível real desde 2021. Mas como chegamos aqui? Este relatório analisa a trajetória da tributação sobre importações desde 2020, cruzando dados do Comex Stat e da Receita Federal, e revela uma história de dois ciclos distintos: o colapso da alíquota efetiva durante o boom de importações de 2021–2022, e a recuperação silenciosa que se seguiu.
 
 ## Preparação dos Dados
 
@@ -31,7 +31,7 @@ Primeiramente, carregamos as bibliotecas necessárias para a análise e visualiz
 
 ```{r}
 if (params$download) {
-  comex_download(2019:2024, directions = "imp", types="ncm")
+  comex_download(2019:2025, directions = "imp", types="ncm")
 }
 ```
 
@@ -39,7 +39,7 @@ if (params$download) {
 Após o download, lemos e limpamos os dados da Receita Federal, selecionando a planilha "Tabela III" e pulando as primeiras 6 linhas. Em seguida, ajustamos os dados, criamos uma coluna de data e transformamos os dados para o formato longo, separando as categorias de arrecadação:
 
 ```{r}
-arrecadacao_link <- "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/arrecadacao-federal/2024-/analise-mensal-mai-2024-anexo.xlsx/@@download/file"
+arrecadacao_link <- "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/arrecadacao-federal/2025/analisemensal-dez-2025-anexo.xlsx/@@download/file"
 arrecadacao_file <- here::here(file.path("data-raw/", gsub(".*(analise.*.xlsx).*", "\\1", arrecadacao_link)))
 if (!file.exists(arrecadacao_file)) download.file(arrecadacao_link, arrecadacao_file)
 ##obs: unidade: R$ milhões a valores correntes
@@ -51,7 +51,7 @@ meses <- tibble(mes_abrev=c("JAN", "FEV", "MAR", "ABR", "MAIO", "JUN", "JUL", "A
            "OUT", "NOV", "DEZ"), mes_codigo=1:12)
 
 drfb <- drfb_0%>%
-  mutate(ano=c(rep(2019:2023, each=13), rep(2024, 7)))%>%
+  mutate(ano=c(rep(2020:2025, each=13), NA))%>%
   inner_join(meses, by=c("mes"="mes_abrev"))%>%
   mutate(date=lubridate::make_date(ano, mes_codigo))%>%
   tidyr::pivot_longer(values_to = "imposto_brl_milhoes", cols = i_renda:total_geral, names_to = "arrecadacao_categoria")%>%
@@ -60,11 +60,23 @@ drfb <- drfb_0%>%
 
 ```
 
+Lemos também a Tabela III-A, que contém os mesmos dados já deflacionados pela própria Receita Federal:
+
+```{r}
+drfb_a <- readxl::read_excel(arrecadacao_file, sheet = "Tabela III-A", skip=6)%>%
+  janitor::clean_names()%>%
+  mutate(ano=c(rep(2020:2025, each=13), NA))%>%
+  inner_join(meses, by=c("mes"="mes_abrev"))%>%
+  mutate(date=lubridate::make_date(ano, mes_codigo))%>%
+  tidyr::pivot_longer(values_to = "imposto_rfb_brl_milhoes", cols = i_renda:total_geral, names_to = "arrecadacao_categoria")%>%
+  mutate(imposto_rfb_brl = imposto_rfb_brl_milhoes*1e6, imposto_rfb_brl_milhoes=NULL)
+```
+
 Agora, vamos preparar os dados do Comex. Filtramos para o período de 2019 a 2024, agrupamos por data, e somamos os valores relevantes:
 
 ```{r}
 comex <- comexr::comex_ncm()%>%
-  filter(direction=="imp", date<="2024-05-01", date>="2019-01-01")%>%
+  filter(direction=="imp", date<="2025-12-01", date>="2020-01-01")%>%
   group_by(date)%>%
   comexr::comex_sum()%>%
   collect()%>%
@@ -72,19 +84,87 @@ comex <- comexr::comex_ncm()%>%
 
 ```
 
-Finalmente, combinamos os dados da Receita Federal (arrecadação de II e IPI vinculado) com os dados do Comex. Em seguida, deflacionamos os valores, calculamos as médias móveis de 12 meses e a proporção do imposto em relação ao valor CIF das importações:
+Carregamos também os dados trimestrais do PIB nominal (R$ milhões) do Banco Central do Brasil, calculando o PIB acumulado em 4 trimestres (equivalente ao PIB anual corrente):
+
+```{r}
+pib_q <- rbcb::get_series(c(pib_brl_milhoes = 4380), start_date = "2019-01-01") |>
+  mutate(pib_brl = pib_brl_milhoes * 1e6) |>
+  arrange(date) |>
+  mutate(pib_annual_brl = slider::slide_dbl(pib_brl, sum, .before = 11, .complete = TRUE))
+```
+
+Finalmente, combinamos os dados da Receita Federal (arrecadação de II e IPI vinculado) com os dados do Comex. Em seguida, deflacionamos os valores, calculamos as médias móveis de 12 meses e a proporção do imposto em relação ao valor CIF das importações. Também unimos os dados do PIB para calcular as proporções em relação ao PIB:
 
 ```{r}
 ii_ipi_comex <- drfb%>%
   filter(arrecadacao_categoria=="i_importacao_e_ipi_vinculado")%>%
+  left_join(
+    drfb_a%>%filter(arrecadacao_categoria=="i_importacao_e_ipi_vinculado")%>%select(date, imposto_rfb_brl),
+    by = "date")%>%
   left_join(comex, by=c("date"))%>%
+  rename(imposto_nominal_brl = imposto_brl)%>%
   comex_deflate()%>%
+  rename(imposto_brl = imposto_nominal_brl)%>%
   ungroup%>%
   comex_roll(x = c("qt_stat", "kg_net", "fob_", "freight_",
                    "insurance_", "cif_", "imposto_"))%>%
   mutate(ii_prop=imposto_brl/(cif_brl),
-         ii_prop_12=imposto_brl_deflated_12/(cif_brl_deflated_12))
+         ii_prop_12=imposto_brl_12/(cif_brl_12))%>%
+  left_join(pib_q%>%select(date, pib_annual_brl), by = "date")%>%
+  mutate(imp_pct_pib_12 = cif_brl_12 / pib_annual_brl,
+         ii_ipi_pct_pib_12 = imposto_brl_12 / pib_annual_brl)
 ```
+
+## Importações em Valor Absoluto (R$ deflacionados pelo IPCA)
+
+```{r}
+basedate_label <- ii_ipi_comex%>%filter(!is.na(ipca_basedate))%>%pull(ipca_basedate)%>%max()%>%format("%m/%Y")
+
+ggplot(data=ii_ipi_comex, aes(x=date, y=cif_brl_deflated/1e9)) +
+  geom_line(color="darkgreen") +
+  geom_vline(xintercept=as.Date("2023-01-01"), color="orange") +
+  hrbrthemes::theme_ft_rc() +
+  scale_y_continuous(paste0("Importações CIF (R$ bilhões, IPCA ", basedate_label, ")"), limits=c(0,NA), expand=c(0,0)) +
+  labs(x="", caption = "Linha vertical: início do Governo Lula 3.")
+```
+
+Em termos reais (deflacionados pelo IPCA), as importações brasileiras atingiram seu pico no final de 2022, chegando a cerca de R$ 170 bilhões mensais em preços constantes — um nível sem precedentes na série histórica recente. O que se seguiu foi uma contração expressiva: ao longo de 2023, as importações reais recuaram quase 40% em relação ao pico, refletindo a combinação de desaceleração da demanda doméstica, queda nos preços de commodities e câmbio menos favorável. A partir de 2024, o volume real se estabilizou na faixa de R$ 120–160 bilhões mensais, num patamar ainda significativo mas abaixo do ciclo anterior.
+
+## Arrecadação de II + IPI Vinculado em Valor Absoluto (R$ deflacionados pela RFB)
+
+```{r}
+ggplot(data=ii_ipi_comex, aes(x=date, y=imposto_rfb_brl/1e9)) +
+  geom_line(color="red") +
+  geom_vline(xintercept=as.Date("2023-01-01"), color="orange") +
+  hrbrthemes::theme_ft_rc() +
+  scale_y_continuous("Arrecadação II + IPI vinculado (R$ bilhões, deflacionado pela RFB)", limits=c(0,NA), expand=c(0,0)) +
+  labs(x="", caption = "Valores deflacionados pela Receita Federal (Tabela III-A).\nLinha vertical: início do Governo Lula 3.")
+```
+
+A arrecadação real de II e IPI vinculado (deflacionada pela própria Receita Federal) conta uma história surpreendente: após um pico em meados de 2021 (~R$ 12 bilhões/mês em termos reais), a arrecadação despencou ao longo de 2022 e chegou ao seu nível mais baixo justamente na transição de governo, em janeiro de 2023. A partir daí, a recuperação foi consistente, e em 2024–2025 a arrecadação real voltou a bater recordes, superando os níveis de 2021. Isso indica que, mesmo com o volume de importações abaixo do pico de 2022, a arrecadação real atingiu novos máximos — resultado combinado da mudança de composição da pauta importada e das elevações de alíquotas promovidas pelo Governo Lula III a partir do final de 2023 (expiração da redução linear de 10%, revisões na LETEC e na LEBITBK).
+
+## Importações e Arrecadação como % do PIB
+
+```{r}
+ii_ipi_comex%>%
+  filter(!is.na(imp_pct_pib_12))%>%
+  tidyr::pivot_longer(cols = c(imp_pct_pib_12, ii_ipi_pct_pib_12),
+                      names_to = "serie",
+                      values_to = "pct_pib")%>%
+  mutate(serie = dplyr::recode(serie,
+    imp_pct_pib_12 = "Importações CIF",
+    ii_ipi_pct_pib_12 = "II + IPI vinculado"))%>%
+  ggplot(aes(x=date, y=pct_pib)) +
+  geom_line(aes(color=serie)) +
+  geom_vline(xintercept=as.Date("2023-01-01"), color="orange") +
+  facet_wrap(~serie, scales="free_y", ncol=1) +
+  hrbrthemes::theme_ft_rc() +
+  scale_color_manual(values=c("Importações CIF"="steelblue", "II + IPI vinculado"="red"), guide="none") +
+  scale_y_continuous("% do PIB", labels=scales::percent, limits=c(0,NA), expand=c(0,0)) +
+  labs(x="", caption = "PIB nominal mensal (BCB série 4380), acumulado em 12 meses.\nImportações e arrecadação: acumulado em 12 meses em R$ correntes.\nLinha vertical: início do Governo Lula 3.")
+```
+
+Em relação ao PIB, as importações CIF acumuladas em 12 meses chegaram a 15,4% em setembro de 2022 — o ponto mais alto da série — e depois recuaram para cerca de 11% em 2023–2024, refletindo tanto a queda no volume real quanto o crescimento nominal do PIB. Em meados de 2025, a relação se aproxima de 13,4%, sinalizando retomada da abertura comercial. Já a arrecadação de II e IPI vinculado, que chegou a representar mais de 1% do PIB em 2021–2022, caiu para 0,7% em 2023 e está se recuperando para ~1,0% em 2025. A convergência entre as duas séries — importações em queda mas arrecadação em alta como % do PIB — é o reflexo direto do aumento da alíquota efetiva, que por sua vez combina mudança de composição da pauta e elevação deliberada de alíquotas nominais a partir do final de 2023, conforme detalhado no gráfico seguinte.
 
 ## Visualização da Proporção do Imposto
 
@@ -100,7 +180,45 @@ ggplot(data=ii_ipi_comex, aes(x=date, y=ii_prop)) +
 ```
 
 
-O gráfico acima mostra a evolução da proporção do Imposto de Importação (II) e IPI vinculado em relação ao valor CIF das importações ao longo do tempo. A linha vermelha sólida representa a proporção mensal, enquanto a linha tracejada vermelha representa a média móvel de 12 meses. A linha vertical indica o início do Governo Lula 3, em 2023.
+Este é o gráfico mais revelador da análise. A alíquota efetiva — razão entre o imposto arrecadado e o valor CIF das importações — foi de ~8,5% no início de 2020 para menos de 5% em meados de 2022: uma queda de quase metade em apenas dois anos. O mecanismo é claro: o boom de importações de 2021–2022 foi liderado por bens com tributação reduzida ou zero (insumos industriais, bens de capital, energia), diluindo a alíquota média sobre a pauta total.
+
+A virada ocorre a partir de 2023, impulsionada por dois fatores combinados. O primeiro é de composição: a normalização do mix de importações, com menor participação de commodities energéticas e insumos desonerados e maior peso de bens de consumo sujeitos a alíquotas padrão. O segundo, e igualmente importante, é de política tarifária: o Governo Lula III promoveu um aumento deliberado da proteção tarifária. Em dezembro de 2023 deixou expirar uma redução linear de 10% sobre as alíquotas do II que havia sido adotada como medida antiinflacionária em 2022. Além disso, houve diversas alterações pontuais de alíquotas via LETEC (Lista de Exceções à Tarifa Externa Comum do Mercosul) e LEBITBK (Lista de Bens de Informática, de Telecomunicações, e de Bens de Capital), reduzindo a abrangência dos regimes especiais que beneficiavam bens de capital e tecnologia. O conjunto dessas mudanças elevou as alíquotas nominais vigentes sobre uma parcela relevante da pauta de importações.
+
+Em junho de 2025, a média móvel de 12 meses da alíquota efetiva chegou a 7,4%, o nível mais alto desde 2020 — refletindo tanto o reposicionamento do mix de importações quanto as decisões de política tarifária do período.
+
+**O que isso significa na prática?** Para cada R$ 100 de produto importado, consumidores e empresas pagam hoje R$ 7,40 em II e IPI vinculado — contra R$ 5,00 no pior momento de 2022. Com importações anuais na casa de R$ 1,65 trilhão, esse aumento de 2,4 pontos percentuais na alíquota efetiva representa cerca de R$ 40 bilhões a mais no custo de importar produtos do exterior — aproximadamente 0,3% do PIB.
+
+## Comentário
+
+A alíquota efetiva do Imposto de Importação subiu quase 50% desde o piso de 2022 — e acaba de subir mais.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data=ii_ipi_comex, aes(x=date)) +
+  geom_line(aes(y=ii_prop), color="red", alpha=0.35) +
+  geom_line(aes(y=ii_prop_12), color="red", linetype=2) +
+  geom_vline(xintercept=as.Date("2023-01-01"), color="orange") +
+  annotate("text", x=as.Date("2023-03-01"), y=0.083,
+           label="Início Lula III", color="orange", hjust=0, size=3) +
+  hrbrthemes::theme_ft_rc() +
+  scale_y_continuous("Alíquota efetiva: II + IPI vinculado / CIF",
+                     limits=c(0, NA), expand=c(0,0), labels=scales::percent) +
+  labs(x="",
+       caption="Arrecadação de II + IPI vinculado (RFB Tabela III) / Valor CIF das importações (Comex Stat).\nLinha tracejada: média móvel 12 meses. Fonte: RFB e MDIC.")
+```
+
+O gráfico acima mostra a **alíquota efetiva** do Imposto de Importação: a razão entre o que a Receita Federal arrecada com II e IPI vinculado e o valor total das importações brasileiras (CIF). É uma medida simples e direta do custo tributário médio de importar no Brasil.
+
+Em 2022, no auge do boom importador pós-pandemia, essa alíquota caiu para menos de 5%. O crescimento das importações foi liderado por insumos energéticos (com a disparada dos preços do petróleo após a invasão da Ucrânia), bens de capital e commodities industriais — categorias com tributação reduzida ou zero que puxaram a alíquota média para baixo. Com importações anuais de cerca de US$ 280 bilhões, cada ponto percentual a menos na alíquota representava bilhões em menor custo para importadores.
+
+A partir de 2023, a trajetória se inverteu. Dois fatores combinados explicam a alta. O primeiro é estrutural: a pauta se normalizou, com menor participação de itens desonerados e mais peso de bens de consumo com alíquotas padrão. O segundo é deliberado: o Governo Lula III elevou a proteção tarifária de forma consistente — expiração da redução linear de 10% do II em dezembro de 2023, revisões sucessivas via LETEC e LEBITBK, e restrição progressiva dos regimes especiais para bens de capital e tecnologia. Em junho de 2025, a alíquota efetiva (média móvel de 12 meses) chegou a 7,4% — 48% acima do piso de 2022.
+
+**O capítulo mais recente** é a Resolução GECEX nº 852, de 4 de fevereiro de 2026, que implementou o "realinhamento" de BK (Bens de Capital) e BIT (Bens de Informática e Telecomunicações): todas as alíquotas abaixo de 7% sobem para 7%; as entre 7% e 12,6%, para 12,6%; as entre 12,7% e 20%, para 20%. A maior parte das novas alíquotas entrou em vigor em 6 de fevereiro; uma segunda leva entra em 1º de março de 2026. Em 2025 o Brasil importou US$ 75 bilhões em BK e BIT — 33% a mais do que em 2022, grande parte em categorias que até então pagavam zero. Com o novo piso de 7%, setores intensivos em CAPEX — óleo e gás, mineração, energia, agronegócio, automação industrial — podem passar a pagar mais em cada equipamento importado.
+
+O governo reconhece que o efeito sobre o IPCA será "indireto e defasado". É verdade: BK e BIT são bens de produção, não de consumo final. Mas o custo do investimento mais caro não some — ele migra para as margens das empresas, para o preço dos produtos industriais e, com defasagem, para o consumidor.
+
+Há aqui uma tensão que vale nomear. BK são, por definição, bens de investimento — máquinas e equipamentos que ampliam a capacidade produtiva. BIT, no contexto desta política, são majoritariamente CAPEX: servidores, roteadores, sistemas de automação e controle. Encarecer esses bens significa encarecer o investimento em si. A própria Nota Técnica que fundamenta a elevação de alíquotas reconhece que BK e BIT têm "o potencial de aumentar os encadeamentos interindustriais e o dinamismo da estrutura industrial nacional" — mas esse potencial se realiza quando as empresas conseguem investir. Tarifas mais altas sobre bens de capital reduzem o ritmo de formação de capital fixo e, com ele, o potencial de crescimento da economia. A literatura econômica é razoavelmente clara nesse ponto: tarifas sobre bens de capital tendem a reduzir a produtividade das indústrias que usam esses bens — que são todas as indústrias. Proteger fabricantes domésticos de equipamentos às custas de quem investe é uma das políticas industriais com pior relação custo-benefício documentada.
+
+*Dados: Comex Stat (MDIC), Receita Federal (Tabela III), Resolução GECEX nº 852/2026.*
 
 
 
