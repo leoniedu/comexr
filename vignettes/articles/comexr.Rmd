@@ -36,14 +36,14 @@ library(comexr)
 library(dplyr)
 
 ##downloading
-#comex_download(years = 2022:2024, types = "ncm", ssl_verifypeer=FALSE)
-if (params$download) {
-  try(comex_download(years = 2014:2024, types = "ncm"
-                     , ssl_verifypeer=FALSE
-  ))
-}
+comex_download(years = 2025, types = "ncm", ssl_verifypeer=FALSE)
+# if (params$download) {
+#   try(comex_download(years = 2016:2025, types = "ncm"
+#                      , ssl_verifypeer=FALSE
+#   ))
+# }
 
-comex_ncm_f <- comex_ncm()|>filter(year>=2014, year<=2023)
+comex_ncm_f <- comex_ncm()|>filter(year>=2022, year<=2025)
 
 ```
 
@@ -283,8 +283,8 @@ ggplot(aes(x=date, y=balance_brl_deflated_12),
 ```{r}
 by_cat_0 <- comex_ncm() |> 
   filter(date>="2022-01-01")%>%
-  filter(## usa
-         #country_code==249
+  filter( ##usa
+         country_code==249
          ## china
          #country_code==160
          ) |>
@@ -322,10 +322,6 @@ by_cat <- by_cat_2%>%
   inner_join(by_cat_2)%>%
   arrange(total)
 
-```
-
-
-```{r}
 ggplot(aes(y=label, x=d/1e9, fill=direction), data=by_cat%>%mutate(label=forcats::fct_inorder(paste0(code, ": ", stringr::str_wrap(name,30))))) + geom_col(position="dodge")+ labs(x="", y="") +
   scale_fill_manual(values=c("blue", "red")) +
   theme_linedraw()

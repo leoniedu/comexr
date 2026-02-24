@@ -82,9 +82,9 @@ ncms <- function(files = c("ncm", "ncm_cgce", "ncm_cuci", "ncm_isic", "ncm_unida
 #' summary_data
 #'
 #' @export
-comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")) {
+comex_sum <- function(data, x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_"), ...) {
     data |>
-        dplyr::summarise(dplyr::across(dplyr::starts_with(x), sum, .names = "{.col}"))
+        dplyr::summarise(dplyr::across(dplyr::starts_with(x), sum, .names = "{.col}", ...))
 }
 
 #' Calculate Rolling Sums for Comex Data

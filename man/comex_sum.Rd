@@ -6,7 +6,8 @@
 \usage{
 comex_sum(
   data,
-  x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_")
+  x = c("qt_stat", "kg_net", "fob_", "freight_", "insurance_", "cif_"),
+  ...
 )
 }
 \arguments{
